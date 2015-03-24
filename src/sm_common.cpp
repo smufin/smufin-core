@@ -1,10 +1,5 @@
 #include <sm_common.hpp>
 
-inline char encode(char c)
-{
-    return codes[c];
-}
-
 unsigned long int strtob4(const char *str)
 {
     register unsigned long int i;

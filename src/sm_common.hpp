@@ -45,9 +45,6 @@ typedef struct {
     sm_msg array[BULK_LEN];
 } sm_bulk;
 
-inline char encode(char c);
-unsigned long int strtob4(const char *str);
-
 // Use ASCII codes to index base 4 values for ACGT. The array is
 // equivalent to the following map, only slightly faster since it avoids
 // hashing, etc.
@@ -88,5 +85,23 @@ extern std::mutex filter_mutex;
 enum noshort_options {
     O_DISABLE_FILTER, O_DISABLE_STATS
 };
+
+unsigned long int strtob4(const char *str);
+
+inline char encode(char c)
+{
+    return codes[c];
+}
+
+inline int lq_count(char *str)
+{
+    int lq = 0;
+    for (int i = 0; i < 80; i++) {
+        int phred = str[i] - 33;
+        if (phred < 20)
+            lq++;
+    }
+    return lq;
+}
 
 #endif

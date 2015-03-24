@@ -30,14 +30,7 @@ void filter_file(int pid, int fid, string file)
 
     kseq_t *seq = kseq_init(in);
     while ((len = kseq_read(seq)) >= 0) {
-        int lq = 0;
-        for (int i = 0; i < 80; i++) {
-            int phred = ((int) seq->qual.s[i]) - 33;
-            if (phred < 20)
-                lq++;
-        }
-
-        if (lq > 8) {
+        if (lq_count(seq->qual.s) > 8) {
             continue;
         }
 
