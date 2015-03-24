@@ -61,33 +61,34 @@ void filter_file(int pid, int fid, string file)
 
 void filter_sub(int pid, int fid, kseq_t *seq, const char *sub, int len)
 {
+    if (len < KMER_LEN)
+        return;
+
     char kmer[31];
-    if (len >= KMER_LEN) {
-        for (int i = 0; i <= len - KMER_LEN; i++) {
-            strncpy(kmer, &sub[i], KMER_LEN);
-            kmer[30] = '\0';
+    for (int i = 0; i <= len - KMER_LEN; i++) {
+        strncpy(kmer, &sub[i], KMER_LEN);
+        kmer[30] = '\0';
 
-            uint32_t m = 0;
-            memcpy(&m, kmer, MAP_LEN);
-            hash_4c_map(m);
+        uint32_t m = 0;
+        memcpy(&m, kmer, MAP_LEN);
+        hash_4c_map(m);
 
-            if (map_l1[m] != pid)
-                continue;
-            int sid = map_l2[m];
-            sm_key key = strtob4(kmer);
+        if (map_l1[m] != pid)
+            continue;
+        int sid = map_l2[m];
+        sm_key key = strtob4(kmer);
 
-            sm_value value = tables[sid][key];
-            uint32_t cnr = value.first;
-            uint32_t ctr = value.second;
-            char buf[256] = {0};
-            if (ctr >= 4 && cnr == 0) {
-                sprintf(buf, "@%s\n%s\n+\n%s",
-                        seq->name.s, seq->seq.s, seq->qual.s);
-                filter_mutex.lock();
-                filter_reads.insert(buf);
-                filter_mutex.unlock();
-                break;
-            }
+        sm_value value = tables[sid][key];
+        uint32_t cnr = value.first;
+        uint32_t ctr = value.second;
+        char buf[256] = {0};
+        if (ctr >= 4 && cnr == 0) {
+            sprintf(buf, "@%s\n%s\n+\n%s",
+                    seq->name.s, seq->seq.s, seq->qual.s);
+            filter_mutex.lock();
+            filter_reads.insert(buf);
+            filter_mutex.unlock();
+            break;
         }
     }
 }
