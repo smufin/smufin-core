@@ -3,14 +3,11 @@
 
 #include <string>
 #include <iostream>
-#include <kseq.h>
 #include <boost/algorithm/string.hpp>
 
 using std::cout;
 using std::endl;
 using std::string;
-
-KSEQ_INIT(gzFile, gzread);
 
 void filter(int pid, int fid)
 {
@@ -25,6 +22,11 @@ void filter(int pid, int fid)
 
 void filter_file(int pid, int fid, string file)
 {
+    std::size_t found = file.find("_N_");
+    if (found != std::string::npos) {
+        return;
+    }
+
     int len;
     gzFile in = gzopen(file.c_str(), "rb");
 
@@ -41,7 +43,7 @@ void filter_file(int pid, int fid, string file)
         while ((ps = (char*) memchr(&seq->seq.s[p], 'N', 80 - p)) != NULL) {
             n = ps - &seq->seq.s[p];
             if (n > 0) {
-                filter_sub(pid, fid, &seq->seq.s[p], n);
+                filter_sub(pid, fid, seq, &seq->seq.s[p], n);
                 p += n;
             }
             p++;
@@ -49,7 +51,7 @@ void filter_file(int pid, int fid, string file)
 
         n = 80 - p;
         if (n > 0) {
-            filter_sub(pid, fid, &seq->seq.s[p], n);
+            filter_sub(pid, fid, seq, &seq->seq.s[p], n);
         }
     }
 
@@ -57,7 +59,7 @@ void filter_file(int pid, int fid, string file)
     gzclose(in);
 }
 
-void filter_sub(int pid, int fid, const char* sub, int len)
+void filter_sub(int pid, int fid, kseq_t *seq, const char *sub, int len)
 {
     char kmer[31];
     if (len >= KMER_LEN) {
@@ -74,15 +76,18 @@ void filter_sub(int pid, int fid, const char* sub, int len)
             int sid = map_l2[m];
             sm_key key = strtob4(kmer);
 
-            // sm_value value = tables[sid][key];
-            // uint32_t cnr = value.first;
-            // uint32_t ctr = value.second;
-            // if (ctr >= 4 && cnr == 0) {
-                // filter_mutex.lock();
-                // filter_reads.insert(token);
-                // filter_mutex.unlock();
-                // break;
-            // }
+            sm_value value = tables[sid][key];
+            uint32_t cnr = value.first;
+            uint32_t ctr = value.second;
+            char buf[256] = {0};
+            if (ctr >= 4 && cnr == 0) {
+                sprintf(buf, "@%s\n%s\n+\n%s",
+                        seq->name.s, seq->seq.s, seq->qual.s);
+                filter_mutex.lock();
+                filter_reads.insert(buf);
+                filter_mutex.unlock();
+                break;
+            }
         }
     }
 }
