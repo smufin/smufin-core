@@ -99,7 +99,7 @@ inline void process_load_sub(int pid, int lid, const char* sub, int len,
 
         uint32_t m = 0;
         memcpy(&m, kmer, MAP_LEN);
-        map4b(m);
+        hash_4c_map(m);
 
         if (map_l1[m] != pid)
             continue;

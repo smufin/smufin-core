@@ -87,11 +87,11 @@ int main(int argc, char *argv[])
     for (string line; getline(map_file, line);) {
         std::vector<string> columns;
         boost::split(columns, line, boost::is_any_of(" "));
-        uint32_t map = 0;
-        memcpy(&map, columns[0].c_str(), 4);
-        map4b(map);
-        map_l1[map] = atoi(columns[1].c_str());
-        map_l2[map] = atoi(columns[2].c_str());
+        uint32_t m = 0;
+        memcpy(&m, columns[0].c_str(), 4);
+        hash_4c_map(m);
+        map_l1[m] = atoi(columns[1].c_str());
+        map_l2[m] = atoi(columns[2].c_str());
     }
 
     // Initialize tables and message queues.

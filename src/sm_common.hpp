@@ -26,7 +26,15 @@
 #define BULK_LEN 128
 #define QMSG_LEN 512
 
-#define map4b(h) ({                         \
+// Convert a string of 4 chars/bytes of the 4-base ACGT alphabet (32 bits)
+// into a unique unsigned int identifier in the [0-256) range (8 bits). The
+// idea is to take the 2nd and 3rd least significant bits of each byte as
+// follows:
+//   A -> 65 -> 01000001 -> 00
+//   C -> 67 -> 01000011 -> 01
+//   G -> 71 -> 01000111 -> 11
+//   T -> 84 -> 01010100 -> 10
+#define hash_4c_map(h) ({                   \
         (h) = ((h) & 101058054) >> 1;       \
         (h) = ((h) & 0xFFFF) + ((h) >> 14); \
         (h) = ((h) & 0xFF) + ((h) >> 4); })
