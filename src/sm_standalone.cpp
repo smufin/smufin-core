@@ -236,8 +236,8 @@ void sm_stats(int num_storers)
             part = part + count;
             part_unique++;
         }
-        cout << "30-mers (part-t-" << i << "): " << part << endl;
-        cout << "30-mers (part-u-" << i << "): " << part_unique << endl;
+        cout << KMER_LEN << "-mers (part-t-" << i << "): " << part << endl;
+        cout << KMER_LEN << "-mers (part-u-" << i << "): " << part_unique << endl;
         subs += part;
         subs_unique += part_unique;
     }
@@ -251,7 +251,7 @@ void sm_stats(int num_storers)
     }
 
     time = end - start;
-    cout << "30-mers (total):  " << subs << endl;
-    cout << "30-mers (unique): " << subs_unique << endl;
+    cout << KMER_LEN << "-mers (total):  " << subs << endl;
+    cout << KMER_LEN << "-mers (unique): " << subs_unique << endl;
     cout << "Iteration time:   " << time.count() << endl;
 }

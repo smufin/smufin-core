@@ -92,10 +92,10 @@ inline void process_load_sub(int pid, int lid, const char* sub, int len,
     if (len < KMER_LEN)
         return;
 
-    char kmer[31];
+    char kmer[KMER_LEN + 1];
     for (int i = 0; i <= len - KMER_LEN; i++) {
         strncpy(kmer, &sub[i], KMER_LEN);
-        kmer[30] = '\0';
+        kmer[KMER_LEN] = '\0';
 
         uint32_t m = 0;
         memcpy(&m, kmer, MAP_LEN);
