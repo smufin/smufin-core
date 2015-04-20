@@ -108,13 +108,6 @@ int main(int argc, char *argv[])
     if (!disable_filter) {
         reset_input_queue(input_file);
         sm_filter(pid, num_filters);
-
-        std::ofstream ofs;
-        ofs.open("filtered.fastq");
-        for (std::unordered_set<string>::const_iterator it = filter_reads.begin();
-             it != filter_reads.end(); ++it) {
-            ofs << *it << endl;
-        }
     }
 
     if (!disable_stats) {
@@ -212,6 +205,13 @@ void sm_filter(int pid, int num_filters)
 #ifdef PROFILE
     ProfilerStop();
 #endif
+
+    std::ofstream ofs;
+    ofs.open("filtered.fastq");
+    for (std::unordered_set<string>::const_iterator it = filter_reads.begin();
+         it != filter_reads.end(); ++it) {
+        ofs << *it << endl;
+    }
 }
 
 void sm_stats(int num_storers)
