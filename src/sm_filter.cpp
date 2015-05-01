@@ -22,11 +22,6 @@ void filter(int pid, int fid)
 
 void filter_file(int pid, int fid, string file)
 {
-    // std::size_t found = file.find("_N_");
-    // if (found != std::string::npos) {
-    //     return;
-    // }
-
     // Identify read kind from file name.
     sm_read_kind kind = NORMAL_READ;
     std::size_t found = file.find("_C_");
@@ -107,9 +102,9 @@ void filter_sub_parent_normal(int pid, int fid, kseq_t *seq, const char *sub,
             if (ctr >= 4 && cnr == 0) {
                 sprintf(buf, "@%s\n%s\n+\n%s",
                         seq->name.s, seq->seq.s, seq->qual.s);
-                filter_mutex.lock();
-                filter_reads.insert(buf);
-                filter_mutex.unlock();
+                filter_n_mutex.lock();
+                filter_n_reads.insert(buf);
+                filter_n_mutex.unlock();
                 return;
             }
         }
@@ -148,9 +143,9 @@ void filter_sub_parent_cancer(int pid, int fid, kseq_t *seq, const char *sub,
         if (ctr >= 4 && cnr == 0) {
             sprintf(buf, "@%s\n%s\n+\n%s",
                     seq->name.s, seq->seq.s, seq->qual.s);
-            filter_mutex.lock();
-            filter_reads.insert(buf);
-            filter_mutex.unlock();
+            filter_m_mutex.lock();
+            filter_m_reads.insert(buf);
+            filter_m_mutex.unlock();
             return;
         }
 
@@ -177,9 +172,9 @@ void filter_sub_parent_cancer(int pid, int fid, kseq_t *seq, const char *sub,
             if (ctr >= 4 && cnr == 0) {
                 sprintf(buf, "@%s\n%s\n+\n%s",
                         seq->name.s, seq->seq.s, seq->qual.s);
-                filter_mutex.lock();
-                filter_reads.insert(buf);
-                filter_mutex.unlock();
+                filter_n_mutex.lock();
+                filter_n_reads.insert(buf);
+                filter_n_mutex.unlock();
                 return;
             }
         }
@@ -221,9 +216,9 @@ void filter_sub_sibling_normal(int pid, int fid, kseq_t *seq, const char *sub,
             if (ctr >= 4 && cnr == 0) {
                 sprintf(buf, "@%s\n%s\n+\n%s",
                         seq->name.s, seq->seq.s, seq->qual.s);
-                filter_mutex.lock();
-                filter_reads.insert(buf);
-                filter_mutex.unlock();
+                filter_n_mutex.lock();
+                filter_n_reads.insert(buf);
+                filter_n_mutex.unlock();
                 return;
             }
         }
@@ -262,9 +257,9 @@ void filter_sub_sibling_cancer(int pid, int fid, kseq_t *seq, const char *sub,
         if (ctr >= 4 && cnr == 0) {
             sprintf(buf, "@%s\n%s\n+\n%s",
                     seq->name.s, seq->seq.s, seq->qual.s);
-            filter_mutex.lock();
-            filter_reads.insert(buf);
-            filter_mutex.unlock();
+            filter_m_mutex.lock();
+            filter_m_reads.insert(buf);
+            filter_m_mutex.unlock();
             return;
         }
 
@@ -290,9 +285,9 @@ void filter_sub_sibling_cancer(int pid, int fid, kseq_t *seq, const char *sub,
             if (ctr >= 4 && cnr == 0) {
                 sprintf(buf, "@%s\n%s\n+\n%s",
                         seq->name.s, seq->seq.s, seq->qual.s);
-                filter_mutex.lock();
-                filter_reads.insert(buf);
-                filter_mutex.unlock();
+                filter_n_mutex.lock();
+                filter_n_reads.insert(buf);
+                filter_n_mutex.unlock();
                 return;
             }
         }
