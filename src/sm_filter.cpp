@@ -46,9 +46,9 @@ void filter_file(int pid, int fid, string file)
             n = ps - &seq->seq.s[p];
             if (n > 0) {
                 if (kind == CANCER_READ)
-                    filter_sub_parent_cancer(pid, fid, seq, &seq->seq.s[p], n);
+                    filter_sub_sibling_cancer(pid, fid, seq, &seq->seq.s[p], n);
                 else
-                    filter_sub_parent_normal(pid, fid, seq, &seq->seq.s[p], n);
+                    filter_sub_sibling_normal(pid, fid, seq, &seq->seq.s[p], n);
                 p += n;
             }
             p++;
@@ -57,9 +57,9 @@ void filter_file(int pid, int fid, string file)
         n = 80 - p;
         if (n > 0) {
             if (kind == CANCER_READ)
-                filter_sub_parent_cancer(pid, fid, seq, &seq->seq.s[p], n);
+                filter_sub_sibling_cancer(pid, fid, seq, &seq->seq.s[p], n);
             else
-                filter_sub_parent_normal(pid, fid, seq, &seq->seq.s[p], n);
+                filter_sub_sibling_normal(pid, fid, seq, &seq->seq.s[p], n);
         }
     }
 
