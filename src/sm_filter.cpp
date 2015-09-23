@@ -24,7 +24,7 @@ void filter_file(int pid, int fid, string file)
 {
     // Identify read kind from file name.
     sm_read_kind kind = NORMAL_READ;
-    std::size_t found = file.find("_C_");
+    std::size_t found = file.find("_T_");
     if (found != std::string::npos) {
         kind = CANCER_READ;
     }
