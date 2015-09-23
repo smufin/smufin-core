@@ -21,7 +21,10 @@
 #define MAP_LEN 4
 #define MAP_FILE_LEN 256 // (BASE_LEN ^ MAP_LEN)
 
+#ifndef KMER_LEN
 #define KMER_LEN 30
+#endif
+
 #define ZBUF_LEN 2592
 #define BULK_LEN 128
 #define QMSG_LEN 512

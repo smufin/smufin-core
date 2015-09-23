@@ -1,5 +1,7 @@
 BINARIES = bin/sm-standalone
 
+KMER_LEN ?= 30
+
 SOURCES = src/sm_*.cpp
 
 GSH_INCLUDE = $(HOME)/opt/sparsehash/include
@@ -14,7 +16,7 @@ RWQ_INCLUDE = $(HOME)/src/readerwriterqueue
 FF_INCLUDE  = $(HOME)/src/folly
 
 # CFLAGS = -O2 -std=c++11 -mcpu=power8 -DNDEBUG -DPROFILE
-CFLAGS = -O3 -std=c++11 -mcpu=power8 -DNDEBUG
+CFLAGS = -O3 -std=c++11 -mcpu=power8 -DNDEBUG -DKMER_LEN=$(KMER_LEN)
 
 all: $(BINARIES)
 
