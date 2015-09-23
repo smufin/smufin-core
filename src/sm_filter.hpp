@@ -22,4 +22,10 @@ void filter_sub_sibling_normal(int pid, int fid, kseq_t *seq, const char *sub,
 void filter_sub_sibling_cancer(int pid, int fid, kseq_t *seq, const char *sub,
                                int len);
 
+// First/Last-based matching
+void filter_sub_fstlst_normal(int pid, int fid, kseq_t *seq, const char *sub,
+                              int len);
+void filter_sub_fstlst_cancer(int pid, int fid, kseq_t *seq, const char *sub,
+                              int len);
+
 #endif
