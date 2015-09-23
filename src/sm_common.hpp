@@ -8,7 +8,7 @@
 #include <unordered_set>
 #include <concurrentqueue.h>
 #include <boost/atomic.hpp>
-#include <sparsehash/sparse_hash_map>
+#include <google/sparse_hash_map>
 #include <folly/ProducerConsumerQueue.h>
 
 // Expected number of keys per storer/thread.
