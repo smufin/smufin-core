@@ -1,37 +1,29 @@
-BINARIES = bin/sm-standalone
+# Do NOT edit NOR commit changes to this file for configuration purposes,
+# create your own customized make.conf instead, see make.conf.sample.
+include make.conf
 
-KMER_LEN ?= 30
+KMER_LEN  ?= 30
 
+GSH_INC   ?= /usr/include
+GPT_INC   ?= /usr/include
+GPT_LIB   ?= /usr/lib
+BOOST_INC ?= /usr/include/boost
+BOOST_LIB ?= /usr/lib
+MCQ_INC   ?= $(HOME)/src/concurrentqueue
+FOLLY_INC ?= $(HOME)/src/folly
+
+BINARY = bin/sm-standalone
 SOURCES = src/sm_*.cpp
 
-GSH_INCLUDE = $(HOME)/opt/sparsehash/include
-GPT_INCLUDE = $(HOME)/opt/gperftools/include
-GPT_LIB     = $(HOME)/opt/gperftools/lib
+CFLAGS = $(FLAGS) -std=c++11 -DKMER_LEN=$(KMER_LEN)
 
-BOOST_INCLUDE = $(HOME)/src/boost/boost_1_57_0
-BOOST_LIB     = $(HOME)/src/boost/boost_1_57_0/stage/lib
+all: $(BINARY)
 
-CQ_INCLUDE  = $(HOME)/src/concurrentqueue
-RWQ_INCLUDE = $(HOME)/src/readerwriterqueue
-FF_INCLUDE  = $(HOME)/src/folly
-
-# CFLAGS = -O2 -std=c++11 -mcpu=power8 -DNDEBUG -DPROFILE
-CFLAGS = -O3 -std=c++11 -mcpu=power8 -DNDEBUG -DKMER_LEN=$(KMER_LEN)
-
-all: $(BINARIES)
-
-bin/sm-standalone: $(SOURCES)
-	g++ $(CFLAGS) -Isrc -I$(GSH_INCLUDE) -I$(GPT_INCLUDE) -L$(GPT_LIB) \
-		-I$(BOOST_INCLUDE) -L$(BOOST_LIB) -I$(CQ_INCLUDE) -I$(FF_INCLUDE)\
-		-o bin/sm-standalone $(SOURCES) \
+$(BINARY): $(SOURCES)
+	g++ $(CFLAGS) -Isrc -I$(GSH_INC) -I$(GPT_INC) -L$(GPT_LIB) \
+		-I$(BOOST_INC) -L$(BOOST_LIB) -I$(MCQ_INC) -I$(FOLLY_INC) \
+		-o $(BINARY) $(SOURCES) \
 		-lprofiler -lz -lpthread
 
-INPUT = var/input-chr22
-MAP = var/map-4char-2proc-16srvs
-
-launch: bin/sm-standalone
-	@seq 0 1 | xargs -P 2 -n 1 -I ID bash -c \
-		'/usr/bin/time -o ID.time ./bin/sm-standalone -i $(INPUT) -m $(MAP) -p ID > ID.out'
-
 clean:
-	rm -f $(BINARIES)
+	rm -f $(BINARY)

@@ -1,0 +1,25 @@
+# Sample make.conf file to be configured depending on the environment in which
+# SMUFIN is executed.
+
+# Length of kmers; should be equal or smaller than 32.
+KMER_LEN ?= 30
+
+# Google sparsehash and perftools: paths to headers/libraries.
+GSH_INC = /usr/include
+GPT_INC = /usr/include
+GPT_LIB = /usr/lib
+
+# Boost: paths to headers/libraries.
+BOOST_INC = /usr/include/boost
+BOOST_LIB = /usr/lib
+
+# Additional headers:
+# - moodycamel's ConcurrentQueue
+# - Folly's ConsumerProducerQueue
+MCQ_INC   = $(HOME)/src/concurrentqueue
+FOLLY_INC = $(HOME)/src/folly
+
+# Compilation flags.
+FLAGS = -O2
+# FLAGS = -O3 -march=core-avx2 -DNDEBUG
+# FLAGS = -O3 -mcpu=power8 -DNDEBUG -DPROFILE
