@@ -46,9 +46,9 @@ void filter_file(int pid, int fid, string file)
             n = ps - &seq->seq.s[p];
             if (n > 0) {
                 if (kind == CANCER_READ)
-                    filter_sub_fstlst_cancer(pid, fid, seq, &seq->seq.s[p], n);
+                    filter_cancer(pid, fid, seq, &seq->seq.s[p], n);
                 else
-                    filter_sub_fstlst_normal(pid, fid, seq, &seq->seq.s[p], n);
+                    filter_normal(pid, fid, seq, &seq->seq.s[p], n);
                 p += n;
             }
             p++;
@@ -57,9 +57,9 @@ void filter_file(int pid, int fid, string file)
         n = 80 - p;
         if (n > 0) {
             if (kind == CANCER_READ)
-                filter_sub_fstlst_cancer(pid, fid, seq, &seq->seq.s[p], n);
+                filter_cancer(pid, fid, seq, &seq->seq.s[p], n);
             else
-                filter_sub_fstlst_normal(pid, fid, seq, &seq->seq.s[p], n);
+                filter_normal(pid, fid, seq, &seq->seq.s[p], n);
         }
     }
 
@@ -67,235 +67,7 @@ void filter_file(int pid, int fid, string file)
     gzclose(in);
 }
 
-void filter_sub_parent_normal(int pid, int fid, kseq_t *seq, const char *sub,
-                              int len)
-{
-    if (len < KMER_LEN)
-        return;
-
-    const char vars[] = "ACGT";
-
-    char kmer[KMER_LEN + 2];
-    for (int i = 0; i <= len - KMER_LEN; i++) {
-        strncpy(kmer, &sub[i], KMER_LEN);
-        kmer[KMER_LEN + 1] = '\0';
-
-        for (int j = 0; j < 4; j++) {
-            kmer[KMER_LEN] = vars[j];
-
-            uint32_t m = 0;
-            memcpy(&m, &kmer[1], MAP_LEN);
-            hash_4c_map(m);
-
-            if (map_l1[m] != pid)
-                continue;
-            int sid = map_l2[m];
-            sm_key key = strtob4(kmer);
-
-            sm_table::const_iterator it = tables[sid].find(key);
-            if (it == tables[sid].end())
-                continue;
-
-            uint32_t cnr = it->second.first;
-            uint32_t ctr = it->second.second;
-            char buf[256] = {0};
-            if (ctr >= 4 && cnr == 0) {
-                sprintf(buf, "@%s\n%s\n+\n%s",
-                        seq->name.s, seq->seq.s, seq->qual.s);
-                filter_nn_mutex.lock();
-                filter_nn_reads.insert(buf);
-                filter_nn_mutex.unlock();
-                return;
-            }
-        }
-    }
-}
-
-void filter_sub_parent_cancer(int pid, int fid, kseq_t *seq, const char *sub,
-                              int len)
-{
-    if (len < KMER_LEN)
-        return;
-
-    const char vars[] = "ACGT";
-
-    char kmer[KMER_LEN + 2];
-    for (int i = 0; i <= len - KMER_LEN; i++) {
-        strncpy(kmer, &sub[i], KMER_LEN);
-        kmer[KMER_LEN] = '\0';
-
-        uint32_t m = 0;
-        memcpy(&m, &kmer[0], MAP_LEN);
-        hash_4c_map(m);
-
-        if (map_l1[m] != pid)
-            continue;
-        int sid = map_l2[m];
-        sm_key key = strtob4(kmer);
-
-        sm_table::const_iterator it = tables[sid].find(key);
-        if (it == tables[sid].end())
-            continue;
-
-        uint32_t cnr = it->second.first;
-        uint32_t ctr = it->second.second;
-        char buf[256] = {0};
-        if (ctr >= 4 && cnr == 0) {
-            sprintf(buf, "@%s\n%s\n+\n%s",
-                    seq->name.s, seq->seq.s, seq->qual.s);
-            filter_tm_mutex.lock();
-            filter_tm_reads.insert(buf);
-            filter_tm_mutex.unlock();
-            return;
-        }
-
-        kmer[KMER_LEN + 1] = '\0';
-        for (int j = 0; j < 4; j++) {
-            kmer[KMER_LEN] = vars[j];
-
-            uint32_t m = 0;
-            memcpy(&m, &kmer[1], MAP_LEN);
-            hash_4c_map(m);
-
-            if (map_l1[m] != pid)
-                continue;
-            int sid = map_l2[m];
-            sm_key key = strtob4(kmer);
-
-            sm_table::const_iterator it = tables[sid].find(key);
-            if (it == tables[sid].end())
-                continue;
-
-            uint32_t cnr = it->second.first;
-            uint32_t ctr = it->second.second;
-            char buf[256] = {0};
-            if (ctr >= 4 && cnr == 0) {
-                sprintf(buf, "@%s\n%s\n+\n%s",
-                        seq->name.s, seq->seq.s, seq->qual.s);
-                filter_tn_mutex.lock();
-                filter_tn_reads.insert(buf);
-                filter_tn_mutex.unlock();
-                return;
-            }
-        }
-    }
-}
-
-void filter_sub_sibling_normal(int pid, int fid, kseq_t *seq, const char *sub,
-                               int len)
-{
-    if (len < KMER_LEN)
-        return;
-
-    const char vars[] = "ACGT";
-
-    char kmer[KMER_LEN + 1];
-    for (int i = 0; i <= len - KMER_LEN; i++) {
-        strncpy(kmer, &sub[i], KMER_LEN);
-        kmer[KMER_LEN] = '\0';
-
-        for (int j = 0; j < 4; j++) {
-            kmer[KMER_LEN - 1] = vars[j];
-
-            uint32_t m = 0;
-            memcpy(&m, &kmer[0], MAP_LEN);
-            hash_4c_map(m);
-
-            if (map_l1[m] != pid)
-                continue;
-            int sid = map_l2[m];
-            sm_key key = strtob4(kmer);
-
-            sm_table::const_iterator it = tables[sid].find(key);
-            if (it == tables[sid].end())
-                continue;
-
-            uint32_t cnr = it->second.first;
-            uint32_t ctr = it->second.second;
-            char buf[256] = {0};
-            if (ctr >= 4 && cnr == 0) {
-                sprintf(buf, "@%s\n%s\n+\n%s",
-                        seq->name.s, seq->seq.s, seq->qual.s);
-                filter_nn_mutex.lock();
-                filter_nn_reads.insert(buf);
-                filter_nn_mutex.unlock();
-                return;
-            }
-        }
-    }
-}
-
-void filter_sub_sibling_cancer(int pid, int fid, kseq_t *seq, const char *sub,
-                               int len)
-{
-    if (len < KMER_LEN)
-        return;
-
-    const char vars[] = "ACGT";
-
-    char kmer[KMER_LEN + 1];
-    for (int i = 0; i <= len - KMER_LEN; i++) {
-        strncpy(kmer, &sub[i], KMER_LEN);
-        kmer[KMER_LEN] = '\0';
-
-        uint32_t m = 0;
-        memcpy(&m, &kmer[0], MAP_LEN);
-        hash_4c_map(m);
-
-        if (map_l1[m] != pid)
-            continue;
-        int sid = map_l2[m];
-        sm_key key = strtob4(kmer);
-
-        sm_table::const_iterator it = tables[sid].find(key);
-        if (it == tables[sid].end())
-            continue;
-
-        uint32_t cnr = it->second.first;
-        uint32_t ctr = it->second.second;
-        char buf[256] = {0};
-        if (ctr >= 4 && cnr == 0) {
-            sprintf(buf, "@%s\n%s\n+\n%s",
-                    seq->name.s, seq->seq.s, seq->qual.s);
-            filter_tm_mutex.lock();
-            filter_tm_reads.insert(buf);
-            filter_tm_mutex.unlock();
-            return;
-        }
-
-        for (int j = 0; j < 4; j++) {
-            kmer[KMER_LEN - 1] = vars[j];
-
-            uint32_t m = 0;
-            memcpy(&m, &kmer[0], MAP_LEN);
-            hash_4c_map(m);
-
-            if (map_l1[m] != pid)
-                continue;
-            int sid = map_l2[m];
-            sm_key key = strtob4(kmer);
-
-            sm_table::const_iterator it = tables[sid].find(key);
-            if (it == tables[sid].end())
-                continue;
-
-            uint32_t cnr = it->second.first;
-            uint32_t ctr = it->second.second;
-            char buf[256] = {0};
-            if (ctr >= 4 && cnr == 0) {
-                sprintf(buf, "@%s\n%s\n+\n%s",
-                        seq->name.s, seq->seq.s, seq->qual.s);
-                filter_tn_mutex.lock();
-                filter_tn_reads.insert(buf);
-                filter_tn_mutex.unlock();
-                return;
-            }
-        }
-    }
-}
-
-void filter_sub_fstlst_normal(int pid, int fid, kseq_t *seq, const char *sub,
-                              int len)
+void filter_normal(int pid, int fid, kseq_t *seq, const char *sub, int len)
 {
     if (len < KMER_LEN)
         return;
@@ -358,8 +130,7 @@ void filter_sub_fstlst_normal(int pid, int fid, kseq_t *seq, const char *sub,
     }
 }
 
-void filter_sub_fstlst_cancer(int pid, int fid, kseq_t *seq, const char *sub,
-                              int len)
+void filter_cancer(int pid, int fid, kseq_t *seq, const char *sub, int len)
 {
     if (len < KMER_LEN)
         return;
