@@ -59,14 +59,26 @@ typedef struct {
 // Use ASCII codes to index base 4 values for ACGT. The array is
 // equivalent to the following map, only slightly faster since it avoids
 // hashing, etc.
-// > std::unordered_map<char, char> codes = {
+// > std::unordered_map<char, char> code = {
 // >     { 'A', '0' }, // pos. 65
 // >     { 'C', '1' }, // pos. 67
 // >     { 'G', '2' }, // pos. 71
 // >     { 'T', '3' }, // pos. 84
 // > };
-const char codes[] = "-------------------------------------------"
-                     "----------------------0-1---2------------3";
+const char code[] = "-------------------------------------------"
+                    "----------------------0-1---2------------3";
+
+// ASCII indexed bases to generate complementary strands.
+// Equivalent to the following map:
+// > std::unordered_map<char, char> comp = {
+// >     { 'A', 'T' }, // pos. 65
+// >     { 'C', 'G' }, // pos. 67
+// >     { 'G', 'C' }, // pos. 71
+// >     { 'N', 'N' }, // pos. 78
+// >     { 'T', 'A' }, // pos. 84
+// > };
+const char comp[] = "-------------------------------------------"
+                    "----------------------T-G---C------N-----A";
 
 // SPMC queue to be initialized at startup time with the list of input
 // files to be processed. Idle producer threads will read from the queue
@@ -102,11 +114,7 @@ enum noshort_options {
 };
 
 unsigned long int strtob4(const char *str);
-
-inline char encode(char c)
-{
-    return codes[c];
-}
+void krevcomp(char s[]);
 
 inline int lq_count(char *str)
 {

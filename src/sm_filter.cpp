@@ -175,8 +175,8 @@ void filter_cancer(int pid, int fid, kseq_t *seq, const char *sub, int len)
         }
 
         kmer[KMER_LEN - 1] = last;
-        uint32_t cnr = normal_counts[codes[last] - '0'];
-        uint32_t ctr = tumour_counts[codes[last] - '0'];
+        uint32_t cnr = normal_counts[code[last] - '0'];
+        uint32_t ctr = tumour_counts[code[last] - '0'];
 
         if (ctr >= 4 && cnr == 0) {
             char buf[256] = {0};
