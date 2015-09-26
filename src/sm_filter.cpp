@@ -25,18 +25,16 @@ void filter_file(int pid, int fid, string file)
     // Identify read kind from file name.
     sm_read_kind kind = NORMAL_READ;
     std::size_t found = file.find("_T_");
-    if (found != std::string::npos) {
+    if (found != std::string::npos)
         kind = CANCER_READ;
-    }
 
     int len;
     gzFile in = gzopen(file.c_str(), "rb");
 
     kseq_t *seq = kseq_init(in);
     while ((len = kseq_read(seq)) >= 0) {
-        if (lq_count(seq->qual.s) > 8) {
+        if (lq_count(seq->qual.s) > 8)
             continue;
-        }
 
         int p = 0;
         int n = 80;
@@ -72,61 +70,11 @@ void filter_normal(int pid, int fid, kseq_t *seq, const char *sub, int len)
     if (len < KMER_LEN)
         return;
 
-    const char vars[] = "ACGT";
-
     char kmer[KMER_LEN + 1];
     for (int i = 0; i <= len - KMER_LEN; i++) {
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
-        for (int j = 0; j < 4; j++) {
-            kmer[0] = vars[j];
-
-            uint32_t normal_parent = 0;
-            uint32_t tumour_parent = 0;
-            uint32_t normal_counts[4] = {0};
-            uint32_t tumour_counts[4] = {0};
-
-            for (int k = 0; k < 4; k++) {
-                kmer[KMER_LEN - 1] = vars[k];
-
-                uint32_t m = 0;
-                memcpy(&m, &kmer[0], MAP_LEN);
-                hash_4c_map(m);
-
-                if (map_l1[m] != pid)
-                    continue;
-                int sid = map_l2[m];
-                sm_key key = strtob4(kmer);
-
-                sm_table::const_iterator it = tables[sid].find(key);
-                if (it == tables[sid].end())
-                    continue;
-
-                uint32_t cnr = it->second.first;
-                uint32_t ctr = it->second.second;
-
-                normal_parent += cnr;
-                tumour_parent += ctr;
-                normal_counts[k] = cnr;
-                tumour_counts[k] = ctr;
-            }
-
-            for (int k = 0; k < 4; k++) {
-                kmer[KMER_LEN - 1] = vars[k];
-
-                uint32_t cnr = normal_counts[k];
-                uint32_t ctr = tumour_counts[k];
-
-                if (ctr >= 4 && cnr == 0) {
-                    char buf[256] = {0};
-                    sprintf(buf, "@%s\n%s\n+\n%s",
-                            seq->name.s, seq->seq.s, seq->qual.s);
-                    filter_nn_mutex.lock();
-                    filter_nn_reads.insert(buf);
-                    filter_nn_mutex.unlock();
-                }
-            }
-        }
+        filter_tree(pid, fid, seq, kmer, NN_WAY);
     }
 }
 
@@ -135,110 +83,106 @@ void filter_cancer(int pid, int fid, kseq_t *seq, const char *sub, int len)
     if (len < KMER_LEN)
         return;
 
-    const char vars[] = "ACGT";
-
     char kmer[KMER_LEN + 1];
-
     for (int i = 0; i <= len - KMER_LEN; i++) {
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
 
         char last = kmer[KMER_LEN - 1];
-        uint32_t normal_parent = 0;
-        uint32_t tumour_parent = 0;
-        uint32_t normal_counts[4] = {0};
-        uint32_t tumour_counts[4] = {0};
-
-        for (int k = 0; k < 4; k++) {
-            kmer[KMER_LEN - 1] = vars[k];
-
-            uint32_t m = 0;
-            memcpy(&m, &kmer[0], MAP_LEN);
-            hash_4c_map(m);
-
-            if (map_l1[m] != pid)
-                continue;
-            int sid = map_l2[m];
-            sm_key key = strtob4(kmer);
-
-            sm_table::const_iterator it = tables[sid].find(key);
-            if (it == tables[sid].end())
-                continue;
-
-            uint32_t cnr = it->second.first;
-            uint32_t ctr = it->second.second;
-
-            normal_parent += cnr;
-            tumour_parent += ctr;
-            normal_counts[k] = cnr;
-            tumour_counts[k] = ctr;
-        }
+        uint32_t nsum = 0;
+        uint32_t tsum = 0;
+        uint32_t narr[4] = {0};
+        uint32_t tarr[4] = {0};
+        get_branch(pid, fid, kmer, narr, tarr, &nsum, &tsum);
 
         kmer[KMER_LEN - 1] = last;
-        uint32_t cnr = normal_counts[code[last] - '0'];
-        uint32_t ctr = tumour_counts[code[last] - '0'];
+        uint32_t nc = narr[code[last] - '0'];
+        uint32_t tc = tarr[code[last] - '0'];
+        filter_kmer(seq, kmer, nc, tc, nsum, tsum, TM_WAY);
 
-        if (ctr >= 4 && cnr == 0) {
-            char buf[256] = {0};
-            sprintf(buf, "@%s\n%s\n+\n%s",
-                    seq->name.s, seq->seq.s, seq->qual.s);
-            filter_tm_mutex.lock();
-            filter_tm_reads.insert(buf);
-            filter_tm_mutex.unlock();
-        }
+        filter_tree(pid, fid, seq, kmer, TN_WAY);
     }
+}
 
-    for (int i = 0; i <= len - KMER_LEN; i++) {
-        strncpy(kmer, &sub[i], KMER_LEN);
-        kmer[KMER_LEN] = '\0';
-        for (int j = 0; j < 4; j++) {
-            kmer[0] = vars[j];
+// Doesn't guarantee integrity of kmer's last character.
+void get_branch(int pid, int fid, char kmer[], uint32_t narr[],
+                uint32_t tarr[], uint32_t *nsum, uint32_t *tsum)
+{
+    for (int i = 0; i < 4; i++) {
+        kmer[KMER_LEN - 1] = alpha[i];
 
-            uint32_t normal_parent = 0;
-            uint32_t tumour_parent = 0;
-            uint32_t normal_counts[4] = {0};
-            uint32_t tumour_counts[4] = {0};
+        uint32_t m = 0;
+        memcpy(&m, &kmer[0], MAP_LEN);
+        hash_4c_map(m);
 
-            for (int k = 0; k < 4; k++) {
-                kmer[KMER_LEN - 1] = vars[k];
+        if (map_l1[m] != pid)
+            continue;
+        int sid = map_l2[m];
+        sm_key key = strtob4(kmer);
 
-                uint32_t m = 0;
-                memcpy(&m, &kmer[0], MAP_LEN);
-                hash_4c_map(m);
+        sm_table::const_iterator it = tables[sid].find(key);
+        if (it == tables[sid].end())
+            continue;
 
-                if (map_l1[m] != pid)
-                    continue;
-                int sid = map_l2[m];
-                sm_key key = strtob4(kmer);
+        uint32_t nc = it->second.first;
+        uint32_t tc = it->second.second;
 
-                sm_table::const_iterator it = tables[sid].find(key);
-                if (it == tables[sid].end())
-                    continue;
+        *nsum += nc;
+        *tsum += tc;
+        narr[i] = nc;
+        tarr[i] = tc;
+    }
+}
 
-                uint32_t cnr = it->second.first;
-                uint32_t ctr = it->second.second;
+void filter_tree(int pid, int fid, kseq_t *seq, char kmer[], sm_way way)
+{
+    for (int i = 0; i < 4; i++) {
+        kmer[0] = alpha[i];
+        uint32_t nsum = 0;
+        uint32_t tsum = 0;
+        uint32_t narr[4] = {0};
+        uint32_t tarr[4] = {0};
+        get_branch(pid, fid, kmer, narr, tarr, &nsum, &tsum);
+        filter_branch(seq, kmer, narr, tarr, nsum, tsum, way);
+    }
+}
 
-                normal_counts[k] = cnr;
-                tumour_counts[k] = ctr;
-                normal_parent += cnr;
-                tumour_parent += ctr;
-            }
+void filter_branch(kseq_t *seq, char kmer[], uint32_t narr[],
+                   uint32_t tarr[], uint32_t nsum, uint32_t tsum,
+                   sm_way way)
+{
+    for (int i = 0; i < 4; i++) {
+        kmer[KMER_LEN - 1] = alpha[i];
+        filter_kmer(seq, kmer, narr[i], tarr[i], nsum, tsum, way);
+    }
+}
 
-            for (int k = 0; k < 4; k++) {
-                kmer[KMER_LEN - 1] = vars[k];
+void filter_kmer(kseq_t *seq, char kmer[], uint32_t nc, uint32_t tc,
+                 uint32_t nsum, uint32_t tsum, sm_way way)
+{
+    if (tc >= 4 && nc == 0) {
+        std::unordered_set<std::string> *reads;
+        std::mutex *mutex;
 
-                uint32_t cnr = normal_counts[k];
-                uint32_t ctr = tumour_counts[k];
-
-                if (ctr >= 4 && cnr == 0) {
-                    char buf[256] = {0};
-                    sprintf(buf, "@%s\n%s\n+\n%s",
-                            seq->name.s, seq->seq.s, seq->qual.s);
-                    filter_tn_mutex.lock();
-                    filter_tn_reads.insert(buf);
-                    filter_tn_mutex.unlock();
-                }
-            }
+        switch (way) {
+            case NN_WAY:
+                mutex = &filter_nn_mutex;
+                reads = &filter_nn_reads;
+                break;
+            case TN_WAY:
+                mutex = &filter_tn_mutex;
+                reads = &filter_tn_reads;
+                break;
+            case TM_WAY:
+                mutex = &filter_tm_mutex;
+                reads = &filter_tm_reads;
+                break;
         }
+
+        char buf[256] = {0};
+        sprintf(buf, "@%s\n%s\n+\n%s", seq->name.s, seq->seq.s, seq->qual.s);
+        mutex->lock();
+        reads->insert(buf);
+        mutex->unlock();
     }
 }
