@@ -143,17 +143,10 @@ void filter_tree(int pid, int fid, kseq_t *seq, char kmer[], sm_way way)
         uint32_t narr[4] = {0};
         uint32_t tarr[4] = {0};
         get_branch(pid, fid, kmer, narr, tarr, &nsum, &tsum);
-        filter_branch(seq, kmer, narr, tarr, nsum, tsum, way);
-    }
-}
-
-void filter_branch(kseq_t *seq, char kmer[], uint32_t narr[],
-                   uint32_t tarr[], uint32_t nsum, uint32_t tsum,
-                   sm_way way)
-{
-    for (int i = 0; i < 4; i++) {
-        kmer[KMER_LEN - 1] = alpha[i];
-        filter_kmer(seq, kmer, narr[i], tarr[i], nsum, tsum, way);
+        for (int j = 0; j < 4; j++) {
+            kmer[KMER_LEN - 1] = alpha[j];
+            filter_kmer(seq, kmer, narr[j], tarr[j], nsum, tsum, way);
+        }
     }
 }
 
