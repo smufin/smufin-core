@@ -24,7 +24,7 @@ boost::atomic<bool> process_done(false);
 int map_l1[MAP_FILE_LEN] = {0};
 int map_l2[MAP_FILE_LEN] = {0};
 sm_table tables[NUM_STORERS];
-folly::ProducerConsumerQueue<sm_bulk>* queues[NUM_STORERS][MAX_NUM_LOADERS];
+folly::ProducerConsumerQueue<sm_bulk>* queues[NUM_STORERS][MAX_LOADERS];
 std::unordered_set<string> filter_nn_reads;
 std::unordered_set<string> filter_tn_reads;
 std::unordered_set<string> filter_tm_reads;
@@ -82,8 +82,8 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    if (num_loaders > MAX_NUM_LOADERS) {
-        cout << "Number of loaders larger than MAX_NUM_LOADERS" << endl;
+    if (num_loaders > MAX_LOADERS) {
+        cout << "Number of loaders larger than MAX_LOADERS" << endl;
         exit(1);
     }
 
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
     // Initialize tables and message queues.
     for (int i = 0; i < NUM_STORERS; i++) {
         tables[i].resize(TABLE_LEN);
-        for (int j = 0; j < MAX_NUM_LOADERS; j++) {
+        for (int j = 0; j < MAX_LOADERS; j++) {
             queues[i][j] = new folly::ProducerConsumerQueue<sm_bulk>(QMSG_LEN);
         }
     }

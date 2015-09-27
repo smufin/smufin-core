@@ -15,7 +15,7 @@
 #define TABLE_LEN 250000000
 
 #define NUM_STORERS 16
-#define MAX_NUM_LOADERS 16
+#define MAX_LOADERS 16
 
 #define BASE_LEN 4
 #define MAP_LEN 4
@@ -100,7 +100,7 @@ extern sm_table tables[NUM_STORERS];
 
 // Message queues between loader threads and storer threads. One SPSC queue
 // per loader/storer pair.
-extern folly::ProducerConsumerQueue<sm_bulk>* queues[NUM_STORERS][MAX_NUM_LOADERS];
+extern folly::ProducerConsumerQueue<sm_bulk>* queues[NUM_STORERS][MAX_LOADERS];
 
 extern std::unordered_set<std::string> filter_nn_reads;
 extern std::unordered_set<std::string> filter_tn_reads;
