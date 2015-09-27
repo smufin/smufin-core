@@ -113,18 +113,8 @@ enum noshort_options {
     O_DISABLE_FILTER, O_DISABLE_STATS
 };
 
-unsigned long int strtob4(const char *str);
+uint64_t strtob4(const char *str);
+int lq_count(const char *str);
 void krevcomp(char s[]);
-
-inline int lq_count(char *str)
-{
-    int lq = 0;
-    for (int i = 0; i < 80; i++) {
-        int phred = str[i] - 33;
-        if (phred < 20)
-            lq++;
-    }
-    return lq;
-}
 
 #endif
