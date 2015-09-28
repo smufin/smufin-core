@@ -18,8 +18,8 @@ void filter_cancer(int pid, int fid, kseq_t *seq, const char *sub, int len);
 inline void get_branch(int pid, int fid, char kmer[], uint32_t narr[],
                        uint32_t tarr[], uint32_t *nsum, uint32_t *tsum);
 
-inline void filter_tree(int pid, int fid, kseq_t *seq, char kmer[], sm_way way);
+inline void filter_tree(int pid, int fid, kseq_t *seq, char kmer[], sm_set set);
 inline void filter_kmer(kseq_t *seq, char kmer[], uint32_t nc, uint32_t tc,
-                        uint32_t nsum, uint32_t tsum, sm_way way);
+                        uint32_t nsum, uint32_t tsum, sm_set set);
 
 #endif

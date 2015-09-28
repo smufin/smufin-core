@@ -74,12 +74,12 @@ void filter_normal(int pid, int fid, kseq_t *seq, const char *sub, int len)
     for (int i = 0; i <= len - KMER_LEN; i++) {
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
-        filter_tree(pid, fid, seq, kmer, NN_WAY);
+        filter_tree(pid, fid, seq, kmer, NN_P);
 
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
         krevcomp(kmer);
-        filter_tree(pid, fid, seq, kmer, NN_REV);
+        filter_tree(pid, fid, seq, kmer, NN_M);
     }
 }
 
@@ -103,14 +103,14 @@ void filter_cancer(int pid, int fid, kseq_t *seq, const char *sub, int len)
         kmer[KMER_LEN - 1] = last;
         uint32_t nc = narr[code[last] - '0'];
         uint32_t tc = tarr[code[last] - '0'];
-        filter_kmer(seq, kmer, nc, tc, nsum, tsum, TM_WAY);
+        filter_kmer(seq, kmer, nc, tc, nsum, tsum, TM_P);
 
-        filter_tree(pid, fid, seq, kmer, TN_WAY);
+        filter_tree(pid, fid, seq, kmer, TN_P);
 
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
         krevcomp(kmer);
-        filter_tree(pid, fid, seq, kmer, TN_REV);
+        filter_tree(pid, fid, seq, kmer, TN_M);
     }
 }
 
@@ -144,7 +144,7 @@ void get_branch(int pid, int fid, char kmer[], uint32_t narr[],
     }
 }
 
-void filter_tree(int pid, int fid, kseq_t *seq, char kmer[], sm_way way)
+void filter_tree(int pid, int fid, kseq_t *seq, char kmer[], sm_set set)
 {
     for (int i = 0; i < 4; i++) {
         kmer[0] = alpha[i];
@@ -155,19 +155,19 @@ void filter_tree(int pid, int fid, kseq_t *seq, char kmer[], sm_way way)
         get_branch(pid, fid, kmer, narr, tarr, &nsum, &tsum);
         for (int j = 0; j < 4; j++) {
             kmer[KMER_LEN - 1] = alpha[j];
-            filter_kmer(seq, kmer, narr[j], tarr[j], nsum, tsum, way);
+            filter_kmer(seq, kmer, narr[j], tarr[j], nsum, tsum, set);
         }
     }
 }
 
 void filter_kmer(kseq_t *seq, char kmer[], uint32_t nc, uint32_t tc,
-                 uint32_t nsum, uint32_t tsum, sm_way way)
+                 uint32_t nsum, uint32_t tsum, sm_set set)
 {
     if (tc >= 4 && nc == 0) {
         char buf[256] = {0};
         sprintf(buf, "@%s\n%s\n+\n%s", seq->name.s, seq->seq.s, seq->qual.s);
-        filter_mutex[way].lock();
-        filter_reads[way].insert(buf);
-        filter_mutex[way].unlock();
+        filter_mutex[set].lock();
+        filter_reads[set].insert(buf);
+        filter_mutex[set].unlock();
     }
 }

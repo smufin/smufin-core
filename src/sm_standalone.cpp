@@ -25,8 +25,8 @@ int map_l1[MAP_FILE_LEN] = {0};
 int map_l2[MAP_FILE_LEN] = {0};
 sm_table tables[NUM_STORERS];
 folly::ProducerConsumerQueue<sm_bulk>* queues[NUM_STORERS][MAX_LOADERS];
-std::unordered_set<std::string> filter_reads[NUM_WAYS];
-std::mutex filter_mutex[NUM_WAYS];
+std::unordered_set<std::string> filter_reads[NUM_SETS];
+std::mutex filter_mutex[NUM_SETS];
 
 int main(int argc, char *argv[])
 {
@@ -199,11 +199,11 @@ void sm_filter(int pid, int num_filters)
 
     end = std::chrono::system_clock::now();
     time = end - start;
-    cout << "Filtered reads (NN+-): " << filter_reads[NN_WAY].size() << endl;
-    cout << "Filtered reads (TN+-): " << filter_reads[TN_WAY].size() << endl;
-    cout << "Filtered reads (TM+-): " << filter_reads[TM_WAY].size() << endl;
-    cout << "Filtered reads (NN--): " << filter_reads[NN_REV].size() << endl;
-    cout << "Filtered reads (TN--): " << filter_reads[TN_REV].size() << endl;
+    cout << "Filtered reads (NN++): " << filter_reads[NN_P].size() << endl;
+    cout << "Filtered reads (TN++): " << filter_reads[TN_P].size() << endl;
+    cout << "Filtered reads (TM++): " << filter_reads[TM_P].size() << endl;
+    cout << "Filtered reads (NN+-): " << filter_reads[NN_M].size() << endl;
+    cout << "Filtered reads (TN+-): " << filter_reads[TN_M].size() << endl;
     cout << "Filter time: " << time.count() << endl;
 
 #ifdef PROFILE
@@ -213,21 +213,21 @@ void sm_filter(int pid, int num_filters)
     std::ofstream ofs;
     ofs.open("filtered-nn.fastq");
     for (std::unordered_set<string>::const_iterator it =
-         filter_reads[NN_WAY].begin(); it != filter_reads[NN_WAY].end(); ++it) {
+         filter_reads[NN_P].begin(); it != filter_reads[NN_P].end(); ++it) {
         ofs << *it << endl;
     }
     ofs.close();
 
     ofs.open("filtered-tn.fastq");
     for (std::unordered_set<string>::const_iterator it =
-         filter_reads[TN_WAY].begin(); it != filter_reads[TN_WAY].end(); ++it) {
+         filter_reads[TN_P].begin(); it != filter_reads[TN_P].end(); ++it) {
         ofs << *it << endl;
     }
     ofs.close();
 
     ofs.open("filtered-tm.fastq");
     for (std::unordered_set<string>::const_iterator it =
-         filter_reads[TM_WAY].begin(); it != filter_reads[TM_WAY].end(); ++it) {
+         filter_reads[TM_P].begin(); it != filter_reads[TM_P].end(); ++it) {
         ofs << *it << endl;
     }
     ofs.close();

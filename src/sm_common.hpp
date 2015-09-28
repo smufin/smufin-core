@@ -102,13 +102,17 @@ extern sm_table tables[NUM_STORERS];
 // per loader/storer pair.
 extern folly::ProducerConsumerQueue<sm_bulk>* queues[NUM_STORERS][MAX_LOADERS];
 
-#define NUM_WAYS 5
-enum sm_way {
-    NN_WAY, TN_WAY, TM_WAY, NN_REV, TN_REV
+#define NUM_SETS 5
+enum sm_set {
+    NN_P, // NN_P: Normal Non-mutated reads, Plus strand.
+    NN_M, // NN_U: Normal Non-mutated reads, Minus strand.
+    TM_P, // TM_P: Tumor Mutated reads, Plus strand.
+    TN_P, // TN_P: Tumor Non-mutated reads, Plus strand.
+    TN_M  // TN_U: Tumor Non-mutated reads, Minus strand.
 };
 
-extern std::unordered_set<std::string> filter_reads[NUM_WAYS];
-extern std::mutex filter_mutex[NUM_WAYS];
+extern std::unordered_set<std::string> filter_reads[NUM_SETS];
+extern std::mutex filter_mutex[NUM_SETS];
 
 enum noshort_options {
     O_DISABLE_FILTER, O_DISABLE_STATS
