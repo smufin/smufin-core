@@ -75,6 +75,11 @@ void filter_normal(int pid, int fid, kseq_t *seq, const char *sub, int len)
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
         filter_tree(pid, fid, seq, kmer, NN_WAY);
+
+        strncpy(kmer, &sub[i], KMER_LEN);
+        kmer[KMER_LEN] = '\0';
+        krevcomp(kmer);
+        filter_tree(pid, fid, seq, kmer, NN_REV);
     }
 }
 
@@ -101,6 +106,11 @@ void filter_cancer(int pid, int fid, kseq_t *seq, const char *sub, int len)
         filter_kmer(seq, kmer, nc, tc, nsum, tsum, TM_WAY);
 
         filter_tree(pid, fid, seq, kmer, TN_WAY);
+
+        strncpy(kmer, &sub[i], KMER_LEN);
+        kmer[KMER_LEN] = '\0';
+        krevcomp(kmer);
+        filter_tree(pid, fid, seq, kmer, TN_REV);
     }
 }
 
