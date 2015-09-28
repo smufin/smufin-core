@@ -154,28 +154,10 @@ void filter_kmer(kseq_t *seq, char kmer[], uint32_t nc, uint32_t tc,
                  uint32_t nsum, uint32_t tsum, sm_way way)
 {
     if (tc >= 4 && nc == 0) {
-        std::unordered_set<std::string> *reads;
-        std::mutex *mutex;
-
-        switch (way) {
-            case NN_WAY:
-                mutex = &filter_nn_mutex;
-                reads = &filter_nn_reads;
-                break;
-            case TN_WAY:
-                mutex = &filter_tn_mutex;
-                reads = &filter_tn_reads;
-                break;
-            case TM_WAY:
-                mutex = &filter_tm_mutex;
-                reads = &filter_tm_reads;
-                break;
-        }
-
         char buf[256] = {0};
         sprintf(buf, "@%s\n%s\n+\n%s", seq->name.s, seq->seq.s, seq->qual.s);
-        mutex->lock();
-        reads->insert(buf);
-        mutex->unlock();
+        filter_mutex[way].lock();
+        filter_reads[way].insert(buf);
+        filter_mutex[way].unlock();
     }
 }

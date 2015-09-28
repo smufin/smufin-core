@@ -9,10 +9,6 @@ KSEQ_INIT(gzFile, gzread);
 
 const char alpha[] = "ACGT";
 
-enum sm_way {
-    NN_WAY, TN_WAY, TM_WAY
-};
-
 void filter(int pid, int fid);
 void filter_file(int pid, int fid, std::string file);
 
