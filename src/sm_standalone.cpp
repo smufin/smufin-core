@@ -248,12 +248,20 @@ void sm_stats(int num_storers)
         uint64_t part_unique = 0;
         for (sm_table::const_iterator it = tables[i].begin();
              it != tables[i].end(); ++it) {
-            uint64_t count = it->second.first + it->second.second;
-            uint64_t bin = 1;
-            bin = int(log2(count));
-            hist[bin]++;
-            part = part + count;
-            part_unique++;
+            for (int f = 0; f < 4; f++) {
+                for (int l = 0; l < 4; l++) {
+                    uint64_t nc = it->second.v[f][l][NORMAL_READ];
+                    uint64_t tc = it->second.v[f][l][CANCER_READ];
+                    uint64_t count = nc + tc;
+                    if (count == 0)
+                        continue;
+                    uint64_t bin = 1;
+                    bin = int(log2(count));
+                    hist[bin]++;
+                    part = part + count;
+                    part_unique++;
+                }
+            }
         }
         cout << KMER_LEN << "-mers (part-t-" << i << "): " << part << endl;
         cout << KMER_LEN << "-mers (part-u-" << i << "): " << part_unique << endl;

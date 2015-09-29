@@ -92,21 +92,28 @@ inline void process_load_sub(int pid, int lid, const char* sub, int len,
     if (len < KMER_LEN)
         return;
 
-    char kmer[KMER_LEN + 1];
+    char imer[IMER_LEN + 1];
     for (int i = 0; i <= len - KMER_LEN; i++) {
-        strncpy(kmer, &sub[i], KMER_LEN);
-        kmer[KMER_LEN] = '\0';
+        strncpy(imer, &sub[i + 1], IMER_LEN);
+        imer[IMER_LEN] = '\0';
 
         uint32_t m = 0;
-        memcpy(&m, kmer, MAP_LEN);
+        memcpy(&m, imer, MAP_LEN);
         hash_4c_map(m);
 
         if (map_l1[m] != pid)
             continue;
         int sid = map_l2[m];
-        sm_key key = strtob4(kmer);
+        sm_key key = strtob4(imer);
 
-        bulks[sid].array[bulks[sid].num] = sm_msg(key, kind);
+        sm_value_offset off;
+        off.first = code[sub[i]] - '0';
+        off.last = code[sub[i + KMER_LEN - 1]] - '0';
+        off.kind = kind;
+
+        // cout << "P: " << &imer[0] << " " << key << endl;
+
+        bulks[sid].array[bulks[sid].num] = sm_msg(key, off);
         bulks[sid].num++;
 
         if (bulks[sid].num == BULK_LEN) {
@@ -146,10 +153,7 @@ void process_incr(int sid, int num_loaders)
     }
 }
 
-inline void process_incr_key(int sid, sm_key key, sm_read_kind kind)
+inline void process_incr_key(int sid, sm_key key, sm_value_offset off)
 {
-    if (kind == NORMAL_READ)
-        tables[sid][key].first++;
-    else
-        tables[sid][key].second++;
+    tables[sid][key].v[off.first][off.last][off.kind]++;
 }

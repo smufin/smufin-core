@@ -25,6 +25,8 @@
 #define KMER_LEN 30
 #endif
 
+#define IMER_LEN (KMER_LEN - 2)
+
 #define ZBUF_LEN 2592
 #define BULK_LEN 128
 #define QMSG_LEN 512
@@ -43,14 +45,25 @@
         (h) = ((h) & 0xFF) + ((h) >> 4); })
 
 typedef uint64_t sm_key;
-typedef std::pair<uint32_t, uint32_t> sm_value;
+
+typedef struct sm_value {
+    uint32_t v[4][4][2] = {{{0}}};
+} sm_value;
+
 typedef google::sparse_hash_map<sm_key, sm_value, sm_hasher<sm_key>> sm_table;
 
-enum sm_read_kind {
+enum sm_read_kind : uint8_t {
     NORMAL_READ, CANCER_READ
 };
 
-typedef std::pair<sm_key, sm_read_kind> sm_msg;
+typedef struct {
+    uint8_t first;
+    uint8_t last;
+    sm_read_kind kind;
+} sm_value_offset;
+
+typedef std::pair<sm_key, sm_value_offset> sm_msg;
+
 typedef struct {
     uint16_t num = 0;
     sm_msg array[BULK_LEN];
