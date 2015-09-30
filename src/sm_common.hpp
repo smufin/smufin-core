@@ -122,13 +122,11 @@ extern sm_cache caches[NUM_STORERS];
 // per loader/storer pair.
 extern folly::ProducerConsumerQueue<sm_bulk>* queues[NUM_STORERS][MAX_LOADERS];
 
-#define NUM_SETS 5
+#define NUM_SETS 3
 enum sm_set {
-    NN_P, // NN_P: Normal Non-mutated reads, Plus strand.
-    NN_M, // NN_U: Normal Non-mutated reads, Minus strand.
-    TM_P, // TM_P: Tumor Mutated reads, Plus strand.
-    TN_P, // TN_P: Tumor Non-mutated reads, Plus strand.
-    TN_M  // TN_U: Tumor Non-mutated reads, Minus strand.
+    NN, // Normal Non-mutated reads.
+    TM, // Tumor Mutated reads.
+    TN, // Tumor Non-mutated reads.
 };
 
 extern std::unordered_set<std::string> filter_reads[NUM_SETS];

@@ -75,12 +75,12 @@ void filter_normal(int pid, int fid, kseq_t *seq, const char *sub, int len)
     for (int i = 0; i <= len - KMER_LEN; i++) {
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
-        filter_all(pid, fid, seq, kmer, NN_P);
+        filter_all(pid, fid, seq, kmer, NN);
 
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
         krevcomp(kmer);
-        filter_all(pid, fid, seq, kmer, NN_M);
+        filter_all(pid, fid, seq, kmer, NN);
     }
 }
 
@@ -93,13 +93,13 @@ void filter_cancer(int pid, int fid, kseq_t *seq, const char *sub, int len)
     for (int i = 0; i <= len - KMER_LEN; i++) {
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
-        filter_branch(pid, fid, seq, kmer, TM_P);
-        filter_all(pid, fid, seq, kmer, TN_P);
+        filter_branch(pid, fid, seq, kmer, TM);
+        filter_all(pid, fid, seq, kmer, TN);
 
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
         krevcomp(kmer);
-        filter_all(pid, fid, seq, kmer, TN_M);
+        filter_all(pid, fid, seq, kmer, TN);
     }
 }
 
