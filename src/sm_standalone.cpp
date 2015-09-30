@@ -27,8 +27,10 @@ int map_l2[MAP_FILE_LEN] = {0};
 sm_table tables[NUM_STORERS];
 sm_cache caches[NUM_STORERS];
 folly::ProducerConsumerQueue<sm_bulk>* queues[NUM_STORERS][MAX_LOADERS];
-std::unordered_set<std::string> filter_reads[NUM_SETS];
 std::mutex filter_mutex[NUM_SETS];
+std::unordered_set<string> filter_reads[NUM_SETS];
+std::unordered_map<string, std::pair<std::vector<uint8_t>, std::vector<uint8_t>>> filter_i2p[NUM_SETS];
+std::unordered_map<string, std::unordered_set<string>> filter_k2i[NUM_SETS];
 
 int main(int argc, char *argv[])
 {
@@ -213,26 +215,46 @@ void sm_filter(int pid, int num_filters)
 #endif
 
     std::ofstream ofs;
-    ofs.open("filtered-nn.fastq");
-    for (std::unordered_set<string>::const_iterator it =
-         filter_reads[NN].begin(); it != filter_reads[NN].end(); ++it) {
-        ofs << *it << endl;
-    }
-    ofs.close();
+    std::vector<string> set_names = {"nn", "tm", "tn"};
 
-    ofs.open("filtered-tn.fastq");
-    for (std::unordered_set<string>::const_iterator it =
-         filter_reads[TN].begin(); it != filter_reads[TN].end(); ++it) {
-        ofs << *it << endl;
+    for (int i = 0; i < NUM_SETS; i++) {
+        ofs.open("filter-" + set_names[i] + ".fastq");
+        for (std::unordered_set<string>::const_iterator it =
+             filter_reads[i].begin(); it != filter_reads[i].end(); ++it) {
+            ofs << *it << endl;
+        }
+        ofs.close();
     }
-    ofs.close();
 
-    ofs.open("filtered-tm.fastq");
-    for (std::unordered_set<string>::const_iterator it =
-         filter_reads[TM].begin(); it != filter_reads[TM].end(); ++it) {
-        ofs << *it << endl;
+    for (int i = 0; i < NUM_SETS; i++) {
+        ofs.open("filter-" + set_names[i] + ".i2p");
+        for (std::unordered_map<string, std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>::const_iterator it =
+             filter_i2p[i].begin(); it != filter_i2p[i].end(); ++it) {
+            ofs << it->first << " " << it->second.first.size() << " " << it->second.second.size();
+            for (std::vector<uint8_t>::const_iterator sit = it->second.first.begin();
+                 sit != it->second.first.end(); ++sit) {
+                ofs << " " << (int) *sit;
+            }
+            for (std::vector<uint8_t>::const_iterator sit = it->second.second.begin();
+                 sit != it->second.second.end(); ++sit) {
+                ofs << " " << (int) *sit;
+            }
+            ofs << endl;
+        }
+        ofs.close();
     }
-    ofs.close();
+
+    for (int i = 0; i < NUM_SETS; i++) {
+        ofs.open("filter-" + set_names[i] + ".k2i");
+        for (std::unordered_map<string, std::unordered_set<string>>::const_iterator it =
+             filter_k2i[i].begin(); it != filter_k2i[i].end(); ++it) {
+            for (std::unordered_set<string>::const_iterator sit = it->second.begin();
+                 sit != it->second.end(); ++sit) {
+                ofs << it->first << " " << *sit << endl;
+            }
+        }
+        ofs.close();
+    }
 }
 
 void sm_stats(int num_storers)

@@ -75,12 +75,12 @@ void filter_normal(int pid, int fid, kseq_t *seq, const char *sub, int len)
     for (int i = 0; i <= len - KMER_LEN; i++) {
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
-        filter_all(pid, fid, seq, kmer, NN);
+        filter_all(pid, fid, seq, i, false, kmer, NN);
 
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
         krevcomp(kmer);
-        filter_all(pid, fid, seq, kmer, NN);
+        filter_all(pid, fid, seq, i, true, kmer, NN);
     }
 }
 
@@ -93,18 +93,16 @@ void filter_cancer(int pid, int fid, kseq_t *seq, const char *sub, int len)
     for (int i = 0; i <= len - KMER_LEN; i++) {
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
-        filter_branch(pid, fid, seq, kmer, TM);
-        filter_all(pid, fid, seq, kmer, TN);
+        filter_branch(pid, fid, seq, i, kmer, TM);
+        filter_all(pid, fid, seq, i, false, kmer, TN);
 
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
         krevcomp(kmer);
-        filter_all(pid, fid, seq, kmer, TN);
+        filter_all(pid, fid, seq, i, true, kmer, TN);
     }
 }
 
-// Do we really need to to keep track and recover the last char of kmer to its
-// original base?
 void get_value(int pid, int fid, char kmer[], sm_tally *tally)
 {
     char last = kmer[KMER_LEN - 1];
@@ -129,7 +127,8 @@ void get_value(int pid, int fid, char kmer[], sm_tally *tally)
     simdunpack_length((const __m128i *) value->v, 32, (uint32_t *) tally->v, value->b);
 }
 
-void filter_branch(int pid, int fid, kseq_t *seq, char kmer[], sm_set set)
+void filter_branch(int pid, int fid, kseq_t *seq, int pos, char kmer[],
+                   sm_set set)
 {
     sm_tally tally;
     get_value(pid, fid, kmer, &tally);
@@ -143,10 +142,11 @@ void filter_branch(int pid, int fid, kseq_t *seq, char kmer[], sm_set set)
         nsum += tally.v[f][l][NORMAL_READ];
         tsum += tally.v[f][l][CANCER_READ];
     }
-    filter_kmer(seq, kmer, nc, tc, nsum, tsum, set);
+    filter_kmer(seq, pos, false, kmer, nc, tc, nsum, tsum, set);
 }
 
-void filter_all(int pid, int fid, kseq_t *seq, char kmer[], sm_set set)
+void filter_all(int pid, int fid, kseq_t *seq, int pos, bool rev,
+                char kmer[], sm_set set)
 {
     sm_tally tally;
     get_value(pid, fid, kmer, &tally);
@@ -160,19 +160,24 @@ void filter_all(int pid, int fid, kseq_t *seq, char kmer[], sm_set set)
         for (int l = 0; l < 4; l++) {
             uint32_t nc = tally.v[f][l][NORMAL_READ];
             uint32_t tc = tally.v[f][l][CANCER_READ];
-            filter_kmer(seq, kmer, nc, tc, nsum, tsum, set);
+            filter_kmer(seq, pos, rev, kmer, nc, tc, nsum, tsum, set);
         }
     }
 }
 
-void filter_kmer(kseq_t *seq, char kmer[], uint32_t nc, uint32_t tc,
-                 uint32_t nsum, uint32_t tsum, sm_set set)
+void filter_kmer(kseq_t *seq, int pos, bool rev, char kmer[], uint32_t nc,
+                 uint32_t tc, uint32_t nsum, uint32_t tsum, sm_set set)
 {
     if (tc >= 4 && nc == 0) {
         char buf[256] = {0};
         sprintf(buf, "@%s\n%s\n+\n%s", seq->name.s, seq->seq.s, seq->qual.s);
         filter_mutex[set].lock();
         filter_reads[set].insert(buf);
+        if (!rev)
+            filter_i2p[set][seq->name.s].first.push_back((uint8_t) pos);
+        else
+            filter_i2p[set][seq->name.s].second.push_back((uint8_t) pos);
+        filter_k2i[set][kmer].insert(seq->name.s);
         filter_mutex[set].unlock();
     }
 }

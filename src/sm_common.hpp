@@ -6,6 +6,7 @@
 #include <mutex>
 #include <string>
 #include <unordered_set>
+#include <unordered_map>
 #include <concurrentqueue.h>
 #include <boost/atomic.hpp>
 #include <google/sparse_hash_map>
@@ -129,8 +130,10 @@ enum sm_set {
     TN, // Tumor Non-mutated reads.
 };
 
-extern std::unordered_set<std::string> filter_reads[NUM_SETS];
 extern std::mutex filter_mutex[NUM_SETS];
+extern std::unordered_set<std::string> filter_reads[NUM_SETS];
+extern std::unordered_map<std::string, std::pair<std::vector<uint8_t>, std::vector<uint8_t>>> filter_i2p[NUM_SETS];
+extern std::unordered_map<std::string, std::unordered_set<std::string>> filter_k2i[NUM_SETS];
 
 enum noshort_options {
     O_DISABLE_FILTER, O_DISABLE_STATS
