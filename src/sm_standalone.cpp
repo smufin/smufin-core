@@ -10,6 +10,7 @@
 #include <chrono>
 #include <thread>
 #include <boost/algorithm/string.hpp>
+#include <simdcomp.h>
 #ifdef PROFILE
 #include <gperftools/profiler.h>
 #endif
@@ -248,10 +249,13 @@ void sm_stats(int num_storers)
         uint64_t part_unique = 0;
         for (sm_table::const_iterator it = tables[i].begin();
              it != tables[i].end(); ++it) {
+            sm_tally tally;
+            const sm_value *value = &it->second;
+            simdunpack_length((const __m128i *) value->v, 32, (uint32_t *) &tally.v, value->b);
             for (int f = 0; f < 4; f++) {
                 for (int l = 0; l < 4; l++) {
-                    uint64_t nc = it->second.v[f][l][NORMAL_READ];
-                    uint64_t tc = it->second.v[f][l][CANCER_READ];
+                    uint64_t nc = tally.v[f][l][NORMAL_READ];
+                    uint64_t tc = tally.v[f][l][CANCER_READ];
                     uint64_t count = nc + tc;
                     if (count == 0)
                         continue;

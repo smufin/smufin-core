@@ -16,8 +16,11 @@ BOOST_LIB = /usr/lib
 # Additional headers:
 # - moodycamel's ConcurrentQueue
 # - Folly's ConsumerProducerQueue
+# - simdcomp
 MCQ_INC   = $(HOME)/src/concurrentqueue
 FOLLY_INC = $(HOME)/src/folly
+SIMD_INC  = $(HOME)/src/simdcomp/include
+SIMD_LIB  = $(HOME)/src/simdcomp
 
 # Compilation flags.
 FLAGS = -O2

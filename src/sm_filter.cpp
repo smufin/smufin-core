@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include <boost/algorithm/string.hpp>
+#include <simdcomp.h>
 
 using std::cout;
 using std::endl;
@@ -74,12 +75,12 @@ void filter_normal(int pid, int fid, kseq_t *seq, const char *sub, int len)
     for (int i = 0; i <= len - KMER_LEN; i++) {
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
-        filter_tree(pid, fid, seq, kmer, NN_P);
+        filter_all(pid, fid, seq, kmer, NN_P);
 
-        // strncpy(kmer, &sub[i], KMER_LEN);
-        // kmer[KMER_LEN] = '\0';
-        // krevcomp(kmer);
-        // filter_tree(pid, fid, seq, kmer, NN_M);
+        strncpy(kmer, &sub[i], KMER_LEN);
+        kmer[KMER_LEN] = '\0';
+        krevcomp(kmer);
+        filter_all(pid, fid, seq, kmer, NN_M);
     }
 }
 
@@ -93,20 +94,18 @@ void filter_cancer(int pid, int fid, kseq_t *seq, const char *sub, int len)
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
         filter_branch(pid, fid, seq, kmer, TM_P);
-        filter_tree(pid, fid, seq, kmer, TN_P);
+        filter_all(pid, fid, seq, kmer, TN_P);
 
-        // strncpy(kmer, &sub[i], KMER_LEN);
-        // kmer[KMER_LEN] = '\0';
-        // krevcomp(kmer);
-        // filter_tree(pid, fid, seq, kmer, TN_M);
+        strncpy(kmer, &sub[i], KMER_LEN);
+        kmer[KMER_LEN] = '\0';
+        krevcomp(kmer);
+        filter_all(pid, fid, seq, kmer, TN_M);
     }
 }
 
-// FIXME: We are doing a significant amount of computation when sm_value is
-// empty. Shouldn't be a big deal except when running multiple processes.
-// Should also make sure it makes sense to return the last char of kmer to its
-// original base.
-const sm_value* get_value(int pid, int fid, char kmer[])
+// Do we really need to to keep track and recover the last char of kmer to its
+// original base?
+void get_value(int pid, int fid, char kmer[], sm_tally *tally)
 {
     char last = kmer[KMER_LEN - 1];
     kmer[KMER_LEN - 1] = '\0';
@@ -116,47 +115,51 @@ const sm_value* get_value(int pid, int fid, char kmer[])
     hash_4c_map(m);
 
     if (map_l1[m] != pid)
-        return new sm_value;
+        return;
     int sid = map_l2[m];
     sm_key key = strtob4(&kmer[1]);
 
     sm_table::const_iterator it = tables[sid].find(key);
     if (it == tables[sid].end())
-        return new sm_value;
+        return;
 
     kmer[KMER_LEN - 1] = last;
-    return &it->second;
+
+    const sm_value *value = &it->second;
+    simdunpack_length((const __m128i *) value->v, 32, (uint32_t *) tally->v, value->b);
 }
 
 void filter_branch(int pid, int fid, kseq_t *seq, char kmer[], sm_set set)
 {
-    const sm_value *counts = get_value(pid, fid, kmer);
+    sm_tally tally;
+    get_value(pid, fid, kmer, &tally);
     int f = code[kmer[0]] - '0';
     int l = code[kmer[KMER_LEN - 1]] - '0';
-    uint32_t nc = counts->v[f][l][NORMAL_READ];
-    uint32_t tc = counts->v[f][l][CANCER_READ];
+    uint32_t nc = tally.v[f][l][NORMAL_READ];
+    uint32_t tc = tally.v[f][l][CANCER_READ];
     uint32_t nsum = 0;
     uint32_t tsum = 0;
     for (l = 0; l < 4; l++) {
-        nsum += counts->v[f][l][NORMAL_READ];
-        tsum += counts->v[f][l][CANCER_READ];
+        nsum += tally.v[f][l][NORMAL_READ];
+        tsum += tally.v[f][l][CANCER_READ];
     }
     filter_kmer(seq, kmer, nc, tc, nsum, tsum, set);
 }
 
-void filter_tree(int pid, int fid, kseq_t *seq, char kmer[], sm_set set)
+void filter_all(int pid, int fid, kseq_t *seq, char kmer[], sm_set set)
 {
-    const sm_value *counts = get_value(pid, fid, kmer);
+    sm_tally tally;
+    get_value(pid, fid, kmer, &tally);
     for (int f = 0; f < 4; f++) {
         uint32_t nsum = 0;
         uint32_t tsum = 0;
         for (int l = 0; l < 4; l++) {
-            nsum += counts->v[f][l][NORMAL_READ];
-            tsum += counts->v[f][l][CANCER_READ];
+            nsum += tally.v[f][l][NORMAL_READ];
+            tsum += tally.v[f][l][CANCER_READ];
         }
         for (int l = 0; l < 4; l++) {
-            uint32_t nc = counts->v[f][l][NORMAL_READ];
-            uint32_t tc = counts->v[f][l][CANCER_READ];
+            uint32_t nc = tally.v[f][l][NORMAL_READ];
+            uint32_t tc = tally.v[f][l][CANCER_READ];
             filter_kmer(seq, kmer, nc, tc, nsum, tsum, set);
         }
     }

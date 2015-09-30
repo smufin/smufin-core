@@ -5,6 +5,7 @@
 #include <iostream>
 #include <kseq.h>
 #include <boost/algorithm/string.hpp>
+#include <simdcomp.h>
 
 using std::cout;
 using std::endl;
@@ -155,5 +156,18 @@ void process_incr(int sid, int num_loaders)
 
 inline void process_incr_key(int sid, sm_key key, sm_value_offset off)
 {
-    tables[sid][key].v[off.first][off.last][off.kind]++;
+    sm_tally tally;
+    sm_value *value;
+    uint32_t b = 0;
+
+    sm_table::iterator it = tables[sid].find(key);
+    if (it != tables[sid].end()) {
+        value = &it->second;
+        simdunpack_length((const __m128i *) value->v, 32, (uint32_t *) &tally.v, value->b);
+    }
+
+    tally.v[off.first][off.last][off.kind]++;
+    b = maxbits_length((const uint32_t *) &tally.v, 32);
+    simdpack_length((const uint32_t *) &tally.v, 32, (__m128i *) &tables[sid][key].v, b);
+    tables[sid][key].b = b;
 }
