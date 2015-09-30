@@ -112,8 +112,6 @@ inline void process_load_sub(int pid, int lid, const char* sub, int len,
         off.last = code[sub[i + KMER_LEN - 1]] - '0';
         off.kind = kind;
 
-        // cout << "P: " << &imer[0] << " " << key << endl;
-
         bulks[sid].array[bulks[sid].num] = sm_msg(key, off);
         bulks[sid].num++;
 
@@ -157,11 +155,34 @@ void process_incr(int sid, int num_loaders)
 inline void process_incr_key(int sid, sm_key key, sm_value_offset off)
 {
     sm_tally tally;
-    sm_value *value;
+    const sm_value *value;
     uint32_t b = 0;
 
-    sm_table::iterator it = tables[sid].find(key);
-    if (it != tables[sid].end()) {
+    // Use sm_cache to hold keys with a single appearance; as soon as a key in
+    // increased more than once, it is removed from sm_cache and placed into
+    // sm_table instead. The steps are as follows:
+    // - Find key in table.
+    //   - Key exists in table: increase offset.
+    //   - Key doesn't exist in table: find key in cache.
+    //     - Key exists in cache: move from cache to table.
+    //     - Key doesn't exist in cache: insert in cache.
+    sm_table::const_iterator it = tables[sid].find(key);
+    if (it == tables[sid].end()) {
+
+        sm_cache::const_iterator cit = caches[sid].find(key);
+        if (cit == caches[sid].end()) {
+            caches[sid][key] = (off.first << 6) | (off.last << 4) | (off.kind << 2);
+            return;
+        }
+
+        uint8_t cache_value = caches[sid][key];
+        sm_value_offset coff;
+        coff.first = cache_value >> 6;
+        coff.last = (cache_value >> 4) & 0x03;
+        coff.kind = (sm_read_kind) ((cache_value >> 2) & 0x03);
+        tally.v[coff.first][coff.last][coff.kind]++;
+        caches[sid].erase(key);
+    } else {
         value = &it->second;
         simdunpack_length((const __m128i *) value->v, 32, (uint32_t *) &tally.v, value->b);
     }

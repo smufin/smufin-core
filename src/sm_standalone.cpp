@@ -25,6 +25,7 @@ boost::atomic<bool> process_done(false);
 int map_l1[MAP_FILE_LEN] = {0};
 int map_l2[MAP_FILE_LEN] = {0};
 sm_table tables[NUM_STORERS];
+sm_cache caches[NUM_STORERS];
 folly::ProducerConsumerQueue<sm_bulk>* queues[NUM_STORERS][MAX_LOADERS];
 std::unordered_set<std::string> filter_reads[NUM_SETS];
 std::mutex filter_mutex[NUM_SETS];
@@ -98,6 +99,8 @@ int main(int argc, char *argv[])
     // Initialize tables and message queues.
     for (int i = 0; i < NUM_STORERS; i++) {
         tables[i].resize(TABLE_LEN);
+        caches[i].resize(TABLE_LEN);
+        caches[i].set_deleted_key((uint64_t) -1);
         for (int j = 0; j < MAX_LOADERS; j++) {
             queues[i][j] = new folly::ProducerConsumerQueue<sm_bulk>(QMSG_LEN);
         }

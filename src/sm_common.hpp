@@ -56,6 +56,7 @@ typedef struct sm_tally {
 } sm_tally;
 
 typedef google::sparse_hash_map<sm_key, sm_value, sm_hasher<sm_key>> sm_table;
+typedef google::sparse_hash_map<sm_key, uint8_t, sm_hasher<sm_key>> sm_cache;
 
 enum sm_read_kind : uint8_t {
     NORMAL_READ, CANCER_READ
@@ -115,6 +116,7 @@ extern int map_l2[MAP_FILE_LEN];
 
 // Hash tables that hold data in memory, one per storer/consumer thread.
 extern sm_table tables[NUM_STORERS];
+extern sm_cache caches[NUM_STORERS];
 
 // Message queues between loader threads and storer threads. One SPSC queue
 // per loader/storer pair.
