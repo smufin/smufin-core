@@ -93,12 +93,13 @@ void filter_cancer(int pid, int fid, kseq_t *seq, const char *sub, int len)
     for (int i = 0; i <= len - KMER_LEN; i++) {
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
-        filter_branch(pid, fid, seq, i, kmer, TM);
+        filter_branch(pid, fid, seq, i, false, kmer, TM);
         filter_all(pid, fid, seq, i, false, kmer, TN);
 
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
         krevcomp(kmer);
+        filter_branch(pid, fid, seq, i, true, kmer, TM);
         filter_all(pid, fid, seq, i, true, kmer, TN);
     }
 }
@@ -127,8 +128,8 @@ void get_value(int pid, int fid, char kmer[], sm_tally *tally)
     simdunpack_length((const __m128i *) value->v, 32, (uint32_t *) tally->v, value->b);
 }
 
-void filter_branch(int pid, int fid, kseq_t *seq, int pos, char kmer[],
-                   sm_set set)
+void filter_branch(int pid, int fid, kseq_t *seq, int pos, bool rev,
+                   char kmer[], sm_set set)
 {
     sm_tally tally;
     get_value(pid, fid, kmer, &tally);
@@ -142,7 +143,7 @@ void filter_branch(int pid, int fid, kseq_t *seq, int pos, char kmer[],
         nsum += tally.v[f][l][NORMAL_READ];
         tsum += tally.v[f][l][CANCER_READ];
     }
-    filter_kmer(seq, pos, false, kmer, nc, tc, nsum, tsum, set);
+    filter_kmer(seq, pos, rev, kmer, nc, tc, nsum, tsum, set);
 }
 
 void filter_all(int pid, int fid, kseq_t *seq, int pos, bool rev,
