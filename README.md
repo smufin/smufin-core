@@ -8,8 +8,8 @@ corresponding normal genome of the same patient.
 
 ## Compile
 
-Compiling shmufin requires `make`, a compiler such as `gcc` with C++11 support
-(>= 4.8), and the following libraries:
+Compiling *shmufin* requires `make`, a compiler such as `gcc` with C++11
+support (>= 4.8), and the following libraries:
 
  - [boost::atomic][boost] (>= 1.55)
  - [sparsehash][sparsehash] (>= 2.0)
@@ -26,7 +26,7 @@ the former two libraries are available as:
  libsparsehash-dev
  ```
 
-shmufin's k-mer length is determined at compile team, but can be easily
+*shmufin*'s k-mer length is determined at compile time, but can be easily
 configured changing the `KMER_LEN` variable (defaults to 30).
 
 ## Run
