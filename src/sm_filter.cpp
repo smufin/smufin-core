@@ -152,6 +152,7 @@ void filter_all(int pid, int fid, kseq_t *seq, int pos, bool rev,
     sm_tally tally;
     get_value(pid, fid, kmer, &tally);
     for (int f = 0; f < 4; f++) {
+        kmer[0] = alpha[f];
         uint32_t nsum = 0;
         uint32_t tsum = 0;
         for (int l = 0; l < 4; l++) {
@@ -159,6 +160,7 @@ void filter_all(int pid, int fid, kseq_t *seq, int pos, bool rev,
             tsum += tally.v[f][l][CANCER_READ];
         }
         for (int l = 0; l < 4; l++) {
+            kmer[KMER_LEN - 1] = alpha[l];
             uint32_t nc = tally.v[f][l][NORMAL_READ];
             uint32_t tc = tally.v[f][l][CANCER_READ];
             filter_kmer(seq, pos, rev, kmer, nc, tc, nsum, tsum, set);
