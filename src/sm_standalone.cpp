@@ -267,6 +267,7 @@ void sm_stats(int num_storers)
 
     uint64_t subs = 0;
     uint64_t subs_unique = 0;
+    uint64_t subs_cache = 0;
     for (int i = 0; i < num_storers; i++) {
         uint64_t part = 0;
         uint64_t part_unique = 0;
@@ -292,8 +293,10 @@ void sm_stats(int num_storers)
         }
         cout << KMER_LEN << "-mers (part-t-" << i << "): " << part << endl;
         cout << KMER_LEN << "-mers (part-u-" << i << "): " << part_unique << endl;
+        cout << KMER_LEN << "-mers (part-c-" << i << "): " << caches[i].size() << endl;
         subs += part;
         subs_unique += part_unique;
+        subs_cache += caches[i].size();
     }
 
     end = std::chrono::system_clock::now();
@@ -307,5 +310,6 @@ void sm_stats(int num_storers)
     time = end - start;
     cout << KMER_LEN << "-mers (total):  " << subs << endl;
     cout << KMER_LEN << "-mers (unique): " << subs_unique << endl;
+    cout << KMER_LEN << "-mers (cache):  " << subs_cache << endl;
     cout << "Iteration time:   " << time.count() << endl;
 }
