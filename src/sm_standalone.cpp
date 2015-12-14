@@ -19,7 +19,7 @@ using std::cout;
 using std::endl;
 using std::string;
 
-moodycamel::ConcurrentQueue<string> input_queue(200);
+moodycamel::ConcurrentQueue<string> input_queue(300);
 boost::atomic_int input_count(0);
 boost::atomic<bool> process_done(false);
 int map_l1[MAP_FILE_LEN] = {0};
