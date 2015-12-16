@@ -30,6 +30,7 @@ std::mutex filter_mutex[NUM_SETS];
 std::unordered_set<string> filter_reads[NUM_SETS];
 std::unordered_map<string, std::pair<std::vector<uint8_t>, std::vector<uint8_t>>> filter_i2p[NUM_SETS];
 std::unordered_map<string, std::unordered_set<string>> filter_k2i[NUM_SETS];
+std::vector<string> set_names = { "nn", "tm", "tn" };
 
 int main(int argc, char *argv[])
 {
@@ -214,7 +215,7 @@ void sm_filter(int pid, int num_filters)
 #endif
 
     std::ofstream ofs;
-    std::vector<string> set_names = {"nn", "tm", "tn"};
+    start = std::chrono::system_clock::now();
 
     for (int i = 0; i < NUM_SETS; i++) {
         ofs.open("filter-" + set_names[i] + ".fastq");
@@ -254,6 +255,10 @@ void sm_filter(int pid, int num_filters)
         }
         ofs.close();
     }
+
+    end = std::chrono::system_clock::now();
+    time = end - start;
+    cout << "Output time: " << time.count() << endl;
 }
 
 void sm_stats(int num_storers)
