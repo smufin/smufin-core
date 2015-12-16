@@ -226,23 +226,21 @@ void sm_filter(int pid, int num_filters)
         ofs.close();
     }
 
-    for (int i = 0; i < NUM_SETS; i++) {
-        ofs.open("filter-" + set_names[i] + ".i2p");
-        for (std::unordered_map<string, std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>::const_iterator it =
-             filter_i2p[i].begin(); it != filter_i2p[i].end(); ++it) {
-            ofs << it->first << " " << it->second.first.size() << " " << it->second.second.size();
-            for (std::vector<uint8_t>::const_iterator sit = it->second.first.begin();
-                 sit != it->second.first.end(); ++sit) {
-                ofs << " " << (int) *sit;
-            }
-            for (std::vector<uint8_t>::const_iterator sit = it->second.second.begin();
-                 sit != it->second.second.end(); ++sit) {
-                ofs << " " << (int) *sit;
-            }
-            ofs << endl;
+    ofs.open("filter-" + set_names[TM] + ".i2p");
+    for (std::unordered_map<string, std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>::const_iterator it =
+         filter_i2p[TM].begin(); it != filter_i2p[TM].end(); ++it) {
+        ofs << it->first << " " << it->second.first.size() << " " << it->second.second.size();
+        for (std::vector<uint8_t>::const_iterator sit = it->second.first.begin();
+             sit != it->second.first.end(); ++sit) {
+            ofs << " " << (int) *sit;
         }
-        ofs.close();
+        for (std::vector<uint8_t>::const_iterator sit = it->second.second.begin();
+             sit != it->second.second.end(); ++sit) {
+            ofs << " " << (int) *sit;
+        }
+        ofs << endl;
     }
+    ofs.close();
 
     for (int i = 0; i < NUM_SETS; i++) {
         ofs.open("filter-" + set_names[i] + ".k2i");
