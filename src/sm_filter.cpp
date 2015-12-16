@@ -104,7 +104,7 @@ void filter_cancer(int pid, int fid, kseq_t *seq, const char *sub, int len)
     }
 }
 
-void get_value(int pid, int fid, char kmer[], sm_tally *tally)
+int get_value(int pid, int fid, char kmer[], sm_table::const_iterator *it)
 {
     char last = kmer[KMER_LEN - 1];
     kmer[KMER_LEN - 1] = '\0';
@@ -114,34 +114,33 @@ void get_value(int pid, int fid, char kmer[], sm_tally *tally)
     hash_4c_map(m);
 
     if (map_l1[m] != pid)
-        return;
+        return -1;
     int sid = map_l2[m];
     sm_key key = strtob4(&kmer[1]);
 
-    sm_table::const_iterator it = tables[sid].find(key);
-    if (it == tables[sid].end())
-        return;
+    *it = tables[sid].find(key);
+    if (*it == tables[sid].end())
+        return -1;
 
     kmer[KMER_LEN - 1] = last;
-
-    const sm_value *value = &it->second;
-    simdunpack_length((const __m128i *) value->v, 32, (uint32_t *) tally->v, value->b);
+    return 0;
 }
 
 void filter_branch(int pid, int fid, kseq_t *seq, int pos, bool rev,
                    char kmer[], sm_set set)
 {
-    sm_tally tally;
-    get_value(pid, fid, kmer, &tally);
+    sm_table::const_iterator it;
+    if (get_value(pid, fid, kmer, &it) != 0)
+        return;
     int f = code[kmer[0]] - '0';
     int l = code[kmer[KMER_LEN - 1]] - '0';
-    uint32_t nc = tally.v[f][l][NORMAL_READ];
-    uint32_t tc = tally.v[f][l][CANCER_READ];
+    uint32_t nc = it->second.v[f][l][NORMAL_READ];
+    uint32_t tc = it->second.v[f][l][CANCER_READ];
     uint32_t nsum = 0;
     uint32_t tsum = 0;
     for (l = 0; l < 4; l++) {
-        nsum += tally.v[f][l][NORMAL_READ];
-        tsum += tally.v[f][l][CANCER_READ];
+        nsum += it->second.v[f][l][NORMAL_READ];
+        tsum += it->second.v[f][l][CANCER_READ];
     }
     filter_kmer(seq, pos, rev, kmer, nc, tc, nsum, tsum, set);
 }
@@ -149,20 +148,21 @@ void filter_branch(int pid, int fid, kseq_t *seq, int pos, bool rev,
 void filter_all(int pid, int fid, kseq_t *seq, int pos, bool rev,
                 char kmer[], sm_set set)
 {
-    sm_tally tally;
-    get_value(pid, fid, kmer, &tally);
+    sm_table::const_iterator it;
+    if (get_value(pid, fid, kmer, &it) != 0)
+        return;
     for (int f = 0; f < 4; f++) {
         kmer[0] = alpha[f];
         uint32_t nsum = 0;
         uint32_t tsum = 0;
         for (int l = 0; l < 4; l++) {
-            nsum += tally.v[f][l][NORMAL_READ];
-            tsum += tally.v[f][l][CANCER_READ];
+            nsum += it->second.v[f][l][NORMAL_READ];
+            tsum += it->second.v[f][l][CANCER_READ];
         }
         for (int l = 0; l < 4; l++) {
             kmer[KMER_LEN - 1] = alpha[l];
-            uint32_t nc = tally.v[f][l][NORMAL_READ];
-            uint32_t tc = tally.v[f][l][CANCER_READ];
+            uint32_t nc = it->second.v[f][l][NORMAL_READ];
+            uint32_t tc = it->second.v[f][l][CANCER_READ];
             filter_kmer(seq, pos, rev, kmer, nc, tc, nsum, tsum, set);
         }
     }

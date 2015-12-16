@@ -154,41 +154,39 @@ void process_incr(int sid, int num_loaders)
 
 inline void process_incr_key(int sid, sm_key key, sm_value_offset off)
 {
-    sm_tally tally;
-    const sm_value *value;
+    sm_value value;
     uint32_t b = 0;
 
     // Use sm_cache to hold keys with a single appearance; as soon as a key in
-    // increased more than once, it is removed from sm_cache and placed into
-    // sm_table instead. The steps are as follows:
-    // - Find key in table.
-    //   - Key exists in table: increase offset.
-    //   - Key doesn't exist in table: find key in cache.
-    //     - Key exists in cache: move from cache to table.
-    //     - Key doesn't exist in cache: insert in cache.
+    // increased more than once, it is placed into sm_table. The steps are as
+    // follows:
+    //
+    // - Find key in cache.
+    //   - Key doesn't exist in cache: insert in cache.
+    //   - Key exists in cache: find key in table.
+    //     - Key doesn't exist in table: insert key and cache in table.
+    //     - Key exists in table: update entry if there's no overflow.
+
+    sm_cache::const_iterator cit = caches[sid].find(key);
+    if (cit == caches[sid].end()) {
+        caches[sid][key] = (off.first << 6) | (off.last << 4) | (off.kind << 2);
+        return;
+    }
+
     sm_table::const_iterator it = tables[sid].find(key);
     if (it == tables[sid].end()) {
-
-        sm_cache::const_iterator cit = caches[sid].find(key);
-        if (cit == caches[sid].end()) {
-            caches[sid][key] = (off.first << 6) | (off.last << 4) | (off.kind << 2);
-            return;
-        }
-
         uint8_t cache_value = caches[sid][key];
         sm_value_offset coff;
         coff.first = cache_value >> 6;
         coff.last = (cache_value >> 4) & 0x03;
         coff.kind = (sm_read_kind) ((cache_value >> 2) & 0x03);
-        tally.v[coff.first][coff.last][coff.kind]++;
-        caches[sid].erase(key);
+        tables[sid][key].v[coff.first][coff.last][coff.kind] = 1;
+        tables[sid][key].v[off.first][off.last][off.kind]++;
     } else {
-        value = &it->second;
-        simdunpack_length((const __m128i *) value->v, 32, (uint32_t *) &tally.v, value->b);
+        uint32_t inc = it->second.v[off.first][off.last][off.kind] + 1;
+        uint16_t over = inc >> 16;
+        uint16_t count = inc & 0x0000FFFF;
+        if (over == 0)
+            tables[sid][key].v[off.first][off.last][off.kind] = count;
     }
-
-    tally.v[off.first][off.last][off.kind]++;
-    b = maxbits_length((const uint32_t *) &tally.v, 32);
-    simdpack_length((const uint32_t *) &tally.v, 32, (__m128i *) &tables[sid][key].v, b);
-    tables[sid][key].b = b;
 }

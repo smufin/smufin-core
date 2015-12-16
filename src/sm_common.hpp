@@ -50,13 +50,8 @@
 typedef uint64_t sm_key;
 
 typedef struct sm_value {
-    uint32_t b = 0;
-    uint8_t v[64] = {0};
+    uint16_t v[4][4][2] = {{{0}}};
 } sm_value;
-
-typedef struct sm_tally {
-    uint32_t v[4][4][2] = {{{0}}};
-} sm_tally;
 
 typedef google::sparse_hash_map<sm_key, sm_value, sm_hasher<sm_key>> sm_table;
 typedef google::sparse_hash_map<sm_key, uint8_t, sm_hasher<sm_key>> sm_cache;
