@@ -6,13 +6,16 @@
 #include <mutex>
 #include <string>
 #include <unordered_set>
+#include <unordered_map>
 #include <concurrentqueue.h>
 #include <boost/atomic.hpp>
 #include <google/sparse_hash_map>
 #include <folly/ProducerConsumerQueue.h>
 
 // Expected number of keys per storer/thread.
-#define TABLE_LEN 250000000
+// #define TABLE_LEN 250000000
+#define TABLE_LEN 300000000
+#define CACHE_LEN 3000000000
 
 #define NUM_STORERS 16
 #define MAX_LOADERS 16
@@ -24,6 +27,8 @@
 #ifndef KMER_LEN
 #define KMER_LEN 30
 #endif
+
+#define IMER_LEN (KMER_LEN - 2)
 
 #define ZBUF_LEN 2592
 #define BULK_LEN 128
@@ -43,14 +48,26 @@
         (h) = ((h) & 0xFF) + ((h) >> 4); })
 
 typedef uint64_t sm_key;
-typedef std::pair<uint32_t, uint32_t> sm_value;
-typedef google::sparse_hash_map<sm_key, sm_value, sm_hasher<sm_key>> sm_table;
 
-enum sm_read_kind {
+typedef struct sm_value {
+    uint16_t v[4][4][2] = {{{0}}};
+} sm_value;
+
+typedef google::sparse_hash_map<sm_key, sm_value, sm_hasher<sm_key>> sm_table;
+typedef google::sparse_hash_map<sm_key, uint8_t, sm_hasher<sm_key>> sm_cache;
+
+enum sm_read_kind : uint8_t {
     NORMAL_READ, CANCER_READ
 };
 
-typedef std::pair<sm_key, sm_read_kind> sm_msg;
+typedef struct {
+    uint8_t first;
+    uint8_t last;
+    sm_read_kind kind;
+} sm_value_offset;
+
+typedef std::pair<sm_key, sm_value_offset> sm_msg;
+
 typedef struct {
     uint16_t num = 0;
     sm_msg array[BULK_LEN];
@@ -97,22 +114,23 @@ extern int map_l2[MAP_FILE_LEN];
 
 // Hash tables that hold data in memory, one per storer/consumer thread.
 extern sm_table tables[NUM_STORERS];
+extern sm_cache caches[NUM_STORERS];
 
 // Message queues between loader threads and storer threads. One SPSC queue
 // per loader/storer pair.
 extern folly::ProducerConsumerQueue<sm_bulk>* queues[NUM_STORERS][MAX_LOADERS];
 
-#define NUM_SETS 5
+#define NUM_SETS 3
 enum sm_set {
-    NN_P, // NN_P: Normal Non-mutated reads, Plus strand.
-    NN_M, // NN_U: Normal Non-mutated reads, Minus strand.
-    TM_P, // TM_P: Tumor Mutated reads, Plus strand.
-    TN_P, // TN_P: Tumor Non-mutated reads, Plus strand.
-    TN_M  // TN_U: Tumor Non-mutated reads, Minus strand.
+    NN, // Normal Non-mutated reads.
+    TM, // Tumor Mutated reads.
+    TN, // Tumor Non-mutated reads.
 };
 
-extern std::unordered_set<std::string> filter_reads[NUM_SETS];
 extern std::mutex filter_mutex[NUM_SETS];
+extern std::unordered_set<std::string> filter_reads[NUM_SETS];
+extern std::unordered_map<std::string, std::pair<std::vector<uint8_t>, std::vector<uint8_t>>> filter_i2p[NUM_SETS];
+extern std::unordered_map<std::string, std::unordered_set<std::string>> filter_k2i[NUM_SETS];
 
 enum noshort_options {
     O_DISABLE_FILTER, O_DISABLE_STATS

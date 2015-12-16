@@ -10,6 +10,7 @@
 #include <chrono>
 #include <thread>
 #include <boost/algorithm/string.hpp>
+#include <simdcomp.h>
 #ifdef PROFILE
 #include <gperftools/profiler.h>
 #endif
@@ -18,15 +19,18 @@ using std::cout;
 using std::endl;
 using std::string;
 
-moodycamel::ConcurrentQueue<string> input_queue(200);
+moodycamel::ConcurrentQueue<string> input_queue(300);
 boost::atomic_int input_count(0);
 boost::atomic<bool> process_done(false);
 int map_l1[MAP_FILE_LEN] = {0};
 int map_l2[MAP_FILE_LEN] = {0};
 sm_table tables[NUM_STORERS];
+sm_cache caches[NUM_STORERS];
 folly::ProducerConsumerQueue<sm_bulk>* queues[NUM_STORERS][MAX_LOADERS];
-std::unordered_set<std::string> filter_reads[NUM_SETS];
 std::mutex filter_mutex[NUM_SETS];
+std::unordered_set<string> filter_reads[NUM_SETS];
+std::unordered_map<string, std::pair<std::vector<uint8_t>, std::vector<uint8_t>>> filter_i2p[NUM_SETS];
+std::unordered_map<string, std::unordered_set<string>> filter_k2i[NUM_SETS];
 
 int main(int argc, char *argv[])
 {
@@ -97,6 +101,8 @@ int main(int argc, char *argv[])
     // Initialize tables and message queues.
     for (int i = 0; i < NUM_STORERS; i++) {
         tables[i].resize(TABLE_LEN);
+        caches[i].resize(CACHE_LEN);
+        caches[i].set_deleted_key((uint64_t) -1);
         for (int j = 0; j < MAX_LOADERS; j++) {
             queues[i][j] = new folly::ProducerConsumerQueue<sm_bulk>(QMSG_LEN);
         }
@@ -199,11 +205,9 @@ void sm_filter(int pid, int num_filters)
 
     end = std::chrono::system_clock::now();
     time = end - start;
-    cout << "Filtered reads (NN++): " << filter_reads[NN_P].size() << endl;
-    cout << "Filtered reads (TN++): " << filter_reads[TN_P].size() << endl;
-    cout << "Filtered reads (TM++): " << filter_reads[TM_P].size() << endl;
-    cout << "Filtered reads (NN+-): " << filter_reads[NN_M].size() << endl;
-    cout << "Filtered reads (TN+-): " << filter_reads[TN_M].size() << endl;
+    cout << "Filtered reads (NN+-): " << filter_reads[NN].size() << endl;
+    cout << "Filtered reads (TN+-): " << filter_reads[TN].size() << endl;
+    cout << "Filtered reads (TM+-): " << filter_reads[TM].size() << endl;
     cout << "Filter time: " << time.count() << endl;
 
 #ifdef PROFILE
@@ -211,26 +215,46 @@ void sm_filter(int pid, int num_filters)
 #endif
 
     std::ofstream ofs;
-    ofs.open("filtered-nn.fastq");
-    for (std::unordered_set<string>::const_iterator it =
-         filter_reads[NN_P].begin(); it != filter_reads[NN_P].end(); ++it) {
-        ofs << *it << endl;
-    }
-    ofs.close();
+    std::vector<string> set_names = {"nn", "tm", "tn"};
 
-    ofs.open("filtered-tn.fastq");
-    for (std::unordered_set<string>::const_iterator it =
-         filter_reads[TN_P].begin(); it != filter_reads[TN_P].end(); ++it) {
-        ofs << *it << endl;
+    for (int i = 0; i < NUM_SETS; i++) {
+        ofs.open("filter-" + set_names[i] + ".fastq");
+        for (std::unordered_set<string>::const_iterator it =
+             filter_reads[i].begin(); it != filter_reads[i].end(); ++it) {
+            ofs << *it << endl;
+        }
+        ofs.close();
     }
-    ofs.close();
 
-    ofs.open("filtered-tm.fastq");
-    for (std::unordered_set<string>::const_iterator it =
-         filter_reads[TM_P].begin(); it != filter_reads[TM_P].end(); ++it) {
-        ofs << *it << endl;
+    for (int i = 0; i < NUM_SETS; i++) {
+        ofs.open("filter-" + set_names[i] + ".i2p");
+        for (std::unordered_map<string, std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>::const_iterator it =
+             filter_i2p[i].begin(); it != filter_i2p[i].end(); ++it) {
+            ofs << it->first << " " << it->second.first.size() << " " << it->second.second.size();
+            for (std::vector<uint8_t>::const_iterator sit = it->second.first.begin();
+                 sit != it->second.first.end(); ++sit) {
+                ofs << " " << (int) *sit;
+            }
+            for (std::vector<uint8_t>::const_iterator sit = it->second.second.begin();
+                 sit != it->second.second.end(); ++sit) {
+                ofs << " " << (int) *sit;
+            }
+            ofs << endl;
+        }
+        ofs.close();
     }
-    ofs.close();
+
+    for (int i = 0; i < NUM_SETS; i++) {
+        ofs.open("filter-" + set_names[i] + ".k2i");
+        for (std::unordered_map<string, std::unordered_set<string>>::const_iterator it =
+             filter_k2i[i].begin(); it != filter_k2i[i].end(); ++it) {
+            for (std::unordered_set<string>::const_iterator sit = it->second.begin();
+                 sit != it->second.end(); ++sit) {
+                ofs << it->first << " " << *sit << endl;
+            }
+        }
+        ofs.close();
+    }
 }
 
 void sm_stats(int num_storers)
@@ -243,22 +267,33 @@ void sm_stats(int num_storers)
 
     uint64_t subs = 0;
     uint64_t subs_unique = 0;
+    uint64_t subs_cache = 0;
     for (int i = 0; i < num_storers; i++) {
         uint64_t part = 0;
         uint64_t part_unique = 0;
         for (sm_table::const_iterator it = tables[i].begin();
              it != tables[i].end(); ++it) {
-            uint64_t count = it->second.first + it->second.second;
-            uint64_t bin = 1;
-            bin = int(log2(count));
-            hist[bin]++;
-            part = part + count;
-            part_unique++;
+            for (int f = 0; f < 4; f++) {
+                for (int l = 0; l < 4; l++) {
+                    uint16_t nc = it->second.v[f][l][NORMAL_READ];
+                    uint16_t tc = it->second.v[f][l][CANCER_READ];
+                    uint32_t count = nc + tc;
+                    if (count == 0)
+                        continue;
+                    uint64_t bin = 1;
+                    bin = int(log2(count));
+                    hist[bin]++;
+                    part = part + count;
+                    part_unique++;
+                }
+            }
         }
         cout << KMER_LEN << "-mers (part-t-" << i << "): " << part << endl;
         cout << KMER_LEN << "-mers (part-u-" << i << "): " << part_unique << endl;
+        cout << KMER_LEN << "-mers (part-c-" << i << "): " << caches[i].size() << endl;
         subs += part;
         subs_unique += part_unique;
+        subs_cache += caches[i].size();
     }
 
     end = std::chrono::system_clock::now();
@@ -272,5 +307,6 @@ void sm_stats(int num_storers)
     time = end - start;
     cout << KMER_LEN << "-mers (total):  " << subs << endl;
     cout << KMER_LEN << "-mers (unique): " << subs_unique << endl;
+    cout << KMER_LEN << "-mers (cache):  " << subs_cache << endl;
     cout << "Iteration time:   " << time.count() << endl;
 }

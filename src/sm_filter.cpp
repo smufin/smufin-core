@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include <boost/algorithm/string.hpp>
+#include <simdcomp.h>
 
 using std::cout;
 using std::endl;
@@ -74,12 +75,12 @@ void filter_normal(int pid, int fid, kseq_t *seq, const char *sub, int len)
     for (int i = 0; i <= len - KMER_LEN; i++) {
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
-        filter_tree(pid, fid, seq, kmer, NN_P);
+        filter_all(pid, fid, seq, i, false, kmer, NN);
 
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
         krevcomp(kmer);
-        filter_tree(pid, fid, seq, kmer, NN_M);
+        filter_all(pid, fid, seq, i, true, kmer, NN);
     }
 }
 
@@ -92,82 +93,94 @@ void filter_cancer(int pid, int fid, kseq_t *seq, const char *sub, int len)
     for (int i = 0; i <= len - KMER_LEN; i++) {
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
-
-        char last = kmer[KMER_LEN - 1];
-        uint32_t nsum = 0;
-        uint32_t tsum = 0;
-        uint32_t narr[4] = {0};
-        uint32_t tarr[4] = {0};
-        get_branch(pid, fid, kmer, narr, tarr, &nsum, &tsum);
-
-        kmer[KMER_LEN - 1] = last;
-        uint32_t nc = narr[code[last] - '0'];
-        uint32_t tc = tarr[code[last] - '0'];
-        filter_kmer(seq, kmer, nc, tc, nsum, tsum, TM_P);
-
-        filter_tree(pid, fid, seq, kmer, TN_P);
+        filter_branch(pid, fid, seq, i, false, kmer, TM);
+        filter_all(pid, fid, seq, i, false, kmer, TN);
 
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
         krevcomp(kmer);
-        filter_tree(pid, fid, seq, kmer, TN_M);
+        filter_branch(pid, fid, seq, i, true, kmer, TM);
+        filter_all(pid, fid, seq, i, true, kmer, TN);
     }
 }
 
-// Doesn't guarantee integrity of kmer's last character.
-void get_branch(int pid, int fid, char kmer[], uint32_t narr[],
-                uint32_t tarr[], uint32_t *nsum, uint32_t *tsum)
+int get_value(int pid, int fid, char kmer[], sm_table::const_iterator *it)
 {
-    for (int i = 0; i < 4; i++) {
-        kmer[KMER_LEN - 1] = alpha[i];
+    char last = kmer[KMER_LEN - 1];
+    kmer[KMER_LEN - 1] = '\0';
 
-        uint32_t m = 0;
-        memcpy(&m, &kmer[0], MAP_LEN);
-        hash_4c_map(m);
+    uint32_t m = 0;
+    memcpy(&m, &kmer[1], MAP_LEN);
+    hash_4c_map(m);
 
-        if (map_l1[m] != pid)
-            continue;
-        int sid = map_l2[m];
-        sm_key key = strtob4(kmer);
+    if (map_l1[m] != pid)
+        return -1;
+    int sid = map_l2[m];
+    sm_key key = strtob4(&kmer[1]);
 
-        sm_table::const_iterator it = tables[sid].find(key);
-        if (it == tables[sid].end())
-            continue;
+    *it = tables[sid].find(key);
+    if (*it == tables[sid].end())
+        return -1;
 
-        uint32_t nc = it->second.first;
-        uint32_t tc = it->second.second;
-
-        *nsum += nc;
-        *tsum += tc;
-        narr[i] = nc;
-        tarr[i] = tc;
-    }
+    kmer[KMER_LEN - 1] = last;
+    return 0;
 }
 
-void filter_tree(int pid, int fid, kseq_t *seq, char kmer[], sm_set set)
+void filter_branch(int pid, int fid, kseq_t *seq, int pos, bool rev,
+                   char kmer[], sm_set set)
 {
-    for (int i = 0; i < 4; i++) {
-        kmer[0] = alpha[i];
+    sm_table::const_iterator it;
+    if (get_value(pid, fid, kmer, &it) != 0)
+        return;
+    int f = code[kmer[0]] - '0';
+    int l = code[kmer[KMER_LEN - 1]] - '0';
+    uint32_t nc = it->second.v[f][l][NORMAL_READ];
+    uint32_t tc = it->second.v[f][l][CANCER_READ];
+    uint32_t nsum = 0;
+    uint32_t tsum = 0;
+    for (l = 0; l < 4; l++) {
+        nsum += it->second.v[f][l][NORMAL_READ];
+        tsum += it->second.v[f][l][CANCER_READ];
+    }
+    filter_kmer(seq, pos, rev, kmer, nc, tc, nsum, tsum, set);
+}
+
+void filter_all(int pid, int fid, kseq_t *seq, int pos, bool rev,
+                char kmer[], sm_set set)
+{
+    sm_table::const_iterator it;
+    if (get_value(pid, fid, kmer, &it) != 0)
+        return;
+    for (int f = 0; f < 4; f++) {
+        kmer[0] = alpha[f];
         uint32_t nsum = 0;
         uint32_t tsum = 0;
-        uint32_t narr[4] = {0};
-        uint32_t tarr[4] = {0};
-        get_branch(pid, fid, kmer, narr, tarr, &nsum, &tsum);
-        for (int j = 0; j < 4; j++) {
-            kmer[KMER_LEN - 1] = alpha[j];
-            filter_kmer(seq, kmer, narr[j], tarr[j], nsum, tsum, set);
+        for (int l = 0; l < 4; l++) {
+            nsum += it->second.v[f][l][NORMAL_READ];
+            tsum += it->second.v[f][l][CANCER_READ];
+        }
+        for (int l = 0; l < 4; l++) {
+            kmer[KMER_LEN - 1] = alpha[l];
+            uint32_t nc = it->second.v[f][l][NORMAL_READ];
+            uint32_t tc = it->second.v[f][l][CANCER_READ];
+            filter_kmer(seq, pos, rev, kmer, nc, tc, nsum, tsum, set);
         }
     }
 }
 
-void filter_kmer(kseq_t *seq, char kmer[], uint32_t nc, uint32_t tc,
-                 uint32_t nsum, uint32_t tsum, sm_set set)
+void filter_kmer(kseq_t *seq, int pos, bool rev, char kmer[], uint32_t nc,
+                 uint32_t tc, uint32_t nsum, uint32_t tsum, sm_set set)
 {
     if (tc >= 4 && nc == 0) {
         char buf[256] = {0};
         sprintf(buf, "@%s\n%s\n+\n%s", seq->name.s, seq->seq.s, seq->qual.s);
         filter_mutex[set].lock();
         filter_reads[set].insert(buf);
+        if (!rev)
+            filter_i2p[set][seq->name.s].first.push_back((uint8_t) pos);
+        else
+            filter_i2p[set][seq->name.s].second.push_back((uint8_t) pos);
+        filter_k2i[set][kmer].insert(seq->name.s);
         filter_mutex[set].unlock();
     }
 }
