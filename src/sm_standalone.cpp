@@ -10,7 +10,6 @@
 #include <chrono>
 #include <thread>
 #include <boost/algorithm/string.hpp>
-#include <simdcomp.h>
 #ifdef PROFILE
 #include <gperftools/profiler.h>
 #endif

@@ -4,7 +4,6 @@
 #include <string>
 #include <iostream>
 #include <boost/algorithm/string.hpp>
-#include <simdcomp.h>
 
 using std::cout;
 using std::endl;

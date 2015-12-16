@@ -5,7 +5,6 @@
 #include <iostream>
 #include <kseq.h>
 #include <boost/algorithm/string.hpp>
-#include <simdcomp.h>
 
 using std::cout;
 using std::endl;
