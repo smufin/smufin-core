@@ -11,8 +11,6 @@ BOOST_INC ?= /usr/include/boost
 BOOST_LIB ?= /usr/lib
 MCQ_INC   ?= $(HOME)/src/concurrentqueue
 FOLLY_INC ?= $(HOME)/src/folly
-SIMD_INC  ?= $(HOME)/src/simdcomp/include
-SIMD_LIB  ?= $(HOME)/src/simdcomp
 
 BINARY = bin/sm-standalone
 SOURCES = src/sm_*.cpp
@@ -24,9 +22,8 @@ all: $(BINARY)
 $(BINARY): $(SOURCES)
 	g++ $(CFLAGS) -Isrc -I$(GSH_INC) -I$(GPT_INC) -L$(GPT_LIB) \
 		-I$(BOOST_INC) -L$(BOOST_LIB) -I$(MCQ_INC) -I$(FOLLY_INC) \
-		-I$(SIMD_INC) -L$(SIMD_LIB) \
 		-o $(BINARY) $(SOURCES) \
-		-lprofiler -lz -lpthread -lsimdcomp
+		-lprofiler -lz -lpthread
 
 clean:
 	rm -f $(BINARY)
