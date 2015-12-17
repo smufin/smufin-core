@@ -214,45 +214,26 @@ void sm_filter(int pid, int num_filters)
     ProfilerStop();
 #endif
 
-    std::ofstream ofs;
     start = std::chrono::system_clock::now();
 
-    for (int i = 0; i < NUM_SETS; i++) {
-        ofs.open("filter-" + set_names[i] + ".fastq");
-        for (std::unordered_set<string>::const_iterator it =
-             filter_reads[i].begin(); it != filter_reads[i].end(); ++it) {
-            ofs << *it << endl;
-        }
-        ofs.close();
-    }
+    std::vector<std::thread> fastqs;
+    for (int i = 0; i < NUM_SETS; i++)
+        fastqs.push_back(std::thread(sm_write_fastq, i));
+    cout << "Spawned " << fastqs.size() << " FASTQ writer threads" << endl;
 
-    ofs.open("filter-" + set_names[TM] + ".i2p");
-    for (std::unordered_map<string, std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>::const_iterator it =
-         filter_i2p[TM].begin(); it != filter_i2p[TM].end(); ++it) {
-        ofs << it->first << " " << it->second.first.size() << " " << it->second.second.size();
-        for (std::vector<uint8_t>::const_iterator sit = it->second.first.begin();
-             sit != it->second.first.end(); ++sit) {
-            ofs << " " << (int) *sit;
-        }
-        for (std::vector<uint8_t>::const_iterator sit = it->second.second.begin();
-             sit != it->second.second.end(); ++sit) {
-            ofs << " " << (int) *sit;
-        }
-        ofs << endl;
-    }
-    ofs.close();
+    std::vector<std::thread> k2is;
+    for (int i = 0; i < NUM_SETS; i++)
+        k2is.push_back(std::thread(sm_write_k2i, i));
+    cout << "Spawned " << fastqs.size() << " K2I writer threads" << endl;
 
-    for (int i = 0; i < NUM_SETS; i++) {
-        ofs.open("filter-" + set_names[i] + ".k2i");
-        for (std::unordered_map<string, std::unordered_set<string>>::const_iterator it =
-             filter_k2i[i].begin(); it != filter_k2i[i].end(); ++it) {
-            for (std::unordered_set<string>::const_iterator sit = it->second.begin();
-                 sit != it->second.end(); ++sit) {
-                ofs << it->first << " " << *sit << endl;
-            }
-        }
-        ofs.close();
-    }
+    std::thread i2p = std::thread(sm_write_i2p, TM);
+    cout << "Spawned I2P writer thread" << endl;
+    i2p.join();
+
+    for (auto& k2i: k2is)
+        k2i.join();
+    for (auto& fastq: fastqs)
+        fastq.join();
 
     end = std::chrono::system_clock::now();
     time = end - start;
@@ -311,4 +292,49 @@ void sm_stats(int num_storers)
     cout << KMER_LEN << "-mers (unique): " << subs_unique << endl;
     cout << KMER_LEN << "-mers (cache):  " << subs_cache << endl;
     cout << "Iteration time:   " << time.count() << endl;
+}
+
+void sm_write_fastq(int set)
+{
+    std::ofstream ofs;
+    ofs.open("filter-" + set_names[set] + ".fastq");
+    for (std::unordered_set<string>::const_iterator it =
+         filter_reads[set].begin(); it != filter_reads[set].end(); ++it) {
+        ofs << *it << endl;
+    }
+    ofs.close();
+}
+
+void sm_write_k2i(int set)
+{
+    std::ofstream ofs;
+    ofs.open("filter-" + set_names[set] + ".k2i");
+    for (std::unordered_map<string, std::unordered_set<string>>::const_iterator it =
+         filter_k2i[set].begin(); it != filter_k2i[set].end(); ++it) {
+        for (std::unordered_set<string>::const_iterator sit = it->second.begin();
+             sit != it->second.end(); ++sit) {
+            ofs << it->first << " " << *sit << endl;
+        }
+    }
+    ofs.close();
+}
+
+void sm_write_i2p(int set)
+{
+    std::ofstream ofs;
+    ofs.open("filter-" + set_names[set] + ".i2p");
+    for (std::unordered_map<string, std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>::const_iterator it =
+         filter_i2p[set].begin(); it != filter_i2p[set].end(); ++it) {
+        ofs << it->first << " " << it->second.first.size() << " " << it->second.second.size();
+        for (std::vector<uint8_t>::const_iterator sit = it->second.first.begin();
+             sit != it->second.first.end(); ++sit) {
+            ofs << " " << (int) *sit;
+        }
+        for (std::vector<uint8_t>::const_iterator sit = it->second.second.begin();
+             sit != it->second.second.end(); ++sit) {
+            ofs << " " << (int) *sit;
+        }
+        ofs << endl;
+    }
+    ofs.close();
 }
