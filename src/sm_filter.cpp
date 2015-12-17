@@ -175,10 +175,12 @@ void filter_kmer(kseq_t *seq, int pos, bool rev, char kmer[], uint32_t nc,
         sprintf(buf, "@%s\n%s\n+\n%s", seq->name.s, seq->seq.s, seq->qual.s);
         filter_mutex[set].lock();
         filter_reads[set].insert(buf);
-        if (!rev)
-            filter_i2p[set][seq->name.s].first.push_back((uint8_t) pos);
-        else
-            filter_i2p[set][seq->name.s].second.push_back((uint8_t) pos);
+        if (set == TM) {
+            if (!rev)
+                filter_i2p[set][seq->name.s].first.push_back((uint8_t) pos);
+            else
+                filter_i2p[set][seq->name.s].second.push_back((uint8_t) pos);
+        }
         filter_k2i[set][kmer].insert(seq->name.s);
         filter_mutex[set].unlock();
     }
