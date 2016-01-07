@@ -16,9 +16,12 @@ FILTER_BIN = bin/sm-filter
 FILTER_SRC = src/sm_common.cpp src/sm_process.cpp src/sm_filter.cpp \
              src/sm_hash.cpp src/sm_standalone.cpp
 
+GROUP_BIN = bin/sm-group
+GROUP_SRC = src/sm_group.cpp
+
 CFLAGS = $(FLAGS) -std=c++11 -DKMER_LEN=$(KMER_LEN)
 
-all: $(FILTER_BIN)
+all: $(FILTER_BIN) $(GROUP_BIN)
 
 $(FILTER_BIN): $(FILTER_SRC)
 	g++ $(CFLAGS) -Isrc -I$(GSH_INC) -I$(GPT_INC) -L$(GPT_LIB) \
@@ -26,5 +29,10 @@ $(FILTER_BIN): $(FILTER_SRC)
 		-o $(FILTER_BIN) $(FILTER_SRC) \
 		-lprofiler -lz -lpthread
 
+$(GROUP_BIN): $(GROUP_SRC)
+	g++ $(CFLAGS) -Isrc -I$(GSH_INC) -I$(BOOST_INC) -L$(BOOST_LIB) \
+		-o $(GROUP_BIN) $(GROUP_SRC) \
+		-lz -lboost_iostreams
+
 clean:
-	rm -f $(FILTER_BIN)
+	rm -f $(FILTER_BIN) $(GROUP_BIN)
