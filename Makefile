@@ -12,18 +12,19 @@ BOOST_LIB ?= /usr/lib
 MCQ_INC   ?= $(HOME)/src/concurrentqueue
 FOLLY_INC ?= $(HOME)/src/folly
 
-BINARY = bin/sm-standalone
-SOURCES = src/sm_*.cpp
+FILTER_BIN = bin/sm-filter
+FILTER_SRC = src/sm_common.cpp src/sm_process.cpp src/sm_filter.cpp \
+             src/sm_hash.cpp src/sm_standalone.cpp
 
 CFLAGS = $(FLAGS) -std=c++11 -DKMER_LEN=$(KMER_LEN)
 
-all: $(BINARY)
+all: $(FILTER_BIN)
 
-$(BINARY): $(SOURCES)
+$(FILTER_BIN): $(FILTER_SRC)
 	g++ $(CFLAGS) -Isrc -I$(GSH_INC) -I$(GPT_INC) -L$(GPT_LIB) \
 		-I$(BOOST_INC) -L$(BOOST_LIB) -I$(MCQ_INC) -I$(FOLLY_INC) \
-		-o $(BINARY) $(SOURCES) \
+		-o $(FILTER_BIN) $(FILTER_SRC) \
 		-lprofiler -lz -lpthread
 
 clean:
-	rm -f $(BINARY)
+	rm -f $(FILTER_BIN)
