@@ -18,7 +18,7 @@ using std::string;
 using namespace boost::iostreams;
 
 #define RLEN 100
-#define KLEN 28
+#define KLEN 30
 #define KMIN 0
 #define KMAX 100
 #define WMIN 7
@@ -112,7 +112,6 @@ void select_candidate(string sid, string seq, std::vector<int>& pos, int dir)
     // TODO: Switch to unordered_set instead of vector?
     std::vector<string> kmers;
     for (int p: pos) {
-        // cout << seq << " " << seq.size() << " " << p << "-" << p + KLEN << endl;
         kmers.push_back(seq.substr(p, KLEN));
     }
     l2k[sid][dir] = kmers;
@@ -210,7 +209,9 @@ int main(int argc, char *argv[])
     time = end - start;
     cerr << "Candidate selection time: " << time.count() << endl;
 
+    cout << "{";
     start = std::chrono::system_clock::now();
+    bool first_group = true;
     for (l2k_table::const_iterator it = l2k.begin(); it != l2k.end(); ++it) {
         string lid = it->first;
         index_count keep;
@@ -228,34 +229,60 @@ int main(int argc, char *argv[])
         populate_index(lid, it->second[1], 0, keep, drop);
         populate_index(lid, it->second[1], 1, keep, drop);
 
-        cout << "GROUP" << endl;
-        cout << " LID: " << lid << endl;
-        cout << " SEQ: " << i2r[lid][1].first << endl;
-        cout << " QUAL: " << i2r[lid][1].second << endl;
+        if (!first_group)
+            cout << ",";
+        first_group = false;
+
+        cout << "\"" << lid << "\":{";
+        cout << "\"lead\":["
+             << "\"" << lid << "\","
+             << "\"" << i2r[lid][1].first << "\","
+             << "\"" << i2r[lid][1].second << "\""
+             << "],";
 
         for (int i = 0; i < 2; i++) {
-            cout << " POS-" << i << ":";
-            for (int p: l2p[lid][i])
-                cout << " " << p;
-            cout << endl;
-            cout << " KMER-" << i << ":";
-            for (string kmer: it->second[i]) {
-                int kept = keep[i][kmer];
-                int dropped = drop[i][kmer];
-                cout << " " << kmer << "(" << kept << "," << dropped << ")";
+            cout << "\"pos-" << i << "\":[";
+            bool first_pos = true;
+            for (int p: l2p[lid][i]) {
+                if (!first_pos)
+                    cout << ",";
+                first_pos = false;
+                cout << p;
             }
-            cout << endl;
+            cout << "],";
+
+            cout << "\"kmers-" << i << "\":[";
+            bool first_kmer = true;
+            for (string kmer: it->second[i]) {
+                int kept_n = keep[0][kmer];
+                int dropped_n = drop[0][kmer];
+                int kept_t = keep[1][kmer];
+                int dropped_t = drop[1][kmer];
+                if (!first_kmer)
+                    cout << ",";
+                first_kmer = false;
+                cout << "[\"" << kmer << "\"," << kept_n << "," << kept_t << ","
+                     << dropped_n << "," << dropped_t << "]";
+            }
+            cout << "],";
         }
 
         for (int i = 0; i < 2; i++) {
-            cout << " READS-" << i << ":";
-            for (string read: l2i[lid][i])
-                cout << " " << read <<  "(" << i2r[read][i].first << "," << i2r[read][i].second << ")";
-            cout << endl;
+            bool first_read = true;
+            cout << "\"reads-" << i << "\":[";
+            for (string read: l2i[lid][i]) {
+                if (!first_read)
+                    cout << ",";
+                first_read = false;
+                cout << "[\"" << read << "\",\"" << i2r[read][i].first
+                     << "\",\"" << i2r[read][i].second << "\"]";
+            }
+            cout << ( i == 1 ? "]" : "]," );
         }
 
-        cout << endl;
+        cout << "}";
     }
+    cout << "}";
     end = std::chrono::system_clock::now();
     time = end - start;
     cerr << "Populate candidates time: " << time.count() << endl;
