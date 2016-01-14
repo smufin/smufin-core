@@ -1,3 +1,4 @@
+#include <getopt.h>
 #include <fstream>
 #include <iostream>
 #include <boost/iostreams/filtering_stream.hpp>
@@ -138,31 +139,59 @@ void populate_index(string& lid, const std::vector<string>& kmers, int kind,
     }
 }
 
+void display_usage()
+{
+    cout << "Usage: sm-group [OPTIONS] -i INPUT_PATH" << endl;
+    cout << "Options:" << endl;
+    cout << " -i, --input INPUT_PATH" << endl;
+    cout << " -h, --help" << endl;
+}
+
 int main(int argc, char *argv[])
 {
+    string input_path;
+
+    static const char *opts = "i:h";
+    static const struct option opts_long[] = {
+        { "input", required_argument, NULL, 'i' },
+        { "help", no_argument, NULL, 'h' },
+        { NULL, no_argument, NULL, 0 },
+    };
+
+    int opt = 0;
+    int opt_index;
+    while (opt != -1) {
+        opt = getopt_long(argc, argv, opts, opts_long, &opt_index);
+        switch (opt) {
+            case 'i': input_path = string(optarg); break;
+            case 'h':
+                display_usage();
+                return 0;
+        }
+    }
+
     std::ios_base::sync_with_stdio(false);
-    string path = "/mnt/fioa/jorda/input/792/output/p1-nolim/";
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
 
     i2r.resize(500000000);
     start = std::chrono::system_clock::now();
-    load_fq(path + "filter-nn.fastq.gz", 0);
-    load_fq(path + "filter-tn.fastq.gz", 1);
+    load_fq(input_path + "filter-nn.fastq.gz", 0);
+    load_fq(input_path + "filter-tn.fastq.gz", 1);
     end = std::chrono::system_clock::now();
     time = end - start;
     cerr << "FASTQ read time: " << time.count() << endl;
 
     k2i.resize(4000000);
     start = std::chrono::system_clock::now();
-    load_k2i(path + "filter-nn.k2i.gz", 0);
-    load_k2i(path + "filter-tn.k2i.gz", 1);
+    load_k2i(input_path + "filter-nn.k2i.gz", 0);
+    load_k2i(input_path + "filter-tn.k2i.gz", 1);
     end = std::chrono::system_clock::now();
     time = end - start;
     cerr << "K2I read time: " << time.count() << endl;
 
     start = std::chrono::system_clock::now();
-    std::ifstream in(path + "filter-tm.i2p");
+    std::ifstream in(input_path + "filter-tm.i2p");
     string sid;
     int flen, rlen;
     while (in >> sid >> flen >> rlen) {
