@@ -50,10 +50,10 @@ void process_load_file(int pid, int lid, string file)
         }
 
         int p = 0;
-        int n = 80;
+        int n = READ_LEN;
         char *ps;
 
-        while ((ps = (char*) memchr(&seq->seq.s[p], 'N', 80 - p)) != NULL) {
+        while ((ps = (char*) memchr(&seq->seq.s[p], 'N', READ_LEN - p)) != NULL) {
             n = ps - &seq->seq.s[p];
             if (n > 0) {
                 process_load_sub(pid, lid, &seq->seq.s[p], n, kind, bulks);
@@ -62,7 +62,7 @@ void process_load_file(int pid, int lid, string file)
             p++;
         }
 
-        n = 80 - p;
+        n = READ_LEN - p;
         if (n > 0) {
             process_load_sub(pid, lid, &seq->seq.s[p], n, kind, bulks);
         }

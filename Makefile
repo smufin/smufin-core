@@ -2,6 +2,7 @@
 # create your own customized make.conf instead, see make.conf.sample.
 include make.conf
 
+READ_LEN  ?= 100
 KMER_LEN  ?= 30
 
 GSH_INC   ?= /usr/include

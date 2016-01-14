@@ -37,10 +37,10 @@ void filter_file(int pid, int fid, string file)
             continue;
 
         int p = 0;
-        int n = 80;
+        int n = READ_LEN;
         char *ps;
 
-        while ((ps = (char*) memchr(&seq->seq.s[p], 'N', 80 - p)) != NULL) {
+        while ((ps = (char*) memchr(&seq->seq.s[p], 'N', READ_LEN - p)) != NULL) {
             n = ps - &seq->seq.s[p];
             if (n > 0) {
                 if (kind == CANCER_READ)
@@ -52,7 +52,7 @@ void filter_file(int pid, int fid, string file)
             p++;
         }
 
-        n = 80 - p;
+        n = READ_LEN - p;
         if (n > 0) {
             if (kind == CANCER_READ)
                 filter_cancer(pid, fid, seq, &seq->seq.s[p], n);

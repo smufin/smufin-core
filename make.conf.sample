@@ -1,7 +1,8 @@
 # Sample make.conf file to be configured depending on the environment in which
 # SMUFIN is executed.
 
-# Length of kmers; should be equal or smaller than 32.
+# Length of reads and kmers; kmers should be equal or smaller than 32.
+READ_LEN ?= 100
 KMER_LEN ?= 30
 
 # Google sparsehash and perftools: paths to headers/libraries.
