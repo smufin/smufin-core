@@ -20,9 +20,12 @@ FILTER_SRC = src/common.cpp src/process.cpp src/filter.cpp \
 GROUP_BIN = bin/sm-group
 GROUP_SRC = src/main_group.cpp
 
+JOINF_BIN = bin/sm-join-fq
+JOINF_SRC = src/main_join_fq.cpp
+
 CFLAGS = $(FLAGS) -std=c++11 -DREAD_LEN=$(READ_LEN) -DKMER_LEN=$(KMER_LEN)
 
-all: $(FILTER_BIN) $(GROUP_BIN)
+all: $(FILTER_BIN) $(GROUP_BIN) $(JOINF_BIN)
 
 $(FILTER_BIN): $(FILTER_SRC)
 	g++ $(CFLAGS) -Isrc -I$(GSH_INC) -I$(GPT_INC) -L$(GPT_LIB) \
@@ -34,6 +37,10 @@ $(GROUP_BIN): $(GROUP_SRC)
 	g++ $(CFLAGS) -Isrc -I$(GSH_INC) -I$(BOOST_INC) -L$(BOOST_LIB) \
 		-o $(GROUP_BIN) $(GROUP_SRC) \
 		-lz -lboost_iostreams
+
+$(JOINF_BIN): $(JOINF_SRC)
+	g++ $(CFLAGS) -Isrc -I$(GSH_INC) -I$(BOOST_INC) -L$(BOOST_LIB) \
+		-o $(JOINF_BIN) $(JOINF_SRC)
 
 clean:
 	rm -f $(FILTER_BIN) $(GROUP_BIN)
