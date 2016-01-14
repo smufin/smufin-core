@@ -1,5 +1,5 @@
-#ifndef __SM_STANDALONE_H__
-#define __SM_STANDALONE_H__
+#ifndef __SM_MAIN_FILTER_H__
+#define __SM_MAIN_FILTER_H__
 
 #include <fstream>
 

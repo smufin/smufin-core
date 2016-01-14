@@ -32,7 +32,7 @@ configured changing the `KMER_LEN` variable (defaults to 30).
 ## Run
 
  ```
- Usage: sm-standalone [OPTIONS] -i INPUT_FILE -m MAP_FILE
+ Usage: sm-filter [OPTIONS] -i INPUT_FILE -m MAP_FILE
  Options:
   -i, --input INPUT_FILE
   -m, --mapping MAP_FILE

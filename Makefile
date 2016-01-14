@@ -15,7 +15,7 @@ FOLLY_INC ?= $(HOME)/src/folly
 
 FILTER_BIN = bin/sm-filter
 FILTER_SRC = src/sm_common.cpp src/sm_process.cpp src/sm_filter.cpp \
-             src/sm_hash.cpp src/sm_standalone.cpp
+             src/sm_hash.cpp src/sm_main_filter.cpp
 
 GROUP_BIN = bin/sm-group
 GROUP_SRC = src/sm_group.cpp

@@ -1,5 +1,5 @@
 #include <sm_common.hpp>
-#include <sm_standalone.hpp>
+#include <sm_main_filter.hpp>
 #include <sm_process.hpp>
 #include <sm_filter.hpp>
 
