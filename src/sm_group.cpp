@@ -186,6 +186,9 @@ int main(int argc, char *argv[])
 
         read_value read = it->second[1];
 
+        if (read.first.size() == 0)
+            continue;
+
         if (read.first.find("N") != std::string::npos)
             continue;
 
