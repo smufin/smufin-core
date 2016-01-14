@@ -20,7 +20,7 @@ FILTER_SRC = src/common.cpp src/process.cpp src/filter.cpp \
 GROUP_BIN = bin/sm-group
 GROUP_SRC = src/main_group.cpp
 
-CFLAGS = $(FLAGS) -std=c++11 -DKMER_LEN=$(KMER_LEN)
+CFLAGS = $(FLAGS) -std=c++11 -DREAD_LEN=$(READ_LEN) -DKMER_LEN=$(KMER_LEN)
 
 all: $(FILTER_BIN) $(GROUP_BIN)
 
