@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 
 void display_usage()
 {
-    cout << "Usage: sm-standalone [OPTIONS] -i INPUT_FILE -m MAP_FILE" << endl;
+    cout << "Usage: sm-filter [OPTIONS] -i INPUT_FILE -m MAP_FILE" << endl;
     cout << "Options:" << endl;
     cout << " -i, --input INPUT_FILE" << endl;
     cout << " -m, --mapping MAP_FILE" << endl;
