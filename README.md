@@ -46,7 +46,7 @@ configured changing the `KMER_LEN` variable (defaults to 30).
 
 ## Maintainers
 
-Jordà Polo `<jorda.polo@bsc.es>`, 2015.
+Jordà Polo `<jorda.polo@bsc.es>`, 2015-2016.
 
 [smufin]: http://cg.bsc.es/smufin/ "SMUFIN"
 [boost]: http://www.boost.org/ "Boost"
