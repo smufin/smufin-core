@@ -1,7 +1,7 @@
 #ifndef __SM_COMMON_H__
 #define __SM_COMMON_H__
 
-#include <sm_hash.hpp>
+#include <hash.hpp>
 
 #include <mutex>
 #include <string>

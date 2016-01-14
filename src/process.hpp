@@ -1,7 +1,7 @@
 #ifndef __SM_PROCESS_H__
 #define __SM_PROCESS_H__
 
-#include <sm_common.hpp>
+#include <common.hpp>
 
 #include <zlib.h>
 #include <string>

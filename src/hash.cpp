@@ -1,4 +1,4 @@
-#include <sm_hash.hpp>
+#include <hash.hpp>
 
 uint64_t murmur_hash(const void * key, int len, unsigned int seed)
 {

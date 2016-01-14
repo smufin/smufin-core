@@ -1,4 +1,4 @@
-#include <sm_common.hpp>
+#include <common.hpp>
 
 // String to integer conversion. Parses a null-terminated string, interpreting
 // its content as an integral number in base 4.

@@ -1,5 +1,5 @@
-#include <sm_common.hpp>
-#include <sm_filter.hpp>
+#include <common.hpp>
+#include <filter.hpp>
 
 #include <string>
 #include <iostream>

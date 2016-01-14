@@ -1,5 +1,5 @@
-#include <sm_common.hpp>
-#include <sm_process.hpp>
+#include <common.hpp>
+#include <process.hpp>
 
 #include <string>
 #include <iostream>

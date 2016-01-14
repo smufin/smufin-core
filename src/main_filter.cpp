@@ -1,7 +1,7 @@
-#include <sm_common.hpp>
-#include <sm_main_filter.hpp>
-#include <sm_process.hpp>
-#include <sm_filter.hpp>
+#include <common.hpp>
+#include <main_filter.hpp>
+#include <process.hpp>
+#include <filter.hpp>
 
 #include <getopt.h>
 #include <string>

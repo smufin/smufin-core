@@ -14,11 +14,11 @@ MCQ_INC   ?= $(HOME)/src/concurrentqueue
 FOLLY_INC ?= $(HOME)/src/folly
 
 FILTER_BIN = bin/sm-filter
-FILTER_SRC = src/sm_common.cpp src/sm_process.cpp src/sm_filter.cpp \
-             src/sm_hash.cpp src/sm_main_filter.cpp
+FILTER_SRC = src/common.cpp src/process.cpp src/filter.cpp \
+             src/hash.cpp src/main_filter.cpp
 
 GROUP_BIN = bin/sm-group
-GROUP_SRC = src/sm_main_group.cpp
+GROUP_SRC = src/main_group.cpp
 
 CFLAGS = $(FLAGS) -std=c++11 -DKMER_LEN=$(KMER_LEN)
 
