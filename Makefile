@@ -43,4 +43,4 @@ $(JOINF_BIN): $(JOINF_SRC)
 		-o $(JOINF_BIN) $(JOINF_SRC)
 
 clean:
-	rm -f $(FILTER_BIN) $(GROUP_BIN)
+	rm -f $(FILTER_BIN) $(GROUP_BIN) $(JOINF_BIN)
