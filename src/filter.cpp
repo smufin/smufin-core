@@ -29,10 +29,17 @@ void filter_file(int pid, int fid, string file)
         kind = CANCER_READ;
 
     int len;
+    int nreads = 0;
     gzFile in = gzopen(file.c_str(), "rb");
+
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    std::chrono::duration<double> time;
+    start = std::chrono::system_clock::now();
 
     kseq_t *seq = kseq_init(in);
     while ((len = kseq_read(seq)) >= 0) {
+        nreads++;
+
         if (lq_count(seq->qual.s) > 8)
             continue;
 
@@ -58,6 +65,13 @@ void filter_file(int pid, int fid, string file)
                 filter_cancer(pid, fid, seq, &seq->seq.s[p], n);
             else
                 filter_normal(pid, fid, seq, &seq->seq.s[p], n);
+        }
+
+        if (nreads % 100000 == 0) {
+            end = std::chrono::system_clock::now();
+            time = end - start;
+            cout << nreads << " f-reads (" << time.count() << ")" << endl;
+            start = std::chrono::system_clock::now();
         }
     }
 

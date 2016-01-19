@@ -67,10 +67,10 @@ void process_load_file(int pid, int lid, string file)
             process_load_sub(pid, lid, &seq->seq.s[p], n, kind, bulks);
         }
 
-        if (nreads % 50000 == 0) {
+        if (nreads % 100000 == 0) {
             end = std::chrono::system_clock::now();
             time = end - start;
-            cout << nreads << " reads (" << time.count() << ")" << endl;
+            cout << nreads << " p-reads (" << time.count() << ")" << endl;
             start = std::chrono::system_clock::now();
         }
     }
