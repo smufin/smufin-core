@@ -48,6 +48,9 @@ l2p_table l2p;
 l2k_table l2k;
 l2i_table l2i;
 
+const char comp_code[] = "ab";
+const char kind_code[] = "nt";
+
 void rrevcomp(char read[])
 {
     const char comp[] = "-------------------------------------------"
@@ -270,7 +273,7 @@ int main(int argc, char *argv[])
              << "],";
 
         for (int i = 0; i < 2; i++) {
-            cout << "\"pos-" << i << "\":[";
+            cout << "\"pos-" << comp_code[i] << "\":[";
             bool first_pos = true;
             for (int p: l2p[lid][i]) {
                 if (!first_pos)
@@ -280,7 +283,7 @@ int main(int argc, char *argv[])
             }
             cout << "],";
 
-            cout << "\"kmers-" << i << "\":[";
+            cout << "\"kmers-" << comp_code[i] << "\":[";
             bool first_kmer = true;
             for (string kmer: it->second[i]) {
                 int kept_n = keep[0][kmer];
@@ -298,7 +301,7 @@ int main(int argc, char *argv[])
 
         for (int i = 0; i < 2; i++) {
             bool first_read = true;
-            cout << "\"reads-" << i << "\":[";
+            cout << "\"reads-" << kind_code[i] << "\":[";
             for (string read: l2i[lid][i]) {
                 if (!first_read)
                     cout << ",";
