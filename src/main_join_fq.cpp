@@ -49,10 +49,12 @@ void display_usage()
 int main(int argc, char *argv[])
 {
     string input_path;
+    string kind;
 
-    static const char *opts = "i:h";
+    static const char *opts = "i:k:h";
     static const struct option opts_long[] = {
         { "input", required_argument, NULL, 'i' },
+        { "kind", required_argument, NULL, 'k' },
         { "help", no_argument, NULL, 'h' },
         { NULL, no_argument, NULL, 0 },
     };
@@ -63,6 +65,7 @@ int main(int argc, char *argv[])
         opt = getopt_long(argc, argv, opts, opts_long, &opt_index);
         switch (opt) {
             case 'i': input_path = string(optarg); break;
+            case 'k': kind = string(optarg); break;
             case 'h':
                 display_usage();
                 return 0;
@@ -72,10 +75,11 @@ int main(int argc, char *argv[])
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
 
-    seen.resize(2000000000);
+    seen.resize(4000000000);
     for (int i = 0; i < 8; i++) {
         start = std::chrono::system_clock::now();
-        load_fq(input_path + "p" + std::to_string(i) + "/filter-tn.fastq");
+        load_fq(input_path + "p" + std::to_string(i) + "/filter-" + kind +
+                "n.fastq");
         end = std::chrono::system_clock::now();
         time = end - start;
         cerr << "FASTQ load time: " << time.count() << endl;
