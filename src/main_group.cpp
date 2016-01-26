@@ -1,14 +1,12 @@
 #include <getopt.h>
+#include <unistd.h>
 #include <fstream>
 #include <iostream>
-#include <boost/iostreams/filtering_stream.hpp>
-#include <boost/iostreams/filter/gzip.hpp>
 #include <string>
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
 #include <chrono>
-#include <zlib.h>
 #include <kseq.h>
 #include <google/sparse_hash_map>
 
@@ -16,7 +14,6 @@ using std::cout;
 using std::cerr;
 using std::endl;
 using std::string;
-using namespace boost::iostreams;
 
 #define RLEN 100
 #define KLEN 30
@@ -26,7 +23,7 @@ using namespace boost::iostreams;
 #define WLEN 10
 #define DROP 500
 
-KSEQ_INIT(gzFile, gzread);
+KSEQ_INIT(int, read);
 
 typedef std::pair<string, string> read_value;
 typedef std::array<read_value, 2> i2r_value;
@@ -67,8 +64,8 @@ void load_fq(string file, int kind)
 {
     int len;
     int nreads = 0;
-    gzFile in = gzopen(file.c_str(), "rb");
-    kseq_t *seq = kseq_init(in);
+    FILE* in = fopen(file.c_str(), "r");
+    kseq_t *seq = kseq_init(fileno(in));
     while ((len = kseq_read(seq)) >= 0) {
         nreads++;
         string id(seq->name.s);
@@ -77,19 +74,15 @@ void load_fq(string file, int kind)
         i2r[id][kind] = read_value(s, q);
     }
     kseq_destroy(seq);
-    gzclose(in);
+    fclose(in);
 }
 
 void load_k2i(string file, int kind)
 {
-    std::ifstream ifs(file, std::ios_base::in | std::ios_base::binary);
-    filtering_istream in;
-    in.push(gzip_decompressor());
-    in.push(ifs);
     string kmer;
     string sid;
-    while (in >> kmer) {
-        in >> sid;
+    std::ifstream in(file);
+    while (in >> kmer >> sid) {
         k2i[kmer][kind].push_back(sid);
     }
 }
@@ -177,18 +170,18 @@ int main(int argc, char *argv[])
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
 
-    i2r.resize(500000000);
+    i2r.resize(5000000000);
     start = std::chrono::system_clock::now();
-    load_fq(input_path + "filter-nn.fastq.gz", 0);
-    load_fq(input_path + "filter-tn.fastq.gz", 1);
+    load_fq(input_path + "filter-nn.fastq", 0);
+    load_fq(input_path + "filter-tn.fastq", 1);
     end = std::chrono::system_clock::now();
     time = end - start;
     cerr << "FASTQ read time: " << time.count() << endl;
 
-    k2i.resize(4000000);
+    k2i.resize(50000000);
     start = std::chrono::system_clock::now();
-    load_k2i(input_path + "filter-nn.k2i.gz", 0);
-    load_k2i(input_path + "filter-tn.k2i.gz", 1);
+    load_k2i(input_path + "filter-nn.k2i", 0);
+    load_k2i(input_path + "filter-tn.k2i", 1);
     end = std::chrono::system_clock::now();
     time = end - start;
     cerr << "K2I read time: " << time.count() << endl;
