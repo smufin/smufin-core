@@ -24,7 +24,7 @@ boost::atomic<bool> process_done(false);
 int map_l1[MAP_FILE_LEN] = {0};
 int map_l2[MAP_FILE_LEN] = {0};
 sm_table tables[NUM_STORERS];
-sm_cache caches[NUM_STORERS];
+sm_cache* caches[NUM_STORERS];
 folly::ProducerConsumerQueue<sm_bulk>* queues[NUM_STORERS][MAX_LOADERS];
 std::mutex filter_mutex[NUM_SETS];
 std::unordered_set<string> filter_reads[NUM_SETS];
@@ -39,8 +39,8 @@ int main(int argc, char *argv[])
     int pid = 0;
     int num_loaders = NUM_STORERS;
     int num_filters = NUM_STORERS;
-    bool disable_filter = false;
     bool disable_stats = false;
+    bool disable_filter = false;
 
     std::ios_base::sync_with_stdio(false);
 
@@ -51,8 +51,8 @@ int main(int argc, char *argv[])
         { "pid", required_argument, NULL, 'p' },
         { "loaders", required_argument, NULL, 'l' },
         { "filters", required_argument, NULL, 'f' },
-        { "disable-filter", no_argument, NULL, O_DISABLE_FILTER },
         { "disable-stats", no_argument, NULL, O_DISABLE_STATS },
+        { "disable-filter", no_argument, NULL, O_DISABLE_FILTER },
         { "help", no_argument, NULL, 'h' },
         { NULL, no_argument, NULL, 0 },
     };
@@ -67,8 +67,8 @@ int main(int argc, char *argv[])
             case 'p': pid = atoi(optarg); break;
             case 'l': num_loaders = atoi(optarg); break;
             case 'f': num_filters = atoi(optarg); break;
-            case O_DISABLE_FILTER: disable_filter = true; break;
             case O_DISABLE_STATS: disable_stats = true; break;
+            case O_DISABLE_FILTER: disable_filter = true; break;
             case 'h':
                 display_usage();
                 return 0;
@@ -101,8 +101,9 @@ int main(int argc, char *argv[])
     // Initialize tables and message queues.
     for (int i = 0; i < NUM_STORERS; i++) {
         tables[i].resize(TABLE_LEN);
-        caches[i].resize(CACHE_LEN);
-        caches[i].set_deleted_key((uint64_t) -1);
+        caches[i] = new sm_cache();
+        caches[i]->resize(CACHE_LEN);
+        caches[i]->set_deleted_key((uint64_t) -1);
         for (int j = 0; j < MAX_LOADERS; j++) {
             queues[i][j] = new folly::ProducerConsumerQueue<sm_bulk>(QMSG_LEN);
         }
@@ -111,13 +112,16 @@ int main(int argc, char *argv[])
     reset_input_queue(input_file);
     sm_process(pid, num_loaders, NUM_STORERS);
 
+    if (!disable_stats) {
+        sm_stats(NUM_STORERS);
+    }
+
+    // Deallocate unnecessary memory so as to allow larger filters.
+    free_caches();
+
     if (!disable_filter) {
         reset_input_queue(input_file);
         sm_filter(pid, num_filters);
-    }
-
-    if (!disable_stats) {
-        sm_stats(NUM_STORERS);
     }
 
     return 0;
@@ -146,6 +150,19 @@ void reset_input_queue(std::ifstream &input_file)
         input_queue.enqueue(line);
         input_count++;
     }
+}
+
+void free_caches()
+{
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    std::chrono::duration<double> time;
+    start = std::chrono::system_clock::now();
+    for (int i = 0; i < NUM_STORERS; i++) {
+        delete caches[i];
+    }
+    end = std::chrono::system_clock::now();
+    time = end - start;
+    cout << "Delete time: " << time.count() << endl;
 }
 
 void sm_process(int pid, int num_loaders, int num_storers)
@@ -273,10 +290,10 @@ void sm_stats(int num_storers)
         }
         cout << KMER_LEN << "-mers (part-t-" << i << "): " << part << endl;
         cout << KMER_LEN << "-mers (part-u-" << i << "): " << part_unique << endl;
-        cout << KMER_LEN << "-mers (part-c-" << i << "): " << caches[i].size() << endl;
+        cout << KMER_LEN << "-mers (part-c-" << i << "): " << caches[i]->size() << endl;
         subs += part;
         subs_unique += part_unique;
-        subs_cache += caches[i].size();
+        subs_cache += caches[i]->size();
     }
 
     end = std::chrono::system_clock::now();

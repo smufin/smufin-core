@@ -153,9 +153,6 @@ void process_incr(int sid, int num_loaders)
 
 inline void process_incr_key(int sid, sm_key key, sm_value_offset off)
 {
-    sm_value value;
-    uint32_t b = 0;
-
     // Use sm_cache to hold keys with a single appearance; as soon as a key in
     // increased more than once, it is placed into sm_table. The steps are as
     // follows:
@@ -166,21 +163,24 @@ inline void process_incr_key(int sid, sm_key key, sm_value_offset off)
     //     - Key doesn't exist in table: insert key and cache in table.
     //     - Key exists in table: update entry if there's no overflow.
 
-    sm_cache::const_iterator cit = caches[sid].find(key);
-    if (cit == caches[sid].end()) {
-        caches[sid][key] = (off.first << 6) | (off.last << 4) | (off.kind << 2);
+    sm_cache::const_iterator cit = caches[sid]->find(key);
+    if (cit == caches[sid]->end()) {
+        uint8_t val = (off.first << 6) | (off.last << 4) | (off.kind << 2);
+        caches[sid]->insert(std::pair<sm_key, uint8_t>(key, val));
         return;
     }
 
     sm_table::const_iterator it = tables[sid].find(key);
     if (it == tables[sid].end()) {
-        uint8_t cache_value = caches[sid][key];
+        uint8_t cache_value = cit->second;
         sm_value_offset coff;
         coff.first = cache_value >> 6;
         coff.last = (cache_value >> 4) & 0x03;
         coff.kind = (sm_read_kind) ((cache_value >> 2) & 0x03);
-        tables[sid][key].v[coff.first][coff.last][coff.kind] = 1;
-        tables[sid][key].v[off.first][off.last][off.kind]++;
+        sm_value val;
+        val.v[coff.first][coff.last][coff.kind] = 1;
+        val.v[off.first][off.last][off.kind]++;
+        tables[sid].insert(std::pair<sm_key, sm_value>(key, val));
     } else {
         uint32_t inc = it->second.v[off.first][off.last][off.kind] + 1;
         uint16_t over = inc >> 16;

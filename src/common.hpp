@@ -118,7 +118,7 @@ extern int map_l2[MAP_FILE_LEN];
 
 // Hash tables that hold data in memory, one per storer/consumer thread.
 extern sm_table tables[NUM_STORERS];
-extern sm_cache caches[NUM_STORERS];
+extern sm_cache* caches[NUM_STORERS];
 
 // Message queues between loader threads and storer threads. One SPSC queue
 // per loader/storer pair.
@@ -138,7 +138,7 @@ extern std::unordered_map<std::string, std::pair<std::vector<uint8_t>, std::vect
 extern std::unordered_map<std::string, std::unordered_set<std::string>> filter_k2i[NUM_SETS];
 
 enum noshort_options {
-    O_DISABLE_FILTER, O_DISABLE_STATS
+    O_DISABLE_STATS, O_DISABLE_FILTER
 };
 
 uint64_t strtob4(const char *str);
