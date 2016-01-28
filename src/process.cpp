@@ -70,7 +70,7 @@ void process_load_file(int pid, int lid, string file)
         if (nreads % 100000 == 0) {
             end = std::chrono::system_clock::now();
             time = end - start;
-            cout << nreads << " p-reads (" << time.count() << ")" << endl;
+            cout << "P: " << lid << " " << time.count() << endl;
             start = std::chrono::system_clock::now();
         }
     }

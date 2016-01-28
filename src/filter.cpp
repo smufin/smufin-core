@@ -70,7 +70,7 @@ void filter_file(int pid, int fid, string file)
         if (nreads % 100000 == 0) {
             end = std::chrono::system_clock::now();
             time = end - start;
-            cout << nreads << " f-reads (" << time.count() << ")" << endl;
+            cout << "F: " << fid << " " << time.count() << endl;
             start = std::chrono::system_clock::now();
         }
     }
