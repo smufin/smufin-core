@@ -159,12 +159,23 @@ void free_caches()
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
     start = std::chrono::system_clock::now();
-    for (int i = 0; i < NUM_STORERS; i++) {
-        delete caches[i];
-    }
+
+    std::vector<std::thread> deallocs;
+    for (int i = 0; i < NUM_STORERS; i++)
+        deallocs.push_back(std::thread(free_cache, i));
+    cout << "Spawned " << deallocs.size() << " dealloc threads" << endl;
+
+    for (auto& dealloc: deallocs)
+        dealloc.join();
+
     end = std::chrono::system_clock::now();
     time = end - start;
-    cout << "Delete time: " << time.count() << endl;
+    cout << "Dealloc time: " << time.count() << endl;
+}
+
+void free_cache(int cid)
+{
+    delete caches[cid];
 }
 
 void sm_process(int pid, int num_loaders, int num_storers)
