@@ -170,8 +170,8 @@ inline void process_incr_key(int sid, sm_key key, sm_value_offset off)
         return;
     }
 
-    sm_table::const_iterator it = tables[sid].find(key);
-    if (it == tables[sid].end()) {
+    sm_table::const_iterator it = tables[sid]->find(key);
+    if (it == tables[sid]->end()) {
         uint8_t cache_value = cit->second;
         sm_value_offset coff;
         coff.first = cache_value >> 6;
@@ -180,12 +180,12 @@ inline void process_incr_key(int sid, sm_key key, sm_value_offset off)
         sm_value val;
         val.v[coff.first][coff.last][coff.kind] = 1;
         val.v[off.first][off.last][off.kind]++;
-        tables[sid].insert(std::pair<sm_key, sm_value>(key, val));
+        tables[sid]->insert(std::pair<sm_key, sm_value>(key, val));
     } else {
         uint32_t inc = it->second.v[off.first][off.last][off.kind] + 1;
         uint16_t over = inc >> 16;
         uint16_t count = inc & 0x0000FFFF;
         if (over == 0)
-            tables[sid][key].v[off.first][off.last][off.kind] = count;
+            (*tables[sid])[key].v[off.first][off.last][off.kind] = count;
     }
 }

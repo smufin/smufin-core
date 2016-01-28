@@ -23,14 +23,15 @@ boost::atomic_int input_count(0);
 boost::atomic<bool> process_done(false);
 int map_l1[MAP_FILE_LEN] = {0};
 int map_l2[MAP_FILE_LEN] = {0};
-sm_table tables[NUM_STORERS];
+std::vector<string> set_names = { "nn", "tm", "tn" };
+
+sm_table* tables[NUM_STORERS];
 sm_cache* caches[NUM_STORERS];
 folly::ProducerConsumerQueue<sm_bulk>* queues[NUM_STORERS][MAX_LOADERS];
 std::mutex filter_mutex[NUM_SETS];
 std::unordered_set<string> filter_reads[NUM_SETS];
 std::unordered_map<string, std::pair<std::vector<uint8_t>, std::vector<uint8_t>>> filter_i2p[NUM_SETS];
 std::unordered_map<string, std::unordered_set<string>> filter_k2i[NUM_SETS];
-std::vector<string> set_names = { "nn", "tm", "tn" };
 
 int main(int argc, char *argv[])
 {
@@ -100,7 +101,8 @@ int main(int argc, char *argv[])
 
     // Initialize tables and message queues.
     for (int i = 0; i < NUM_STORERS; i++) {
-        tables[i].resize(TABLE_LEN);
+        tables[i] = new sm_table();
+        tables[i]->resize(TABLE_LEN);
         caches[i] = new sm_cache();
         caches[i]->resize(CACHE_LEN);
         caches[i]->set_deleted_key((uint64_t) -1);
@@ -271,8 +273,8 @@ void sm_stats(int num_storers)
     for (int i = 0; i < num_storers; i++) {
         uint64_t part = 0;
         uint64_t part_unique = 0;
-        for (sm_table::const_iterator it = tables[i].begin();
-             it != tables[i].end(); ++it) {
+        for (sm_table::const_iterator it = tables[i]->begin();
+             it != tables[i]->end(); ++it) {
             for (int f = 0; f < 4; f++) {
                 for (int l = 0; l < 4; l++) {
                     uint16_t nc = it->second.v[f][l][NORMAL_READ];

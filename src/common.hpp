@@ -115,7 +115,7 @@ extern int map_l1[MAP_FILE_LEN];
 extern int map_l2[MAP_FILE_LEN];
 
 // Hash tables that hold data in memory, one per storer/consumer thread.
-extern sm_table tables[NUM_STORERS];
+extern sm_table* tables[NUM_STORERS];
 extern sm_cache* caches[NUM_STORERS];
 
 // Message queues between loader threads and storer threads. One SPSC queue

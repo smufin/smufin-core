@@ -131,8 +131,8 @@ int get_value(int pid, int fid, char kmer[], sm_table::const_iterator *it)
     int sid = map_l2[m];
     sm_key key = strtob4(&kmer[1]);
 
-    *it = tables[sid].find(key);
-    if (*it == tables[sid].end())
+    *it = tables[sid]->find(key);
+    if (*it == tables[sid]->end())
         return -1;
 
     kmer[KMER_LEN - 1] = last;
