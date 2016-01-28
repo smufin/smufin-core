@@ -33,7 +33,6 @@
 
 #define IMER_LEN (KMER_LEN - 2)
 
-#define ZBUF_LEN 2592
 #define BULK_LEN 128
 #define QMSG_LEN 512
 
