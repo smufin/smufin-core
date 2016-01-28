@@ -99,17 +99,7 @@ int main(int argc, char *argv[])
         map_l2[m] = atoi(columns[2].c_str());
     }
 
-    // Initialize tables and message queues.
-    for (int i = 0; i < NUM_STORERS; i++) {
-        tables[i] = new sm_table();
-        tables[i]->resize(TABLE_LEN);
-        caches[i] = new sm_cache();
-        caches[i]->resize(CACHE_LEN);
-        caches[i]->set_deleted_key((uint64_t) -1);
-        for (int j = 0; j < MAX_LOADERS; j++) {
-            queues[i][j] = new folly::ProducerConsumerQueue<sm_bulk>(QMSG_LEN);
-        }
-    }
+    init_tables();
 
     reset_input_queue(input_file);
     sm_process(pid, num_loaders, NUM_STORERS);
@@ -152,6 +142,29 @@ void reset_input_queue(std::ifstream &input_file)
         input_queue.enqueue(line);
         input_count++;
     }
+}
+
+void init_tables()
+{
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    std::chrono::duration<double> time;
+    start = std::chrono::system_clock::now();
+
+    // Initialize tables and message queues.
+    for (int i = 0; i < NUM_STORERS; i++) {
+        tables[i] = new sm_table();
+        tables[i]->resize(TABLE_LEN);
+        caches[i] = new sm_cache();
+        caches[i]->resize(CACHE_LEN);
+        caches[i]->set_deleted_key((uint64_t) -1);
+        for (int j = 0; j < MAX_LOADERS; j++) {
+            queues[i][j] = new folly::ProducerConsumerQueue<sm_bulk>(QMSG_LEN);
+        }
+    }
+
+    end = std::chrono::system_clock::now();
+    time = end - start;
+    cout << "Init time: " << time.count() << endl;
 }
 
 void free_caches()
