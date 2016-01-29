@@ -31,6 +31,9 @@
 #define KMER_LEN 30
 #endif
 
+#define MIN_TC 4
+#define MAX_NC 1
+
 #define IMER_LEN (KMER_LEN - 2)
 
 #define BULK_LEN 128
