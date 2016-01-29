@@ -354,6 +354,8 @@ void sm_write_k2i(int set)
     ofs.open("filter-" + set_names[set] + ".k2i");
     for (std::unordered_map<string, std::unordered_set<string>>::const_iterator it =
          filter_k2i[set].begin(); it != filter_k2i[set].end(); ++it) {
+        if (it->second.size() > MAX_K2I_READS)
+            continue;
         for (std::unordered_set<string>::const_iterator sit = it->second.begin();
              sit != it->second.end(); ++sit) {
             ofs << it->first << " " << *sit << endl;

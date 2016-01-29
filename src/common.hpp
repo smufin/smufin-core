@@ -33,6 +33,7 @@
 
 #define MIN_TC 4
 #define MAX_NC 1
+#define MAX_K2I_READS 2000
 
 #define IMER_LEN (KMER_LEN - 2)
 
