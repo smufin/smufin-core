@@ -16,10 +16,10 @@ uint64_t strtob4(const char *str)
 
 // Low-quality phred score counter. Returns number of bases with a quality
 // score below 20.
-int lq_count(const char *str)
+int lq_count(const char *str, int len)
 {
     int lq = 0;
-    for (int i = 0; i < READ_LEN; i++) {
+    for (int i = 0; i < len; i++) {
         int phred = str[i] - 33;
         if (phred < 20)
             lq++;

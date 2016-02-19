@@ -23,10 +23,6 @@
 #define MAP_LEN 4
 #define MAP_FILE_LEN 256 // (BASE_LEN ^ MAP_LEN)
 
-#ifndef READ_LEN
-#define READ_LEN 100
-#endif
-
 #ifndef KMER_LEN
 #define KMER_LEN 30
 #endif
@@ -144,7 +140,7 @@ enum noshort_options {
 };
 
 uint64_t strtob4(const char *str);
-int lq_count(const char *str);
+int lq_count(const char *str, int len);
 void krevcomp(char s[]);
 
 #endif

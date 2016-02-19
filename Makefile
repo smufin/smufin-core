@@ -2,7 +2,6 @@
 # create your own customized make.conf instead, see make.conf.sample.
 include make.conf
 
-READ_LEN  ?= 100
 KMER_LEN  ?= 30
 
 GSH_INC   ?= /usr/include
@@ -23,7 +22,7 @@ GROUP_SRC = src/main_group.cpp
 JOINF_BIN = bin/sm-join-fq
 JOINF_SRC = src/main_join_fq.cpp
 
-CFLAGS = $(FLAGS) -std=c++11 -DREAD_LEN=$(READ_LEN) -DKMER_LEN=$(KMER_LEN)
+CFLAGS = $(FLAGS) -std=c++11 -DKMER_LEN=$(KMER_LEN)
 
 all: $(FILTER_BIN) $(GROUP_BIN) $(JOINF_BIN)
 

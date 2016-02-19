@@ -45,15 +45,16 @@ void process_load_file(int pid, int lid, string file)
     while ((len = kseq_read(seq)) >= 0) {
         nreads++;
 
-        if (lq_count(seq->qual.s) > 8) {
+        if (lq_count(seq->qual.s, seq->qual.l) > 8) {
             continue;
         }
 
         int p = 0;
-        int n = READ_LEN;
+        int l = seq->seq.l;
+        int n = seq->seq.l;
         char *ps;
 
-        while ((ps = (char*) memchr(&seq->seq.s[p], 'N', READ_LEN - p)) != NULL) {
+        while ((ps = (char*) memchr(&seq->seq.s[p], 'N', l - p)) != NULL) {
             n = ps - &seq->seq.s[p];
             if (n > 0) {
                 process_load_sub(pid, lid, &seq->seq.s[p], n, kind, bulks);
@@ -62,7 +63,7 @@ void process_load_file(int pid, int lid, string file)
             p++;
         }
 
-        n = READ_LEN - p;
+        n = l - p;
         if (n > 0) {
             process_load_sub(pid, lid, &seq->seq.s[p], n, kind, bulks);
         }
