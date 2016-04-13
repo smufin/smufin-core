@@ -45,9 +45,8 @@ void process_load_file(int pid, int lid, string file)
     while ((len = kseq_read(seq)) >= 0) {
         nreads++;
 
-        if (lq_count(seq->qual.s, seq->qual.l) > 8) {
+        if (lq_count(seq->qual.s, seq->qual.l) > len/10)
             continue;
-        }
 
         int p = 0;
         int l = seq->seq.l;
