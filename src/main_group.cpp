@@ -15,7 +15,7 @@ using std::cerr;
 using std::endl;
 using std::string;
 
-#define RLEN 100
+#define RMAX 100
 #define KLEN 30
 #define KMIN 0
 #define KMAX 100
@@ -48,12 +48,12 @@ l2i_table l2i;
 const char comp_code[] = "ab";
 const char kind_code[] = "nt";
 
-void rrevcomp(char read[])
+void rrevcomp(char read[], int len)
 {
     const char comp[] = "-------------------------------------------"
                         "----------------------T-G---C------N-----A";
     int c, i, j;
-    for (i = 0, j = RLEN - 1; i < j; i++, j--) {
+    for (i = 0, j = len - 1; i < j; i++, j--) {
         c = read[i];
         read[i] = comp[read[j]];
         read[j] = comp[c];
@@ -195,26 +195,27 @@ int main(int argc, char *argv[])
         std::vector<int> fpos;
         std::vector<int> rpos;
 
+        i2r_table::const_iterator it = i2r.find(sid);
+        if (it == i2r.end())
+            continue;
+
+        read_value read = it->second[1];
+        int read_length = read.first.size();
+
+        if (read_length == 0)
+            continue;
+
+        if (read.first.find("N") != std::string::npos)
+            continue;
+
         for (int i = 0; i < flen; i++) {
             in >> pos;
             fpos.push_back(pos);
         }
         for (int i = 0; i < rlen; i++) {
             in >> pos;
-            rpos.push_back(RLEN - KLEN - pos);
+            rpos.push_back(read_length - KLEN - pos);
         }
-
-        i2r_table::const_iterator it = i2r.find(sid);
-        if (it == i2r.end())
-            continue;
-
-        read_value read = it->second[1];
-
-        if (read.first.size() == 0)
-            continue;
-
-        if (read.first.find("N") != std::string::npos)
-            continue;
 
         if (flen >= KMIN && flen <= KMAX && rlen > 0 && match_window(fpos)) {
             select_candidate(sid, read.first, fpos, 0);
@@ -223,10 +224,10 @@ int main(int argc, char *argv[])
         std::reverse(rpos.begin(), rpos.end());
 
         if (rlen >= KMIN && rlen <= KMAX && flen > 0 && match_window(rpos)) {
-            char buf[RLEN + 1];
+            char buf[RMAX + 1];
             copy(read.first.begin(), read.first.end(), buf);
-            buf[RLEN] = '\0';
-            rrevcomp(buf);
+            buf[read_length] = '\0';
+            rrevcomp(buf, read_length);
             select_candidate(sid, string(buf), rpos, 1);
         }
     }
