@@ -15,8 +15,11 @@ using std::cerr;
 using std::endl;
 using std::string;
 
+#ifndef KMER_LEN
+#define KMER_LEN 30
+#endif
+
 #define RMAX 100
-#define KLEN 30
 #define KMIN 0
 #define KMAX 100
 #define WMIN 7
@@ -109,7 +112,7 @@ void select_candidate(string sid, string seq, std::vector<int>& pos, int dir)
     // TODO: Switch to unordered_set instead of vector?
     std::vector<string> kmers;
     for (int p: pos) {
-        kmers.push_back(seq.substr(p, KLEN));
+        kmers.push_back(seq.substr(p, KMER_LEN));
     }
     l2k[sid][dir] = kmers;
 }
@@ -214,7 +217,7 @@ int main(int argc, char *argv[])
         }
         for (int i = 0; i < rlen; i++) {
             in >> pos;
-            rpos.push_back(read_length - KLEN - pos);
+            rpos.push_back(read_length - KMER_LEN - pos);
         }
 
         if (flen >= KMIN && flen <= KMAX && rlen > 0 && match_window(fpos)) {
