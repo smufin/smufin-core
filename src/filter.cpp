@@ -186,7 +186,7 @@ void filter_kmer(kseq_t *seq, int pos, bool rev, char kmer[], uint32_t nc,
                  uint32_t tc, uint32_t nsum, uint32_t tsum, sm_set set)
 {
     if (tc >= MIN_TC && nc <= MAX_NC) {
-        char buf[256] = {0};
+        char buf[512] = {0};
         sprintf(buf, "@%s\n%s\n+\n%s", seq->name.s, seq->seq.s, seq->qual.s);
         filter_mutex[set].lock();
         filter_reads[set].insert(buf);
