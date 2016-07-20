@@ -4,6 +4,9 @@ include make.conf
 
 KMER_LEN  ?= 30
 
+MIN_TC ?= 4
+MAX_NC ?= 1
+
 WMIN ?= 7
 WLEN ?= 10
 
@@ -26,6 +29,7 @@ JOINF_BIN = bin/sm-join-fq
 JOINF_SRC = src/main_join_fq.cpp
 
 CFLAGS = $(FLAGS) -std=c++11 -DKMER_LEN=$(KMER_LEN) \
+         -DMIN_TC=$(MIN_TC) -DMAX_NC=$(MAX_NC) \
          -DWMIN=$(WMIN) -DWLEN=$(WLEN)
 
 all: $(FILTER_BIN) $(GROUP_BIN) $(JOINF_BIN)
