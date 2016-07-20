@@ -261,15 +261,15 @@ void sm_filter(int pid, int num_filters)
 
     std::vector<std::thread> fastqs;
     for (int i = 0; i < NUM_SETS; i++)
-        fastqs.push_back(std::thread(sm_write_fastq, i));
+        fastqs.push_back(std::thread(sm_write_fastq, i, pid));
     cout << "Spawned " << fastqs.size() << " FASTQ writer threads" << endl;
 
     std::vector<std::thread> k2is;
     for (int i = 0; i < NUM_SETS; i++)
-        k2is.push_back(std::thread(sm_write_k2i, i));
+        k2is.push_back(std::thread(sm_write_k2i, i, pid));
     cout << "Spawned " << fastqs.size() << " K2I writer threads" << endl;
 
-    std::thread i2p = std::thread(sm_write_i2p, TM);
+    std::thread i2p = std::thread(sm_write_i2p, TM, pid);
     cout << "Spawned I2P writer thread" << endl;
     i2p.join();
 
@@ -337,10 +337,10 @@ void sm_stats(int num_storers)
     cout << "Iteration time:   " << time.count() << endl;
 }
 
-void sm_write_fastq(int set)
+void sm_write_fastq(int set, int pid)
 {
     std::ofstream ofs;
-    ofs.open("filter-" + set_names[set] + ".fastq");
+    ofs.open("filter-" + set_names[set] + "." + std::to_string(pid) + ".fastq");
     for (std::unordered_set<string>::const_iterator it =
          filter_reads[set].begin(); it != filter_reads[set].end(); ++it) {
         ofs << *it << endl;
@@ -348,10 +348,10 @@ void sm_write_fastq(int set)
     ofs.close();
 }
 
-void sm_write_k2i(int set)
+void sm_write_k2i(int set, int pid)
 {
     std::ofstream ofs;
-    ofs.open("filter-" + set_names[set] + ".k2i");
+    ofs.open("filter-" + set_names[set] + "." + std::to_string(pid) + ".k2i");
     for (std::unordered_map<string, std::unordered_set<string>>::const_iterator it =
          filter_k2i[set].begin(); it != filter_k2i[set].end(); ++it) {
         if (it->second.size() > MAX_K2I_READS)
@@ -366,10 +366,10 @@ void sm_write_k2i(int set)
     ofs.close();
 }
 
-void sm_write_i2p(int set)
+void sm_write_i2p(int set, int pid)
 {
     std::ofstream ofs;
-    ofs.open("filter-" + set_names[set] + ".i2p");
+    ofs.open("filter-" + set_names[set] + "." + std::to_string(pid) + ".i2p");
     for (std::unordered_map<string, std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>::const_iterator it =
          filter_i2p[set].begin(); it != filter_i2p[set].end(); ++it) {
         ofs << it->first << " " << it->second.first.size() << " " << it->second.second.size();

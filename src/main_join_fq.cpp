@@ -76,10 +76,10 @@ int main(int argc, char *argv[])
     std::chrono::duration<double> time;
 
     seen.resize(4000000000);
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 16; i++) {
         start = std::chrono::system_clock::now();
-        load_fq(input_path + "p" + std::to_string(i) + "/filter-" + kind +
-                "n.fastq");
+        load_fq(input_path + "/filter-" + kind + "n." + std::to_string(i) +
+                ".fastq");
         end = std::chrono::system_clock::now();
         time = end - start;
         cerr << "FASTQ load time: " << time.count() << endl;

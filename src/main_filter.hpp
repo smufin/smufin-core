@@ -15,8 +15,8 @@ void sm_process(int pid, int num_loaders, int num_storers);
 void sm_filter(int pid, int num_filters);
 void sm_stats(int num_storers);
 
-void sm_write_fastq(int set);
-void sm_write_k2i(int set);
-void sm_write_i2p(int set);
+void sm_write_fastq(int set, int pid);
+void sm_write_k2i(int set, int pid);
+void sm_write_i2p(int set, int pid);
 
 #endif
