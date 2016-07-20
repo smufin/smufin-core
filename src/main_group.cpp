@@ -1,3 +1,5 @@
+#include <common.hpp>
+
 #include <getopt.h>
 #include <unistd.h>
 #include <fstream>
@@ -15,24 +17,19 @@ using std::cerr;
 using std::endl;
 using std::string;
 
-#ifndef KMER_LEN
-#define KMER_LEN 30
-#endif
+KSEQ_INIT(int, read);
 
 #define RMAX 100
 #define KMIN 0
 #define KMAX 100
-#define WMIN 7
-#define WLEN 10
+
 #define DROP 500
 
-KSEQ_INIT(int, read);
-
-typedef std::pair<string, string> read_value;
+typedef string read_value;
 typedef std::array<read_value, 2> i2r_value;
 typedef google::sparse_hash_map<string, i2r_value> i2r_table;
 typedef std::array<std::vector<string>, 2> k2i_value;
-typedef google::sparse_hash_map<string, k2i_value> k2i_table;
+typedef google::sparse_hash_map<uint64_t, k2i_value> k2i_table;
 typedef std::array<std::vector<int>, 2> pos_value;
 typedef google::sparse_hash_map<string, pos_value> l2p_table;
 typedef std::array<std::vector<string>, 2> kmer_value;
@@ -66,16 +63,15 @@ void rrevcomp(char read[], int len)
 void load_fq(string file, int kind)
 {
     int len;
-    int nreads = 0;
+
     FILE* in = fopen(file.c_str(), "r");
     kseq_t *seq = kseq_init(fileno(in));
     while ((len = kseq_read(seq)) >= 0) {
-        nreads++;
         string id(seq->name.s);
         string s(seq->seq.s);
-        string q(seq->qual.s);
-        i2r[id][kind] = read_value(s, q);
+        i2r[id][kind] = s;
     }
+
     kseq_destroy(seq);
     fclose(in);
 }
@@ -83,10 +79,18 @@ void load_fq(string file, int kind)
 void load_k2i(string file, int kind)
 {
     string kmer;
-    string sid;
+    int l;
     std::ifstream in(file);
-    while (in >> kmer >> sid) {
-        k2i[kmer][kind].push_back(sid);
+
+    while (in >> kmer >> l) {
+        string sid;
+
+        uint64_t key = strtob4(kmer.c_str());
+
+        for (int i = 0; i < l; i++) {
+            in >> sid;
+            k2i[key][kind].push_back(sid);
+        }
     }
 }
 
@@ -121,7 +125,8 @@ void populate_index(string& lid, const std::vector<string>& kmers, int kind,
                     index_count& keep, index_count& drop)
 {
     for (string kmer: kmers) {
-        k2i_table::const_iterator kit = k2i.find(kmer);
+        uint64_t key = strtob4(kmer.c_str());
+        k2i_table::const_iterator kit = k2i.find(key);
         if (kit == k2i.end()) {
             continue;
         }
@@ -173,21 +178,21 @@ int main(int argc, char *argv[])
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
 
-    i2r.resize(5000000000);
-    start = std::chrono::system_clock::now();
-    load_fq(input_path + "filter-nn.fastq", 0);
-    load_fq(input_path + "filter-tn.fastq", 1);
-    end = std::chrono::system_clock::now();
-    time = end - start;
-    cerr << "FASTQ read time: " << time.count() << endl;
-
-    k2i.resize(50000000);
+    k2i.resize(10000000000);
     start = std::chrono::system_clock::now();
     load_k2i(input_path + "filter-nn.k2i", 0);
     load_k2i(input_path + "filter-tn.k2i", 1);
     end = std::chrono::system_clock::now();
     time = end - start;
     cerr << "K2I read time: " << time.count() << endl;
+
+    i2r.resize(10000000000);
+    start = std::chrono::system_clock::now();
+    load_fq(input_path + "filter-nn.fastq", 0);
+    load_fq(input_path + "filter-tn.fastq", 1);
+    end = std::chrono::system_clock::now();
+    time = end - start;
+    cerr << "FASTQ read time: " << time.count() << endl;
 
     start = std::chrono::system_clock::now();
     std::ifstream in(input_path + "filter-tm.i2p");
@@ -203,12 +208,12 @@ int main(int argc, char *argv[])
             continue;
 
         read_value read = it->second[1];
-        int read_length = read.first.size();
+        int read_length = read.size();
 
         if (read_length == 0)
             continue;
 
-        if (read.first.find("N") != std::string::npos)
+        if (read.find("N") != std::string::npos)
             continue;
 
         for (int i = 0; i < flen; i++) {
@@ -221,14 +226,14 @@ int main(int argc, char *argv[])
         }
 
         if (flen >= KMIN && flen <= KMAX && rlen > 0 && match_window(fpos)) {
-            select_candidate(sid, read.first, fpos, 0);
+            select_candidate(sid, read, fpos, 0);
         }
 
         std::reverse(rpos.begin(), rpos.end());
 
         if (rlen >= KMIN && rlen <= KMAX && flen > 0 && match_window(rpos)) {
             char buf[RMAX + 1];
-            copy(read.first.begin(), read.first.end(), buf);
+            copy(read.begin(), read.end(), buf);
             buf[read_length] = '\0';
             rrevcomp(buf, read_length);
             select_candidate(sid, string(buf), rpos, 1);
@@ -265,8 +270,7 @@ int main(int argc, char *argv[])
         cout << "\"" << lid << "\":{";
         cout << "\"lead\":["
              << "\"" << lid << "\","
-             << "\"" << i2r[lid][1].first << "\","
-             << "\"" << i2r[lid][1].second << "\""
+             << "\"" << i2r[lid][1] << "\""
              << "],";
 
         for (int i = 0; i < 2; i++) {
@@ -303,8 +307,7 @@ int main(int argc, char *argv[])
                 if (!first_read)
                     cout << ",";
                 first_read = false;
-                cout << "[\"" << read << "\",\"" << i2r[read][i].first
-                     << "\",\"" << i2r[read][i].second << "\"]";
+                cout << "[\"" << read << "\",\"" << i2r[read][i] << "\"]";
             }
             cout << ( i == 1 ? "]" : "]," );
         }

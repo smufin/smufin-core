@@ -27,6 +27,14 @@
 #define KMER_LEN 30
 #endif
 
+#ifndef WMIN
+#define WMIN 7
+#endif
+
+#ifndef WLEN
+#define WLEN 10
+#endif
+
 #define MIN_TC 4
 #define MAX_NC 1
 #define MAX_K2I_READS 2000

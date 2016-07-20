@@ -4,6 +4,9 @@ include make.conf
 
 KMER_LEN  ?= 30
 
+WMIN ?= 7
+WLEN ?= 10
+
 GSH_INC   ?= /usr/include
 GPT_INC   ?= /usr/include
 GPT_LIB   ?= /usr/lib
@@ -17,12 +20,13 @@ FILTER_SRC = src/common.cpp src/process.cpp src/filter.cpp \
              src/hash.cpp src/main_filter.cpp
 
 GROUP_BIN = bin/sm-group
-GROUP_SRC = src/main_group.cpp
+GROUP_SRC = src/common.cpp src/main_group.cpp
 
 JOINF_BIN = bin/sm-join-fq
 JOINF_SRC = src/main_join_fq.cpp
 
-CFLAGS = $(FLAGS) -std=c++11 -DKMER_LEN=$(KMER_LEN)
+CFLAGS = $(FLAGS) -std=c++11 -DKMER_LEN=$(KMER_LEN) \
+         -DWMIN=$(WMIN) -DWLEN=$(WLEN)
 
 all: $(FILTER_BIN) $(GROUP_BIN) $(JOINF_BIN)
 
@@ -34,6 +38,7 @@ $(FILTER_BIN): $(FILTER_SRC)
 
 $(GROUP_BIN): $(GROUP_SRC)
 	g++ $(CFLAGS) -Isrc -I$(GSH_INC) -I$(BOOST_INC) -L$(BOOST_LIB) \
+		-I$(BOOST_INC) -L$(BOOST_LIB) -I$(MCQ_INC) -I$(FOLLY_INC) \
 		-o $(GROUP_BIN) $(GROUP_SRC) \
 		-lz -lboost_iostreams
 
