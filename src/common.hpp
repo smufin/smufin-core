@@ -63,6 +63,12 @@
         (h) = ((h) & 0xFFFF) + ((h) >> 14); \
         (h) = ((h) & 0xFF) + ((h) >> 4); })
 
+#define hash_5c_map(h) ({                   \
+        (h) = ((h) & 25870861830) >> 1;     \
+        (h) = ((h) & 0xFFFF) + ((h) >> 14); \
+        (h) = ((h) & 0xFF) + ((h) >> 4);    \
+        (h) = ((h) & 0xFF) + (((h) & 0xFF00) >> 6); })
+
 typedef uint64_t sm_key;
 
 typedef struct sm_value {
