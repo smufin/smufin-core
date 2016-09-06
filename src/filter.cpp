@@ -123,9 +123,9 @@ int get_value(int pid, int fid, char kmer[], sm_table::const_iterator *it)
     char last = kmer[KMER_LEN - 1];
     kmer[KMER_LEN - 1] = '\0';
 
-    uint32_t m = 0;
+    uint64_t m = 0;
     memcpy(&m, &kmer[1], MAP_LEN);
-    hash_4c_map(m);
+    hash_5c_map(m);
 
     if (map_l1[m] != pid)
         return -1;

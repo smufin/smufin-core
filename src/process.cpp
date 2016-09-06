@@ -97,9 +97,9 @@ inline void process_load_sub(int pid, int lid, const char* sub, int len,
         strncpy(imer, &sub[i + 1], IMER_LEN);
         imer[IMER_LEN] = '\0';
 
-        uint32_t m = 0;
+        uint64_t m = 0;
         memcpy(&m, imer, MAP_LEN);
-        hash_4c_map(m);
+        hash_5c_map(m);
 
         if (map_l1[m] != pid)
             continue;
