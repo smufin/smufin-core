@@ -13,11 +13,12 @@
 #include <folly/ProducerConsumerQueue.h>
 
 // Expected number of keys per storer/thread.
-#define TABLE_LEN 500000000
-#define CACHE_LEN 5000000000
+#define TABLE_LEN 400000000
+#define CACHE_LEN 4000000000
 
-#define NUM_STORERS 16
-#define MAX_LOADERS 16
+
+#define NUM_STORERS 8
+#define MAX_LOADERS 8
 
 #define BASE_LEN 4
 #define MAP_LEN 5
