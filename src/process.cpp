@@ -5,6 +5,7 @@
 #include <iostream>
 #include <kseq.h>
 #include <boost/algorithm/string.hpp>
+#include <google/sparse_hash_map>
 
 using std::cout;
 using std::endl;
@@ -125,6 +126,11 @@ inline void process_load_sub(int pid, int lid, const char* sub, int len,
 
 void process_incr(int sid, int num_loaders)
 {
+    tables[sid] = new sm_table();
+    tables[sid]->resize(TABLE_LEN);
+    caches[sid] = new sm_cache();
+    caches[sid]->resize(CACHE_LEN);
+
     sm_bulk* pmsg;
     while (!process_done) {
         for (int lid = 0; lid < num_loaders; lid++) {
@@ -149,6 +155,10 @@ void process_incr(int sid, int num_loaders)
             pmsg = queues[sid][lid]->frontPtr();
         }
     }
+
+    string file = string("table-") + std::to_string(sid) + string(".data");
+    FILE* fp = fopen(file.c_str(), "w");
+    tables[sid]->serialize(sm_table::NopointerSerializer(), fp);
 }
 
 inline void process_incr_key(int sid, sm_key key, sm_value_offset off)

@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
         map_l2[m] = atoi(columns[2].c_str());
     }
 
-    init_tables();
+    init();
 
     reset_input_queue(input_file);
     sm_process(pid, num_loaders, NUM_STORERS);
@@ -109,7 +109,8 @@ int main(int argc, char *argv[])
     }
 
     // Deallocate unnecessary memory so as to allow larger filters.
-    free_caches();
+    free_tables();
+    rebuild_tables();
 
     if (!disable_filter) {
         reset_input_queue(input_file);
@@ -144,7 +145,7 @@ void reset_input_queue(std::ifstream &input_file)
     }
 }
 
-void init_tables()
+void init()
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
@@ -152,11 +153,6 @@ void init_tables()
 
     // Initialize tables and message queues.
     for (int i = 0; i < NUM_STORERS; i++) {
-        tables[i] = new sm_table();
-        tables[i]->resize(TABLE_LEN);
-        caches[i] = new sm_cache();
-        caches[i]->resize(CACHE_LEN);
-        caches[i]->set_deleted_key((uint64_t) -1);
         for (int j = 0; j < MAX_LOADERS; j++) {
             queues[i][j] = new folly::ProducerConsumerQueue<sm_bulk>(QMSG_LEN);
         }
@@ -167,7 +163,35 @@ void init_tables()
     cout << "Init time: " << time.count() << endl;
 }
 
-void free_caches()
+void rebuild_tables()
+{
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    std::chrono::duration<double> time;
+    start = std::chrono::system_clock::now();
+
+    std::vector<std::thread> rebuilders;
+    for (int i = 0; i < NUM_STORERS; i++)
+        rebuilders.push_back(std::thread(rebuild_table, i));
+    cout << "Spawned " << rebuilders.size() << " rebuilder threads" << endl;
+
+    for (auto& rebuilder: rebuilders)
+        rebuilder.join();
+
+    end = std::chrono::system_clock::now();
+    time = end - start;
+    cout << "Rebuild time: " << time.count() << endl;
+}
+
+void rebuild_table(int sid)
+{
+    tables[sid] = new sm_table();
+    tables[sid]->resize(TABLE_LEN);
+    string file = string("table-") + std::to_string(sid) + string(".data");
+    FILE* fp = fopen(file.c_str(), "r");
+    tables[sid]->unserialize(sm_table::NopointerSerializer(), fp);
+}
+
+void free_tables()
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
@@ -175,7 +199,7 @@ void free_caches()
 
     std::vector<std::thread> deallocs;
     for (int i = 0; i < NUM_STORERS; i++)
-        deallocs.push_back(std::thread(free_cache, i));
+        deallocs.push_back(std::thread(free_table, i));
     cout << "Spawned " << deallocs.size() << " dealloc threads" << endl;
 
     for (auto& dealloc: deallocs)
@@ -186,9 +210,14 @@ void free_caches()
     cout << "Dealloc time: " << time.count() << endl;
 }
 
-void free_cache(int cid)
+void free_table(int sid)
 {
-    delete caches[cid];
+    caches[sid]->clear();
+    caches[sid]->resize(0);
+    delete caches[sid];
+    tables[sid]->clear();
+    tables[sid]->resize(0);
+    delete tables[sid];
 }
 
 void sm_process(int pid, int num_loaders, int num_storers)

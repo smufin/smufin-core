@@ -7,9 +7,11 @@ int main(int argc, char *argv[]);
 void display_usage();
 
 void reset_input_queue(std::ifstream &input_file);
-void init_tables();
-void free_caches();
-void free_cache(int cid);
+void init();
+void free_tables();
+void free_table(int sid);
+void rebuild_tables();
+void rebuild_table(int sid);
 
 void sm_process(int pid, int num_loaders, int num_storers);
 void sm_filter(int pid, int num_filters);
