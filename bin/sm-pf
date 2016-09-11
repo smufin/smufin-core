@@ -1,0 +1,6 @@
+#!/bin/bash
+
+bindir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+$bindir/sm-process $@
+$bindir/sm-filter $@
