@@ -53,7 +53,6 @@ int main(int argc, char *argv[])
         { "loaders", required_argument, NULL, 'l' },
         { "filters", required_argument, NULL, 'f' },
         { "disable-stats", no_argument, NULL, O_DISABLE_STATS },
-        { "disable-filter", no_argument, NULL, O_DISABLE_FILTER },
         { "help", no_argument, NULL, 'h' },
         { NULL, no_argument, NULL, 0 },
     };
@@ -69,7 +68,6 @@ int main(int argc, char *argv[])
             case 'l': num_loaders = atoi(optarg); break;
             case 'f': num_filters = atoi(optarg); break;
             case O_DISABLE_STATS: disable_stats = true; break;
-            case O_DISABLE_FILTER: disable_filter = true; break;
             case 'h':
                 display_usage();
                 return 0;
@@ -99,23 +97,23 @@ int main(int argc, char *argv[])
         map_l2[m] = atoi(columns[2].c_str());
     }
 
+#ifdef ENABLE_PROCESS
     init();
 
     reset_input_queue(input_file);
     sm_process(pid, num_loaders, NUM_STORERS);
+#endif
+
+#ifdef ENABLE_FILTER
+    rebuild_tables();
 
     if (!disable_stats) {
         sm_stats(NUM_STORERS);
     }
 
-    // Deallocate unnecessary memory so as to allow larger filters.
-    free_tables();
-    rebuild_tables();
-
-    if (!disable_filter) {
-        reset_input_queue(input_file);
-        sm_filter(pid, num_filters);
-    }
+    reset_input_queue(input_file);
+    sm_filter(pid, num_filters);
+#endif
 
     return 0;
 }
@@ -322,7 +320,6 @@ void sm_stats(int num_storers)
 
     uint64_t subs = 0;
     uint64_t subs_unique = 0;
-    uint64_t subs_cache = 0;
     for (int i = 0; i < num_storers; i++) {
         uint64_t part = 0;
         uint64_t part_unique = 0;
@@ -345,10 +342,8 @@ void sm_stats(int num_storers)
         }
         cout << KMER_LEN << "-mers (part-t-" << i << "): " << part << endl;
         cout << KMER_LEN << "-mers (part-u-" << i << "): " << part_unique << endl;
-        cout << KMER_LEN << "-mers (part-c-" << i << "): " << caches[i]->size() << endl;
         subs += part;
         subs_unique += part_unique;
-        subs_cache += caches[i]->size();
     }
 
     end = std::chrono::system_clock::now();

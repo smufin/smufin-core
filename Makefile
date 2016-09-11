@@ -18,6 +18,8 @@ BOOST_LIB ?= /usr/lib
 MCQ_INC   ?= $(HOME)/src/concurrentqueue
 FOLLY_INC ?= $(HOME)/src/folly
 
+PROCESS_BIN = bin/sm-process
+
 FILTER_BIN = bin/sm-filter
 FILTER_SRC = src/common.cpp src/process.cpp src/filter.cpp \
              src/hash.cpp src/main_filter.cpp
@@ -32,13 +34,17 @@ CFLAGS = $(FLAGS) -std=c++11 -DKMER_LEN=$(KMER_LEN) \
          -DMIN_TC=$(MIN_TC) -DMAX_NC=$(MAX_NC) \
          -DWMIN=$(WMIN) -DWLEN=$(WLEN)
 
-all: $(FILTER_BIN) $(GROUP_BIN) $(JOINF_BIN)
+all: $(PROCESS_BIN) $(FILTER_BIN) $(GROUP_BIN) $(JOINF_BIN)
+
+$(PROCESS_BIN): $(FILTER_SRC)
+	g++ $(CFLAGS) -DENABLE_PROCESS -Isrc -I$(GSH_INC) -I$(GPT_INC) \
+		-L$(GPT_LIB) -I$(BOOST_INC) -L$(BOOST_LIB) -I$(MCQ_INC) \
+		-I$(FOLLY_INC) -o $(PROCESS_BIN) $(FILTER_SRC) -lz -lpthread
 
 $(FILTER_BIN): $(FILTER_SRC)
-	g++ $(CFLAGS) -Isrc -I$(GSH_INC) -I$(GPT_INC) -L$(GPT_LIB) \
-		-I$(BOOST_INC) -L$(BOOST_LIB) -I$(MCQ_INC) -I$(FOLLY_INC) \
-		-o $(FILTER_BIN) $(FILTER_SRC) \
-		-lprofiler -lz -lpthread
+	g++ $(CFLAGS) -DENABLE_FILTER -Isrc -I$(GSH_INC) -I$(GPT_INC) \
+		-L$(GPT_LIB) -I$(BOOST_INC) -L$(BOOST_LIB) -I$(MCQ_INC) \
+		-I$(FOLLY_INC) -o $(FILTER_BIN) $(FILTER_SRC) -lz -lpthread
 
 $(GROUP_BIN): $(GROUP_SRC)
 	g++ $(CFLAGS) -Isrc -I$(GSH_INC) -I$(BOOST_INC) -L$(BOOST_LIB) \
@@ -51,4 +57,4 @@ $(JOINF_BIN): $(JOINF_SRC)
 		-o $(JOINF_BIN) $(JOINF_SRC)
 
 clean:
-	rm -f $(FILTER_BIN) $(GROUP_BIN) $(JOINF_BIN)
+	rm -f $(PROCESS_BIN) $(FILTER_BIN) $(GROUP_BIN) $(JOINF_BIN)
