@@ -30,6 +30,7 @@ sm_cache* caches[NUM_STORERS];
 folly::ProducerConsumerQueue<sm_bulk>* queues[NUM_STORERS][MAX_LOADERS];
 std::mutex filter_mutex[NUM_SETS];
 std::unordered_set<string> filter_reads[NUM_SETS];
+std::unordered_set<std::string> filter_ids[NUM_SETS];
 std::unordered_map<string, std::pair<std::vector<uint8_t>, std::vector<uint8_t>>> filter_i2p[NUM_SETS];
 std::unordered_map<string, std::unordered_set<string>> filter_k2i[NUM_SETS];
 
@@ -275,9 +276,9 @@ void sm_filter(int pid, int num_filters)
 
     end = std::chrono::system_clock::now();
     time = end - start;
-    cout << "Filtered reads (NN+-): " << filter_reads[NN].size() << endl;
-    cout << "Filtered reads (TN+-): " << filter_reads[TN].size() << endl;
-    cout << "Filtered reads (TM+-): " << filter_reads[TM].size() << endl;
+    cout << "Filtered reads (NN+-): " << filter_ids[NN].size() << endl;
+    cout << "Filtered reads (TN+-): " << filter_ids[TN].size() << endl;
+    cout << "Filtered reads (TM+-): " << filter_ids[TM].size() << endl;
     cout << "Filter time: " << time.count() << endl;
 
 #ifdef PROFILE
@@ -357,15 +358,15 @@ void sm_stats(int num_storers)
     time = end - start;
     cout << KMER_LEN << "-mers (total):  " << subs << endl;
     cout << KMER_LEN << "-mers (unique): " << subs_unique << endl;
-    cout << KMER_LEN << "-mers (cache):  " << subs_cache << endl;
     cout << "Iteration time:   " << time.count() << endl;
 }
 
 void sm_write_fastq(int set, int pid)
 {
     std::ofstream ofs;
-    ofs.open("filter-" + set_names[set] + "." + std::to_string(pid) + ".fastq");
-    for (std::unordered_set<string>::const_iterator it =
+    ofs.open("filter-" + set_names[set] + "." + std::to_string(pid) + ".fastq",
+             std::ofstream::app);
+    for (std::unordered_set<std::string>::const_iterator it =
          filter_reads[set].begin(); it != filter_reads[set].end(); ++it) {
         ofs << *it << endl;
     }

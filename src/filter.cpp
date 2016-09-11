@@ -2,6 +2,7 @@
 #include <filter.hpp>
 
 #include <string>
+#include <fstream>
 #include <iostream>
 #include <boost/algorithm/string.hpp>
 
@@ -75,6 +76,31 @@ void filter_file(int pid, int fid, string file)
             start = std::chrono::system_clock::now();
         }
     }
+
+
+    bool disk = false;
+    for (int i = 0; i < NUM_SETS; i++) {
+        filter_mutex[i].lock();
+        if (filter_reads[i].size() > 1000000) {
+            std::ofstream ofs;
+            ofs.open("filter-" + set_names[i] + "." + std::to_string(pid) + ".fastq",
+                     std::ofstream::app);
+            for (std::unordered_set<string>::const_iterator it =
+                 filter_reads[i].begin(); it != filter_reads[i].end(); ++it) {
+                ofs << *it << endl;
+            }
+            ofs.close();
+            filter_reads[i].clear();
+            filter_reads[i] = std::unordered_set<string>();
+            disk = true;
+        }
+        filter_mutex[i].unlock();
+    }
+
+    end = std::chrono::system_clock::now();
+    time = end - start;
+    cout << "W: " << fid << " " << time.count() << " " << disk << endl;
+    start = std::chrono::system_clock::now();
 
     kseq_destroy(seq);
     gzclose(in);
@@ -189,7 +215,11 @@ void filter_kmer(kseq_t *seq, int pos, bool rev, char kmer[], uint32_t nc,
         char buf[512] = {0};
         sprintf(buf, "@%s\n%s\n+\n%s", seq->name.s, seq->seq.s, seq->qual.s);
         filter_mutex[set].lock();
-        filter_reads[set].insert(buf);
+        std::pair<std::unordered_set<string>::iterator, bool> result;
+        result = filter_ids[set].insert(seq->name.s);
+        if (result.second == true) {
+            filter_reads[set].insert(buf);
+        }
         if (set == TM) {
             if (!rev)
                 filter_i2p[set][seq->name.s].first.push_back((uint8_t) pos);

@@ -151,6 +151,7 @@ enum sm_set {
 
 extern std::vector<std::string> set_names;
 extern std::mutex filter_mutex[NUM_SETS];
+extern std::unordered_set<std::string> filter_ids[NUM_SETS];
 extern std::unordered_set<std::string> filter_reads[NUM_SETS];
 extern std::unordered_map<std::string, std::pair<std::vector<uint8_t>, std::vector<uint8_t>>> filter_i2p[NUM_SETS];
 extern std::unordered_map<std::string, std::unordered_set<std::string>> filter_k2i[NUM_SETS];
