@@ -12,6 +12,7 @@ inline void process_load_sub(int pid, int lid, const char* sub, int len,
                              sm_read_kind kind, sm_bulk* bulks);
 
 void process_incr(int sid, int num_loaders);
-inline void process_incr_key(int sid, sm_key key, sm_value_offset off);
+inline void process_incr_key(sm_table* table, sm_cache* cache, sm_key key,
+                             sm_value_offset off);
 
 #endif

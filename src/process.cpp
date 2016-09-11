@@ -126,10 +126,10 @@ inline void process_load_sub(int pid, int lid, const char* sub, int len,
 
 void process_incr(int sid, int num_loaders)
 {
-    tables[sid] = new sm_table();
-    tables[sid]->resize(TABLE_LEN);
-    caches[sid] = new sm_cache();
-    caches[sid]->resize(CACHE_LEN);
+    sm_table table = sm_table();
+    table.resize(TABLE_LEN);
+    sm_cache cache = sm_cache();
+    cache.resize(CACHE_LEN);
 
     sm_bulk* pmsg;
     while (!process_done) {
@@ -137,7 +137,7 @@ void process_incr(int sid, int num_loaders)
             pmsg = queues[sid][lid]->frontPtr();
             while (pmsg) {
                 for (int i = 0; i < pmsg->num; i++) {
-                    process_incr_key(sid, pmsg->array[i].first, pmsg->array[i].second);
+                    process_incr_key(&table, &cache, pmsg->array[i].first, pmsg->array[i].second);
                 }
                 queues[sid][lid]->popFront();
                 pmsg = queues[sid][lid]->frontPtr();
@@ -149,19 +149,20 @@ void process_incr(int sid, int num_loaders)
         pmsg = queues[sid][lid]->frontPtr();
         while (pmsg) {
             for (int i = 0; i < pmsg->num; i++) {
-                process_incr_key(sid, pmsg->array[i].first, pmsg->array[i].second);
+                process_incr_key(&table, &cache, pmsg->array[i].first, pmsg->array[i].second);
             }
             queues[sid][lid]->popFront();
             pmsg = queues[sid][lid]->frontPtr();
         }
     }
 
+    cout << "Cache " << sid << ": " << cache.size() << endl;
     string file = string("table-") + std::to_string(sid) + string(".data");
     FILE* fp = fopen(file.c_str(), "w");
-    tables[sid]->serialize(sm_table::NopointerSerializer(), fp);
+    table.serialize(sm_table::NopointerSerializer(), fp);
 }
 
-inline void process_incr_key(int sid, sm_key key, sm_value_offset off)
+inline void process_incr_key(sm_table* table, sm_cache* cache, sm_key key, sm_value_offset off)
 {
     // Use sm_cache to hold keys with a single appearance; as soon as a key in
     // increased more than once, it is placed into sm_table. The steps are as
@@ -173,15 +174,15 @@ inline void process_incr_key(int sid, sm_key key, sm_value_offset off)
     //     - Key doesn't exist in table: insert key and cache in table.
     //     - Key exists in table: update entry if there's no overflow.
 
-    sm_cache::const_iterator cit = caches[sid]->find(key);
-    if (cit == caches[sid]->end()) {
+    sm_cache::const_iterator cit = cache->find(key);
+    if (cit == cache->end()) {
         uint8_t val = (off.first << 6) | (off.last << 4) | (off.kind << 2);
-        caches[sid]->insert(std::pair<sm_key, uint8_t>(key, val));
+        cache->insert(std::pair<sm_key, uint8_t>(key, val));
         return;
     }
 
-    sm_table::const_iterator it = tables[sid]->find(key);
-    if (it == tables[sid]->end()) {
+    sm_table::const_iterator it = table->find(key);
+    if (it == table->end()) {
         uint8_t cache_value = cit->second;
         sm_value_offset coff;
         coff.first = cache_value >> 6;
@@ -190,12 +191,12 @@ inline void process_incr_key(int sid, sm_key key, sm_value_offset off)
         sm_value val;
         val.v[coff.first][coff.last][coff.kind] = 1;
         val.v[off.first][off.last][off.kind]++;
-        tables[sid]->insert(std::pair<sm_key, sm_value>(key, val));
+        table->insert(std::pair<sm_key, sm_value>(key, val));
     } else {
         uint32_t inc = it->second.v[off.first][off.last][off.kind] + 1;
         uint16_t over = inc >> 16;
         uint16_t count = inc & 0x0000FFFF;
         if (over == 0)
-            (*tables[sid])[key].v[off.first][off.last][off.kind] = count;
+            (*table)[key].v[off.first][off.last][off.kind] = count;
     }
 }
