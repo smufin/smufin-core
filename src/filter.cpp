@@ -75,32 +75,33 @@ void filter_file(int pid, int fid, string file)
             cout << "F: " << fid << " " << time.count() << endl;
             start = std::chrono::system_clock::now();
         }
-    }
 
-
-    bool disk = false;
-    for (int i = 0; i < NUM_SETS; i++) {
-        filter_mutex[i].lock();
-        if (filter_reads[i].size() > 1000000) {
-            std::ofstream ofs;
-            ofs.open("filter-" + set_names[i] + "." + std::to_string(pid) + ".fastq",
-                     std::ofstream::app);
-            for (std::unordered_set<string>::const_iterator it =
-                 filter_reads[i].begin(); it != filter_reads[i].end(); ++it) {
-                ofs << *it << endl;
+        if (nreads % 10000000 == 0) {
+            bool disk = false;
+            for (int i = 0; i < NUM_SETS; i++) {
+                filter_mutex[i].lock();
+                if (filter_reads[i].size() > 1000000) {
+                    std::ofstream ofs;
+                    ofs.open("filter-" + set_names[i] + "." + std::to_string(pid) + ".fastq",
+                             std::ofstream::app);
+                    for (std::unordered_set<string>::const_iterator it =
+                         filter_reads[i].begin(); it != filter_reads[i].end(); ++it) {
+                        ofs << *it << endl;
+                    }
+                    ofs.close();
+                    filter_reads[i].clear();
+                    filter_reads[i] = std::unordered_set<string>();
+                    disk = true;
+                }
+                filter_mutex[i].unlock();
             }
-            ofs.close();
-            filter_reads[i].clear();
-            filter_reads[i] = std::unordered_set<string>();
-            disk = true;
-        }
-        filter_mutex[i].unlock();
-    }
 
-    end = std::chrono::system_clock::now();
-    time = end - start;
-    cout << "W: " << fid << " " << time.count() << " " << disk << endl;
-    start = std::chrono::system_clock::now();
+            end = std::chrono::system_clock::now();
+            time = end - start;
+            cout << "W: " << fid << " " << time.count() << " " << disk << endl;
+            start = std::chrono::system_clock::now();
+        }
+    }
 
     kseq_destroy(seq);
     gzclose(in);
