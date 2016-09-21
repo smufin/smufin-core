@@ -3,6 +3,7 @@
 #include <process.hpp>
 #include <filter.hpp>
 
+#include <errno.h>
 #include <getopt.h>
 #include <string>
 #include <iostream>
@@ -106,7 +107,7 @@ int main(int argc, char *argv[])
 #endif
 
 #ifdef ENABLE_FILTER
-    rebuild_tables();
+    rebuild_tables(pid);
 
     if (!disable_stats) {
         sm_stats(NUM_STORERS);
@@ -162,7 +163,7 @@ void init()
     cout << "Init time: " << time.count() << endl;
 }
 
-void rebuild_tables()
+void rebuild_tables(int pid)
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
@@ -170,7 +171,7 @@ void rebuild_tables()
 
     std::vector<std::thread> rebuilders;
     for (int i = 0; i < NUM_STORERS; i++)
-        rebuilders.push_back(std::thread(rebuild_table, i));
+        rebuilders.push_back(std::thread(rebuild_table, pid, i));
     cout << "Spawned " << rebuilders.size() << " rebuilder threads" << endl;
 
     for (auto& rebuilder: rebuilders)
@@ -181,12 +182,18 @@ void rebuild_tables()
     cout << "Rebuild time: " << time.count() << endl;
 }
 
-void rebuild_table(int sid)
+void rebuild_table(int pid, int sid)
 {
     tables[sid] = new sm_table();
     tables[sid]->resize(TABLE_LEN);
-    string file = string("table-") + std::to_string(sid) + string(".data");
+    string file = string("table-") + std::to_string(pid) + string("-") +
+                  std::to_string(sid) + string(".data");
     FILE* fp = fopen(file.c_str(), "r");
+    while (fp == NULL) {
+        cout << "Failed to open: " << file << " (" << errno << ")" << endl;
+        std::this_thread::sleep_for(std::chrono::seconds(10));
+        fp = fopen(file.c_str(), "r");
+    }
     tables[sid]->unserialize(sm_table::NopointerSerializer(), fp);
 }
 
@@ -237,7 +244,7 @@ void sm_process(int pid, int num_loaders, int num_storers)
 
     std::vector<std::thread> storers;
     for (int i = 0; i < num_storers; i++)
-        storers.push_back(std::thread(process_incr, i, num_loaders));
+        storers.push_back(std::thread(process_incr, pid, i, num_loaders));
     cout << "Spawned " << storers.size() << " storer threads" << endl;
 
     for (auto& loader: loaders)

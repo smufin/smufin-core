@@ -1,6 +1,7 @@
 #include <common.hpp>
 #include <process.hpp>
 
+#include <errno.h>
 #include <string>
 #include <iostream>
 #include <kseq.h>
@@ -124,7 +125,7 @@ inline void process_load_sub(int pid, int lid, const char* sub, int len,
     }
 }
 
-void process_incr(int sid, int num_loaders)
+void process_incr(int pid, int sid, int num_loaders)
 {
     sm_table table = sm_table();
     table.resize(TABLE_LEN);
@@ -157,8 +158,13 @@ void process_incr(int sid, int num_loaders)
     }
 
     cout << "Cache " << sid << ": " << cache.size() << endl;
-    string file = string("table-") + std::to_string(sid) + string(".data");
+    string file = string("table-") + std::to_string(pid) + string("-") +
+                  std::to_string(sid) + string(".data");
     FILE* fp = fopen(file.c_str(), "w");
+    if (fp == NULL) {
+        cout << "Failed to open: " << file << " (" << errno << ")" << endl;
+        exit(1);
+    }
     table.serialize(sm_table::NopointerSerializer(), fp);
 }
 
