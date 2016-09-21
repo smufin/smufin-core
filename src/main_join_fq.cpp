@@ -1,4 +1,5 @@
 #include <getopt.h>
+#include <errno.h>
 #include <iostream>
 #include <chrono>
 #include <string.h>
@@ -23,6 +24,10 @@ void load_fq(string file)
     int len;
     int nreads = 0;
     FILE* in = fopen(file.c_str(), "r");
+    if (in == NULL) {
+        cerr << "Failed to open: " << file << " (" << errno << ")" << endl;
+        return;
+    }
     kseq_t *seq = kseq_init(fileno(in));
     while ((len = kseq_read(seq)) >= 0) {
         nreads++;
@@ -75,7 +80,7 @@ int main(int argc, char *argv[])
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
 
-    seen.resize(4000000000);
+    seen.resize(2000000000);
     for (int i = 0; i < 16; i++) {
         start = std::chrono::system_clock::now();
         load_fq(input_path + "/filter-" + kind + "n." + std::to_string(i) +
