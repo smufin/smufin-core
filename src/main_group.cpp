@@ -185,14 +185,16 @@ int main(int argc, char *argv[])
     end = std::chrono::system_clock::now();
     time = end - start;
     cerr << "K2I read time: " << time.count() << endl;
+    cerr << "K2I size: " << k2i.size() << endl;
 
-    i2r.resize(10000000000);
+    i2r.resize(2000000000);
     start = std::chrono::system_clock::now();
     load_fq(input_path + "filter-nn.fastq", 0);
     load_fq(input_path + "filter-tn.fastq", 1);
     end = std::chrono::system_clock::now();
     time = end - start;
     cerr << "FASTQ read time: " << time.count() << endl;
+    cerr << "FASTQ size: " << i2r.size() << endl;
 
     start = std::chrono::system_clock::now();
     std::ifstream in(input_path + "filter-tm.i2p");
