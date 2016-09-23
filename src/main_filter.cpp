@@ -195,6 +195,7 @@ void rebuild_table(int pid, int sid)
         fp = fopen(file.c_str(), "r");
     }
     tables[sid]->unserialize(sm_table::NopointerSerializer(), fp);
+    fclose(fp);
 }
 
 void free_tables()

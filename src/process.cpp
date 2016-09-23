@@ -166,6 +166,7 @@ void process_incr(int pid, int sid, int num_loaders)
         exit(1);
     }
     table.serialize(sm_table::NopointerSerializer(), fp);
+    fclose(fp);
 }
 
 inline void process_incr_key(sm_table* table, sm_cache* cache, sm_key key, sm_value_offset off)
