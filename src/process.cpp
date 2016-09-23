@@ -160,6 +160,12 @@ void process_incr(int pid, int sid, int num_loaders)
     cout << "Cache " << sid << ": " << cache.size() << endl;
     string file = string("table-") + std::to_string(pid) + string("-") +
                   std::to_string(sid) + string(".data");
+
+    char buf[PATH_MAX] = "";
+    if (getcwd(buf, PATH_MAX) != NULL) {
+        cout << "Serialize " << file << " (" << string(buf) << ")" << endl;
+    }
+
     FILE* fp = fopen(file.c_str(), "w");
     if (fp == NULL) {
         cout << "Failed to open: " << file << " (" << errno << ")" << endl;

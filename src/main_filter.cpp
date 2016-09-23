@@ -188,11 +188,16 @@ void rebuild_table(int pid, int sid)
     tables[sid]->resize(TABLE_LEN);
     string file = string("table-") + std::to_string(pid) + string("-") +
                   std::to_string(sid) + string(".data");
+
+    char buf[PATH_MAX] = "";
+    if (getcwd(buf, PATH_MAX) != NULL) {
+        cout << "Unserialize " << file << " (" << string(buf) << ")" << endl;
+    }
+
     FILE* fp = fopen(file.c_str(), "r");
-    while (fp == NULL) {
+    if (fp == NULL) {
         cout << "Failed to open: " << file << " (" << errno << ")" << endl;
-        std::this_thread::sleep_for(std::chrono::seconds(10));
-        fp = fopen(file.c_str(), "r");
+        exit(0);
     }
     tables[sid]->unserialize(sm_table::NopointerSerializer(), fp);
     fclose(fp);
