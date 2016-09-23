@@ -95,6 +95,11 @@ typedef struct {
     sm_msg array[BULK_LEN];
 } sm_bulk;
 
+typedef struct sm_pos_bitmap {
+    uint64_t a[2] = {0};
+    uint64_t b[2] = {0};
+} sm_pos_bitmap;
+
 // Use ASCII codes to index base 4 values for ACGT. The array is
 // equivalent to the following map, only slightly faster since it avoids
 // hashing, etc.
@@ -153,7 +158,7 @@ extern std::vector<std::string> set_names;
 extern std::mutex filter_mutex[NUM_SETS];
 extern std::unordered_set<std::string> filter_ids[NUM_SETS];
 extern std::unordered_set<std::string> filter_reads[NUM_SETS];
-extern std::unordered_map<std::string, std::pair<std::vector<uint8_t>, std::vector<uint8_t>>> filter_i2p[NUM_SETS];
+extern std::unordered_map<std::string, sm_pos_bitmap> filter_i2p[NUM_SETS];
 extern std::unordered_map<std::string, std::unordered_set<std::string>> filter_k2i[NUM_SETS];
 
 enum noshort_options {

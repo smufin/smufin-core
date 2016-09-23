@@ -32,7 +32,7 @@ folly::ProducerConsumerQueue<sm_bulk>* queues[NUM_STORERS][MAX_LOADERS];
 std::mutex filter_mutex[NUM_SETS];
 std::unordered_set<string> filter_reads[NUM_SETS];
 std::unordered_set<std::string> filter_ids[NUM_SETS];
-std::unordered_map<string, std::pair<std::vector<uint8_t>, std::vector<uint8_t>>> filter_i2p[NUM_SETS];
+std::unordered_map<string, sm_pos_bitmap> filter_i2p[NUM_SETS];
 std::unordered_map<string, std::unordered_set<string>> filter_k2i[NUM_SETS];
 
 int main(int argc, char *argv[])
@@ -408,18 +408,12 @@ void sm_write_i2p(int set, int pid)
 {
     std::ofstream ofs;
     ofs.open("filter-" + set_names[set] + "." + std::to_string(pid) + ".i2p");
-    for (std::unordered_map<string, std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>::const_iterator it =
+    for (std::unordered_map<string, sm_pos_bitmap>::const_iterator it =
          filter_i2p[set].begin(); it != filter_i2p[set].end(); ++it) {
-        ofs << it->first << " " << it->second.first.size() << " " << it->second.second.size();
-        for (std::vector<uint8_t>::const_iterator sit = it->second.first.begin();
-             sit != it->second.first.end(); ++sit) {
-            ofs << " " << (int) *sit;
-        }
-        for (std::vector<uint8_t>::const_iterator sit = it->second.second.begin();
-             sit != it->second.second.end(); ++sit) {
-            ofs << " " << (int) *sit;
-        }
-        ofs << endl;
+        ofs << it->first << " ";
+        sm_pos_bitmap p = it->second;
+        ofs << p.a[0] << " " << p.a[1] << " ";
+        ofs << p.b[0] << " " << p.b[1] << endl;
     }
     ofs.close();
 }
