@@ -1,4 +1,11 @@
-#include <common.hpp>
+#include "common.hpp"
+
+#include <fstream>
+#include <iostream>
+
+using std::cout;
+using std::endl;
+using std::string;
 
 // String to integer conversion. Parses a null-terminated string, interpreting
 // its content as an integral number in base 4.
@@ -37,4 +44,24 @@ void krevcomp(char kmer[])
         kmer[i] = comp[kmer[j]];
         kmer[j] = comp[c];
     }
+}
+
+// Generic and timed thread spawn, to avoid duplicating the same boilerplate
+// for different stages/steps.
+void spawn(string name, std::function<void(int)> func, int n)
+{
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    std::chrono::duration<double> time;
+    start = std::chrono::system_clock::now();
+
+    std::vector<std::thread> threads;
+    for (int i = 0; i < n; i++)
+        threads.push_back(std::thread(func, i));
+    cout << "Spawned " << threads.size() << " " << name << " threads" << endl;
+    for (auto& thread: threads)
+        thread.join();
+
+    end = std::chrono::system_clock::now();
+    time = end - start;
+    cout << "Spawn " << name << " time: " << time.count() << endl;
 }

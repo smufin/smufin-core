@@ -1,27 +1,91 @@
-#include <common.hpp>
-#include <filter.hpp>
+#include "filter.hpp"
 
-#include <string>
+#include <chrono>
 #include <fstream>
 #include <iostream>
+#include <map>
+#include <string>
+#include <thread>
+
 #include <boost/algorithm/string.hpp>
 
 using std::cout;
 using std::endl;
 using std::string;
 
-void filter(int pid, int fid)
+filter::filter(const sm_config &conf) : stage(conf),
+    _alpha{'A','C','G','T'},
+    _sets{{"nn","tm","tn"}}
+{
+    std::ifstream ifs(_conf.input_file);
+    if (!ifs.good()) {
+        cout << "Invalid input file" << endl;
+        exit(1);
+    }
+
+    for (string line; std::getline(ifs, line);) {
+        _input_queue.enqueue(line);
+        _input_count++;
+    }
+
+    _executable["run"] = std::bind(&filter::run, this);
+    _executable["dump"] = std::bind(&filter::dump, this);
+    _executable["stats"] = std::bind(&filter::stats, this);
+}
+
+void filter::chain(const stage* prev)
+{
+    cout << "Chain: filter" << endl;
+    _count = static_cast<const count*>(prev);
+}
+
+void filter::run()
+{
+    spawn("filter", std::bind(&filter::load, this, std::placeholders::_1),
+          _conf.num_filters);
+}
+
+void filter::stats()
+{
+    cout << "Filtered reads (NN+-): " << _ids[NN].size() << endl;
+    cout << "Filtered reads (TN+-): " << _ids[TN].size() << endl;
+    cout << "Filtered reads (TM+-): " << _ids[TM].size() << endl;
+}
+
+void filter::dump()
+{
+    std::vector<std::thread> fastqs;
+    for (int i = 0; i < NUM_SETS; i++)
+        fastqs.push_back(std::thread(&filter::write_fastq, this, i));
+    cout << "Spawned " << fastqs.size() << " FASTQ writer threads" << endl;
+
+    std::vector<std::thread> k2is;
+    for (int i = 0; i < NUM_SETS; i++)
+        k2is.push_back(std::thread(&filter::write_k2i, this, i));
+    cout << "Spawned " << fastqs.size() << " K2I writer threads" << endl;
+
+    std::thread i2p = std::thread(&filter::write_i2p, this, TM);
+    cout << "Spawned I2P writer thread" << endl;
+    i2p.join();
+
+    for (auto& k2i: k2is)
+        k2i.join();
+    for (auto& fastq: fastqs)
+        fastq.join();
+}
+
+void filter::load(int fid)
 {
     string file;
-    while (input_count > 0) {
-        while (input_queue.try_dequeue(file)) {
-            filter_file(pid, fid, file);
-            input_count--;
+    while (_input_count > 0) {
+        while (_input_queue.try_dequeue(file)) {
+            load_file(fid, file);
+            _input_count--;
         }
     }
 }
 
-void filter_file(int pid, int fid, string file)
+void filter::load_file(int fid, string file)
 {
     // Identify read kind from file name.
     sm_read_kind kind = NORMAL_READ;
@@ -53,9 +117,9 @@ void filter_file(int pid, int fid, string file)
             n = ps - &seq->seq.s[p];
             if (n > 0) {
                 if (kind == CANCER_READ)
-                    filter_cancer(pid, fid, seq, &seq->seq.s[p], n);
+                    filter_cancer(fid, seq, &seq->seq.s[p], n);
                 else
-                    filter_normal(pid, fid, seq, &seq->seq.s[p], n);
+                    filter_normal(fid, seq, &seq->seq.s[p], n);
                 p += n;
             }
             p++;
@@ -64,9 +128,9 @@ void filter_file(int pid, int fid, string file)
         n = l - p;
         if (n > 0) {
             if (kind == CANCER_READ)
-                filter_cancer(pid, fid, seq, &seq->seq.s[p], n);
+                filter_cancer(fid, seq, &seq->seq.s[p], n);
             else
-                filter_normal(pid, fid, seq, &seq->seq.s[p], n);
+                filter_normal(fid, seq, &seq->seq.s[p], n);
         }
 
         if (nreads % 100000 == 0) {
@@ -79,21 +143,21 @@ void filter_file(int pid, int fid, string file)
         if (nreads % 10000000 == 0) {
             bool disk = false;
             for (int i = 0; i < NUM_SETS; i++) {
-                filter_mutex[i].lock();
-                if (filter_reads[i].size() > 1000000) {
+                _mutex[i].lock();
+                if (_reads[i].size() > 1000000) {
                     std::ofstream ofs;
-                    ofs.open("filter-" + set_names[i] + "." + std::to_string(pid) + ".fastq",
+                    ofs.open("filter-" + _sets[i] + "." + std::to_string(_conf.pid) + ".fastq",
                              std::ofstream::app);
                     for (std::unordered_set<string>::const_iterator it =
-                         filter_reads[i].begin(); it != filter_reads[i].end(); ++it) {
+                         _reads[i].begin(); it != _reads[i].end(); ++it) {
                         ofs << *it << endl;
                     }
                     ofs.close();
-                    filter_reads[i].clear();
-                    filter_reads[i] = std::unordered_set<string>();
+                    _reads[i].clear();
+                    _reads[i] = std::unordered_set<string>();
                     disk = true;
                 }
-                filter_mutex[i].unlock();
+                _mutex[i].unlock();
             }
 
             end = std::chrono::system_clock::now();
@@ -107,7 +171,7 @@ void filter_file(int pid, int fid, string file)
     gzclose(in);
 }
 
-void filter_normal(int pid, int fid, kseq_t *seq, const char *sub, int len)
+void filter::filter_normal(int fid, kseq_t *seq, const char *sub, int len)
 {
     if (len < KMER_LEN)
         return;
@@ -116,16 +180,16 @@ void filter_normal(int pid, int fid, kseq_t *seq, const char *sub, int len)
     for (int i = 0; i <= len - KMER_LEN; i++) {
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
-        filter_all(pid, fid, seq, i, false, kmer, NN);
+        filter_all(fid, seq, i, false, kmer, NN);
 
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
         krevcomp(kmer);
-        filter_all(pid, fid, seq, i, true, kmer, NN);
+        filter_all(fid, seq, i, true, kmer, NN);
     }
 }
 
-void filter_cancer(int pid, int fid, kseq_t *seq, const char *sub, int len)
+void filter::filter_cancer(int fid, kseq_t *seq, const char *sub, int len)
 {
     if (len < KMER_LEN)
         return;
@@ -134,18 +198,18 @@ void filter_cancer(int pid, int fid, kseq_t *seq, const char *sub, int len)
     for (int i = 0; i <= len - KMER_LEN; i++) {
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
-        filter_branch(pid, fid, seq, i, false, kmer, TM);
-        filter_all(pid, fid, seq, i, false, kmer, TN);
+        filter_branch(fid, seq, i, false, kmer, TM);
+        filter_all(fid, seq, i, false, kmer, TN);
 
         strncpy(kmer, &sub[i], KMER_LEN);
         kmer[KMER_LEN] = '\0';
         krevcomp(kmer);
-        filter_branch(pid, fid, seq, i, true, kmer, TM);
-        filter_all(pid, fid, seq, i, true, kmer, TN);
+        filter_branch(fid, seq, i, true, kmer, TM);
+        filter_all(fid, seq, i, true, kmer, TN);
     }
 }
 
-int get_value(int pid, int fid, char kmer[], sm_table::const_iterator *it)
+int filter::get_value(int fid, char kmer[], sm_table::const_iterator *it)
 {
     char last = kmer[KMER_LEN - 1];
     kmer[KMER_LEN - 1] = '\0';
@@ -154,24 +218,25 @@ int get_value(int pid, int fid, char kmer[], sm_table::const_iterator *it)
     memcpy(&m, &kmer[1], MAP_LEN);
     hash_5c_map(m);
 
-    if (map_l1[m] != pid)
+    if (map_l1[m] != _conf.pid)
         return -1;
     int sid = map_l2[m];
     sm_key key = strtob4(&kmer[1]);
 
-    *it = tables[sid]->find(key);
-    if (*it == tables[sid]->end())
+    const sm_table* table = (*_count)[sid];
+    *it = table->find(key);
+    if (*it == table->end())
         return -1;
 
     kmer[KMER_LEN - 1] = last;
     return 0;
 }
 
-void filter_branch(int pid, int fid, kseq_t *seq, int pos, bool rev,
-                   char kmer[], sm_set set)
+void filter::filter_branch(int fid, kseq_t *seq, int pos, bool rev,
+                           char kmer[], sm_set set)
 {
     sm_table::const_iterator it;
-    if (get_value(pid, fid, kmer, &it) != 0)
+    if (get_value(fid, kmer, &it) != 0)
         return;
     int f = code[kmer[0]] - '0';
     int l = code[kmer[KMER_LEN - 1]] - '0';
@@ -186,14 +251,14 @@ void filter_branch(int pid, int fid, kseq_t *seq, int pos, bool rev,
     filter_kmer(seq, pos, rev, kmer, nc, tc, nsum, tsum, set);
 }
 
-void filter_all(int pid, int fid, kseq_t *seq, int pos, bool rev,
-                char kmer[], sm_set set)
+void filter::filter_all(int fid, kseq_t *seq, int pos, bool rev,
+                        char kmer[], sm_set set)
 {
     sm_table::const_iterator it;
-    if (get_value(pid, fid, kmer, &it) != 0)
+    if (get_value(fid, kmer, &it) != 0)
         return;
     for (int f = 0; f < 4; f++) {
-        kmer[0] = alpha[f];
+        kmer[0] = _alpha[f];
         uint32_t nsum = 0;
         uint32_t tsum = 0;
         for (int l = 0; l < 4; l++) {
@@ -201,7 +266,7 @@ void filter_all(int pid, int fid, kseq_t *seq, int pos, bool rev,
             tsum += it->second.v[f][l][CANCER_READ];
         }
         for (int l = 0; l < 4; l++) {
-            kmer[KMER_LEN - 1] = alpha[l];
+            kmer[KMER_LEN - 1] = _alpha[l];
             uint32_t nc = it->second.v[f][l][NORMAL_READ];
             uint32_t tc = it->second.v[f][l][CANCER_READ];
             filter_kmer(seq, pos, rev, kmer, nc, tc, nsum, tsum, set);
@@ -209,27 +274,72 @@ void filter_all(int pid, int fid, kseq_t *seq, int pos, bool rev,
     }
 }
 
-void filter_kmer(kseq_t *seq, int pos, bool rev, char kmer[], uint32_t nc,
-                 uint32_t tc, uint32_t nsum, uint32_t tsum, sm_set set)
+void filter::filter_kmer(kseq_t *seq, int pos, bool rev, char kmer[], uint32_t nc,
+                         uint32_t tc, uint32_t nsum, uint32_t tsum, sm_set set)
 {
     if (tc >= MIN_TC && nc <= MAX_NC) {
         char buf[512] = {0};
         sprintf(buf, "@%s\n%s\n+\n%s", seq->name.s, seq->seq.s, seq->qual.s);
-        filter_mutex[set].lock();
+        _mutex[set].lock();
         std::pair<std::unordered_set<string>::iterator, bool> result;
-        result = filter_ids[set].insert(seq->name.s);
+        result = _ids[set].insert(seq->name.s);
         if (result.second == true) {
-            filter_reads[set].insert(buf);
+            _reads[set].insert(buf);
         }
         if (set == TM) {
             if (!rev)
-                filter_i2p[set][seq->name.s].a[pos / 64] |= 1 << (pos % 64);
+                _i2p[set][seq->name.s].a[pos / 64] |= 1 << (pos % 64);
             else
-                filter_i2p[set][seq->name.s].b[pos / 64] |= 1 << (pos % 64);
+                _i2p[set][seq->name.s].b[pos / 64] |= 1 << (pos % 64);
         }
-        if (filter_k2i[set][kmer].size() <= MAX_K2I_READS) {
-            filter_k2i[set][kmer].insert(seq->name.s);
+        if (_k2i[set][kmer].size() <= MAX_K2I_READS) {
+            _k2i[set][kmer].insert(seq->name.s);
         }
-        filter_mutex[set].unlock();
+        _mutex[set].unlock();
     }
+}
+
+
+void filter::write_fastq(int set)
+{
+    std::ofstream ofs;
+    ofs.open("filter-" + _sets[set] + "." + std::to_string(_conf.pid) + ".fastq",
+             std::ofstream::app);
+    for (sm_reads::const_iterator it = _reads[set].begin();
+         it != _reads[set].end(); ++it) {
+        ofs << *it << endl;
+    }
+    ofs.close();
+}
+
+void filter::write_k2i(int set)
+{
+    std::ofstream ofs;
+    ofs.open("filter-" + _sets[set] + "." + std::to_string(_conf.pid) + ".k2i");
+    for (sm_k2i::const_iterator it = _k2i[set].begin();
+         it != _k2i[set].end(); ++it) {
+        if (it->second.size() > MAX_K2I_READS)
+            continue;
+        ofs << it->first << " " << it->second.size();
+        for (sm_ids::const_iterator sit = it->second.begin();
+             sit != it->second.end(); ++sit) {
+            ofs << " " << *sit;
+        }
+        ofs << endl;
+    }
+    ofs.close();
+}
+
+void filter::write_i2p(int set)
+{
+    std::ofstream ofs;
+    ofs.open("filter-" + _sets[set] + "." + std::to_string(_conf.pid) + ".i2p");
+    for (sm_i2p::const_iterator it = _i2p[set].begin();
+         it != _i2p[set].end(); ++it) {
+        ofs << it->first << " ";
+        sm_pos_bitmap p = it->second;
+        ofs << p.a[0] << " " << p.a[1] << " ";
+        ofs << p.b[0] << " " << p.b[1] << endl;
+    }
+    ofs.close();
 }

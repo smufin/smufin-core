@@ -1,16 +1,19 @@
 #ifndef __SM_COMMON_H__
 #define __SM_COMMON_H__
 
-#include <hash.hpp>
-
 #include <mutex>
 #include <string>
 #include <unordered_set>
 #include <unordered_map>
+
+#include <zlib.h>
+
 #include <concurrentqueue.h>
-#include <boost/atomic.hpp>
 #include <google/sparse_hash_map>
 #include <folly/ProducerConsumerQueue.h>
+
+#include "kseq.h"
+#include "hash.hpp"
 
 // Expected number of keys per storer/thread.
 #define TABLE_LEN 140000000
@@ -95,10 +98,17 @@ typedef struct {
     sm_msg array[BULK_LEN];
 } sm_bulk;
 
+typedef folly::ProducerConsumerQueue<sm_bulk> sm_queue;
+
 typedef struct sm_pos_bitmap {
     uint64_t a[2] = {0};
     uint64_t b[2] = {0};
 } sm_pos_bitmap;
+
+typedef std::unordered_set<std::string> sm_ids;
+typedef std::unordered_set<std::string> sm_reads;
+typedef std::unordered_map<std::string, sm_pos_bitmap> sm_i2p;
+typedef std::unordered_map<std::string, sm_ids> sm_k2i;
 
 // Use ASCII codes to index base 4 values for ACGT. The array is
 // equivalent to the following map, only slightly faster since it avoids
@@ -124,28 +134,11 @@ const char code[] = "-------------------------------------------"
 const char comp[] = "-------------------------------------------"
                     "----------------------T-G---C------N-----A";
 
-// SPMC queue to be initialized at startup time with the list of input
-// files to be processed. Idle producer threads will read from the queue
-// until there are no input files left.
-extern moodycamel::ConcurrentQueue<std::string> input_queue;
-extern boost::atomic_int input_count;
-
-// Signal end of processing and filtering threads.
-extern boost::atomic<bool> process_done;
-
 // Arrays that map which prefixes are to be processed on the current
 // process (l1), and storer/consumer threads (l2), distributing them as
 // evenly as possible according to MAP_FILE.
 extern int map_l1[MAP_FILE_LEN];
 extern int map_l2[MAP_FILE_LEN];
-
-// Hash tables that hold data in memory, one per storer/consumer thread.
-extern sm_table* tables[NUM_STORERS];
-extern sm_cache* caches[NUM_STORERS];
-
-// Message queues between loader threads and storer threads. One SPSC queue
-// per loader/storer pair.
-extern folly::ProducerConsumerQueue<sm_bulk>* queues[NUM_STORERS][MAX_LOADERS];
 
 #define NUM_SETS 3
 enum sm_set {
@@ -154,19 +147,21 @@ enum sm_set {
     TN, // Tumor Non-mutated reads.
 };
 
-extern std::vector<std::string> set_names;
-extern std::mutex filter_mutex[NUM_SETS];
-extern std::unordered_set<std::string> filter_ids[NUM_SETS];
-extern std::unordered_set<std::string> filter_reads[NUM_SETS];
-extern std::unordered_map<std::string, sm_pos_bitmap> filter_i2p[NUM_SETS];
-extern std::unordered_map<std::string, std::unordered_set<std::string>> filter_k2i[NUM_SETS];
-
-enum noshort_options {
-    O_DISABLE_STATS, O_DISABLE_FILTER
+struct sm_config {
+    int pid = 0;
+    int num_storers = NUM_STORERS;
+    int num_loaders = 1;
+    int num_filters = 1;
+    std::string input_file;
+    std::string map_file;
+    std::string exec;
 };
+
+KSEQ_INIT(gzFile, gzread);
 
 uint64_t strtob4(const char *str);
 int lq_count(const char *str, int len);
 void krevcomp(char s[]);
+void spawn(std::string name, std::function<void(int)> func, int n);
 
 #endif
