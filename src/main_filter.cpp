@@ -45,8 +45,6 @@ int main(int argc, char *argv[])
     bool disable_stats = false;
     bool disable_filter = false;
 
-    std::ios_base::sync_with_stdio(false);
-
     static const char *opts = "i:m:p:l:f:h";
     static const struct option opts_long[] = {
         { "input", required_argument, NULL, 'i' },
