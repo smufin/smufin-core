@@ -36,7 +36,7 @@ CFLAGS = $(FLAGS) -std=c++11 -DKMER_LEN=$(KMER_LEN) \
          -DMIN_TC=$(MIN_TC) -DMAX_NC=$(MAX_NC) \
          -DWMIN=$(WMIN) -DWLEN=$(WLEN)
 
-all: $(PROCESS_BIN) $(FILTER_BIN) $(GROUP_BIN) $(MERGE_BIN)
+all: $(PROCESS_BIN) $(FILTER_BIN) $(MERGE_BIN) $(GROUP_BIN)
 
 $(PROCESS_BIN): $(FILTER_SRC)
 	g++ $(CFLAGS) -DENABLE_PROCESS -Isrc -I$(GSH_INC) -I$(GPT_INC) \
@@ -48,15 +48,16 @@ $(FILTER_BIN): $(FILTER_SRC)
 		-L$(GPT_LIB) -I$(BOOST_INC) -L$(BOOST_LIB) -I$(MCQ_INC) \
 		-I$(FOLLY_INC) -o $(FILTER_BIN) $(FILTER_SRC) -lz -lpthread
 
-$(GROUP_BIN): $(GROUP_SRC)
-	g++ $(CFLAGS) -Isrc -I$(GSH_INC) -I$(BOOST_INC) -L$(BOOST_LIB) \
-		-I$(BOOST_INC) -L$(BOOST_LIB) -I$(MCQ_INC) -I$(FOLLY_INC) \
-		-o $(GROUP_BIN) $(GROUP_SRC) \
-		-lz -lboost_iostreams
-
 $(MERGE_BIN): $(MERGE_SRC)
 	g++ $(CFLAGS) -Isrc -I$(MCQ_INC) -I$(FOLLY_INC) -I$(RDB_INC) \
 		-o $(MERGE_BIN) $(MERGE_SRC) $(RDB_LIB)
 
+$(GROUP_BIN): $(GROUP_SRC)
+	g++ $(CFLAGS) -Isrc -I$(GSH_INC) -I$(BOOST_INC) -L$(BOOST_LIB) \
+		-I$(BOOST_INC) -L$(BOOST_LIB) -I$(MCQ_INC) -I$(FOLLY_INC) \
+		-I$(RDB_INC) \
+		-o $(GROUP_BIN) $(GROUP_SRC) $(RDB_LIB) \
+		-lz -lboost_iostreams
+
 clean:
-	rm -f $(PROCESS_BIN) $(FILTER_BIN) $(GROUP_BIN) $(MERGE_BIN)
+	rm -f $(PROCESS_BIN) $(FILTER_BIN) $(MERGE_BIN) $(GROUP_BIN)
