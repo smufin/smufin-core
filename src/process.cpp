@@ -158,12 +158,14 @@ void process_incr(int pid, int sid, int num_loaders)
     }
 
     cout << "Cache " << sid << ": " << cache.size() << endl;
+
+    std::this_thread::sleep_for(std::chrono::seconds(sid * 7));
     string file = string("table-") + std::to_string(pid) + string("-") +
                   std::to_string(sid) + string(".data");
 
     char buf[PATH_MAX] = "";
     if (getcwd(buf, PATH_MAX) != NULL) {
-        cout << "Serialize " << file << " (" << string(buf) << ")" << endl;
+        cout << "Serialize " << string(buf) << "/" << file << endl;
     }
 
     FILE* fp = fopen(file.c_str(), "w");
@@ -171,7 +173,12 @@ void process_incr(int pid, int sid, int num_loaders)
         cout << "Failed to open: " << file << " (" << errno << ")" << endl;
         exit(1);
     }
-    table.serialize(sm_table::NopointerSerializer(), fp);
+
+    if (!table.serialize(sm_table::NopointerSerializer(), fp)) {
+        cout << "Failed to serialize table " << pid << "-" << sid << endl;
+        exit(1);
+    }
+
     fclose(fp);
 }
 
