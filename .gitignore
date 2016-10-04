@@ -1,2 +1,5 @@
-bin/sm-standalone
+bin/sm-process
+bin/sm-filter
+bin/sm-merge
+bin/sm-group
 make.conf
