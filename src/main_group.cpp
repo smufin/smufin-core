@@ -14,6 +14,7 @@
 #include <google/sparse_hash_map>
 #include <rocksdb/db.h>
 
+#include "db.hpp"
 #include "common.hpp"
 
 using std::cout;
@@ -26,6 +27,9 @@ using std::string;
 #define KMAX 100
 
 #define DROP 500
+
+int map_l1[MAP_FILE_LEN] = {0};
+int map_l2[MAP_FILE_LEN] = {0};
 
 rocksdb::DB* i2r[NUM_SETS];
 rocksdb::DB* k2i[NUM_SETS];
@@ -99,8 +103,6 @@ void populate_index(string& lid, const std::vector<string>& kmers, int kind,
         std::unordered_set<string> sids;
         boost::split(sids, list, boost::is_any_of(" "));
 
-        cerr << sids.size() << endl;
-
         if (sids.size() > DROP) {
             drop[kind][kmer] += sids.size();
             continue;
@@ -149,12 +151,14 @@ int main(int argc, char *argv[])
 {
     string input;
     string rdb;
+    string map_filename;
     int pid = 0;
 
-    static const char *opts = "i:r:p:h";
+    static const char *opts = "i:r:m:p:h";
     static const struct option opts_long[] = {
         { "input", required_argument, NULL, 'i' },
         { "rdb", required_argument, NULL, 'r' },
+        { "mapping", required_argument, NULL, 'm' },
         { "pid", required_argument, NULL, 'p' },
         { "help", no_argument, NULL, 'h' },
         { NULL, no_argument, NULL, 0 },
@@ -167,11 +171,29 @@ int main(int argc, char *argv[])
         switch (opt) {
             case 'i': input = string(optarg); break;
             case 'r': rdb = string(optarg); break;
+            case 'm': map_filename = string(optarg); break;
             case 'p': pid = atoi(optarg); break;
             case 'h':
                 display_usage();
                 return 0;
         }
+    }
+
+    std::ifstream map_file(map_filename);
+    if (!map_file.good()) {
+        display_usage();
+        exit(1);
+    }
+
+    // Initialize prefix to process/thread mapping.
+    for (string line; getline(map_file, line);) {
+        std::vector<string> columns;
+        boost::split(columns, line, boost::is_any_of(" "));
+        uint64_t m = 0;
+        memcpy(&m, columns[0].c_str(), MAP_LEN);
+        hash_5c_map(m);
+        map_l1[m] = atoi(columns[1].c_str());
+        map_l2[m] = atoi(columns[2].c_str());
     }
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -182,30 +204,40 @@ int main(int argc, char *argv[])
 
     string dir;
     rocksdb::Status status;
-    rocksdb::Options options;
+
     for (int i = 0; i < NUM_SETS; i++) {
+        rocksdb::Options options;
         dir = rdb + "/seq-" + sets[i] + ".rdb";
         cerr << "Open RocksDB: " << dir << endl;
         status = rocksdb::DB::OpenForReadOnly(options, dir, &i2r[i]);
         assert(status.ok());
+    }
+
+    for (int i = 0; i < NUM_SETS; i++) {
+        rocksdb::Options options;
+        options.merge_operator.reset(new IDListOperator());
         dir = rdb + "/k2i-" + sets[i] + ".rdb";
         cerr << "Open RocksDB: " << dir << endl;
         status = rocksdb::DB::OpenForReadOnly(options, dir, &k2i[i]);
         assert(status.ok());
     }
 
-    string file = input + "filter-tm." + std::to_string(pid) + ".i2p";
-    cerr << "Open: " << file << endl;
-    std::ifstream in(file);
-    if (!in.good()) {
-        cerr << "Failed to open: " << file << endl;
-        exit(1);
-    }
+    rocksdb::DB* i2p;
+    rocksdb::Options options;
+    options.merge_operator.reset(new PositionsMapOperator());
+    dir = rdb + "/i2p-" + sets[TM] + ".rdb";
+    cerr << "Open RocksDB: " << dir << endl;
+    status = rocksdb::DB::OpenForReadOnly(options, dir, &i2p);
+    assert(status.ok());
 
-    int n = 0;
     string sid;
     sm_pos_bitmap p;
-    while (in >> sid >> p.a[0] >> p.a[1] >> p.b[0] >> p.b[1]) {
+
+    rocksdb::Iterator* it = i2p->NewIterator(rocksdb::ReadOptions());
+    for (it->SeekToFirst(); it->Valid(); it->Next()) {
+        sid = it->key().ToString();
+        p = decode_pos(it->value().data());
+
         std::vector<int> a_pos;
         std::vector<int> b_pos;
 
@@ -223,7 +255,13 @@ int main(int argc, char *argv[])
         if (read.find("N") != std::string::npos)
             continue;
 
-        // TODO: Check partition.
+        uint64_t m = 0;
+        string sub = read.substr(0, MAP_LEN);
+        memcpy(&m, sub.c_str(), MAP_LEN);
+        hash_5c_map(m);
+
+        if (map_l1[m] != pid)
+            continue;
 
         get_positions_a(p.a, &a_pos);
         get_positions_b(p.b, &b_pos, read_length);
@@ -244,6 +282,7 @@ int main(int argc, char *argv[])
             select_candidate(sid, string(buf), b_pos, 1);
         }
     }
+    delete it;
 
     end = std::chrono::system_clock::now();
     time = end - start;

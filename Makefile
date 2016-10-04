@@ -27,7 +27,7 @@ FILTER_SRC = src/common.cpp src/process.cpp src/filter.cpp \
              src/hash.cpp src/main_filter.cpp
 
 GROUP_BIN = bin/sm-group
-GROUP_SRC = src/common.cpp src/main_group.cpp
+GROUP_SRC = src/db.cpp src/common.cpp src/main_group.cpp
 
 MERGE_BIN = bin/sm-merge
 MERGE_SRC = src/db.cpp src/merge.cpp src/main_merge.cpp
