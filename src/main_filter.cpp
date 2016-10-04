@@ -306,7 +306,7 @@ void sm_filter(int pid, int num_filters)
     std::vector<std::thread> k2is;
     for (int i = 0; i < NUM_SETS; i++)
         k2is.push_back(std::thread(sm_write_k2i, i, pid));
-    cout << "Spawned " << fastqs.size() << " K2I writer threads" << endl;
+    cout << "Spawned " << k2is.size() << " K2I writer threads" << endl;
 
     std::thread i2p = std::thread(sm_write_i2p, TM, pid);
     cout << "Spawned I2P writer thread" << endl;
