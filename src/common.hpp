@@ -150,8 +150,8 @@ extern folly::ProducerConsumerQueue<sm_bulk>* queues[NUM_STORERS][MAX_LOADERS];
 #define NUM_SETS 3
 enum sm_set {
     NN, // Normal Non-mutated reads.
-    TM, // Tumor Mutated reads.
     TN, // Tumor Non-mutated reads.
+    TM, // Tumor Mutated reads.
 };
 
 extern std::vector<std::string> set_names;

@@ -24,7 +24,7 @@ boost::atomic_int input_count(0);
 boost::atomic<bool> process_done(false);
 int map_l1[MAP_FILE_LEN] = {0};
 int map_l2[MAP_FILE_LEN] = {0};
-std::vector<string> set_names = { "nn", "tm", "tn" };
+std::vector<string> set_names = { "nn", "tn", "tm" };
 
 sm_table* tables[NUM_STORERS];
 sm_cache* caches[NUM_STORERS];
