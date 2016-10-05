@@ -101,10 +101,15 @@ void load_seq(rocksdb::DB* db, string path, string set, int i)
     int n = 0;
     int len;
     kseq_t *seq = kseq_init(fileno(in));
+    rocksdb::WriteBatch batch;
     while ((len = kseq_read(seq)) >= 0) {
         string id(seq->name.s);
         string s(seq->seq.s);
-        db->Put(rocksdb::WriteOptions(), id, s);
+        batch.Put(id, s);
+        if (n % 10000 == 0) {
+            db->Write(rocksdb::WriteOptions(), &batch);
+            batch.Clear();
+        }
         if (n % 100000 == 0) {
             end = std::chrono::system_clock::now();
             time = end - start;
@@ -113,6 +118,7 @@ void load_seq(rocksdb::DB* db, string path, string set, int i)
         }
         n++;
     }
+    db->Write(rocksdb::WriteOptions(), &batch);
     kseq_destroy(seq);
     fclose(in);
 }
