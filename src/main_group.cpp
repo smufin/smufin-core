@@ -115,26 +115,26 @@ void populate_index(string& lid, const std::vector<string>& kmers, int kind,
 
 void get_positions_a(uint64_t bitmap[2], std::vector<int> *pos)
 {
-    for (int i = 1; i >= 0; i--) {
+    for (int i = 0; i < 2; i++) {
         unsigned long tmp = bitmap[i];
         int offset = i * 64;
         while (tmp > 0) {
             int p = __builtin_ffsl(tmp) - 1;
             tmp &= (tmp - 1);
-            pos->push_back(63 - p + offset);
+            pos->push_back(p + offset);
         }
     }
 }
 
 void get_positions_b(uint64_t bitmap[2], std::vector<int> *pos, int len)
 {
-    for (int i = 1; i >= 0; i--) {
+    for (int i = 0; i < 2; i++) {
         unsigned long tmp = bitmap[i];
         int offset = i * 64;
         while (tmp > 0) {
             int p = __builtin_ffsl(tmp) - 1;
             tmp &= (tmp - 1);
-            pos->push_back(len - KMER_LEN - 1 - (63 - p + offset));
+            pos->push_back(len - KMER_LEN - (p + offset));
         }
     }
 }
@@ -265,7 +265,7 @@ int main(int argc, char *argv[])
 
         get_positions_a(p.a, &a_pos);
         get_positions_b(p.b, &b_pos, read_length);
-        std::reverse(a_pos.begin(), a_pos.end());
+        std::reverse(b_pos.begin(), b_pos.end());
 
         int a_len = a_pos.size();
         int b_len = b_pos.size();

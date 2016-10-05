@@ -223,9 +223,9 @@ void filter_kmer(kseq_t *seq, int pos, bool rev, char kmer[], uint32_t nc,
         }
         if (set == TM) {
             if (!rev)
-                filter_i2p[set][seq->name.s].a[pos / 64] |= 1 << (pos % 64);
+                filter_i2p[set][seq->name.s].a[pos / 64] |= 1UL << (pos % 64);
             else
-                filter_i2p[set][seq->name.s].b[pos / 64] |= 1 << (pos % 64);
+                filter_i2p[set][seq->name.s].b[pos / 64] |= 1UL << (pos % 64);
         }
         if (filter_k2i[set][kmer].size() <= MAX_K2I_READS) {
             filter_k2i[set][kmer].insert(seq->name.s);
