@@ -64,18 +64,18 @@ int main(int argc, char *argv[])
     }
 
     if (type == "seq") {
-        rdb_path = output + "seq-" + set + ".rdb";
+        rdb_path = output + "/seq-" + set + ".rdb";
         func = load_seq;
     }
 
     if (type == "i2p") {
-        rdb_path = output + "i2p-" + set + ".rdb";
+        rdb_path = output + "/i2p-" + set + ".rdb";
         func = load_i2p;
         options.merge_operator.reset(new PositionsMapOperator());
     }
 
     if (type == "k2i") {
-        rdb_path = output + "k2i-" + set + ".rdb";
+        rdb_path = output + "/k2i-" + set + ".rdb";
         func = load_k2i;
         options.merge_operator.reset(new IDListOperator());
     }
