@@ -51,6 +51,7 @@ int main(int argc, char *argv[])
     rocksdb::DB* db;
     rocksdb::Options options;
     options.create_if_missing = true;
+    options.IncreaseParallelism(4);
     string rdb_path;
     std::function<void(rocksdb::DB* db, string path, string set, int i)> func;
 
