@@ -1,165 +1,57 @@
 #include <getopt.h>
-#include <unistd.h>
 
 #include <chrono>
 #include <fstream>
 #include <iostream>
-#include <string>
-#include <unordered_set>
-#include <unordered_map>
-#include <vector>
-#include <set>
 
 #include <boost/algorithm/string.hpp>
-#include <google/sparse_hash_map>
 #include <rocksdb/db.h>
+#include <rocksdb/cache.h>
+#include <rocksdb/filter_policy.h>
+#include <rocksdb/table.h>
 
 #include "db.hpp"
 #include "common.hpp"
+#include "group.hpp"
 
 using std::cout;
-using std::cerr;
 using std::endl;
 using std::string;
-
-#define RMAX 100
-#define KMIN 0
-#define KMAX 100
-
-#define DROP 500
 
 int map_l1[MAP_FILE_LEN] = {0};
 int map_l2[MAP_FILE_LEN] = {0};
 
+l2p_table* l2p[MAX_GROUPERS];
+l2k_table* l2k[MAX_GROUPERS];
+l2i_table* l2i[MAX_GROUPERS];
+
 rocksdb::DB* i2r[NUM_SETS];
 rocksdb::DB* k2i[NUM_SETS];
 
-typedef std::array<std::vector<int>, 2> pos_value;
-typedef std::array<std::vector<string>, 2> kmer_value;
-typedef std::array<std::unordered_set<string>, 2> id_value;
-
-typedef google::sparse_hash_map<string, pos_value> l2p_table;
-typedef google::sparse_hash_map<string, kmer_value> l2k_table;
-typedef google::sparse_hash_map<string, id_value> l2i_table;
-
-typedef std::array<std::unordered_map<string, int>, 2> index_count;
-
-l2p_table l2p;
-l2k_table l2k;
-l2i_table l2i;
-
-const char comp_code[] = "ab";
-const char kind_code[] = "nt";
-
-void rrevcomp(char read[], int len)
-{
-    const char comp[] = "-------------------------------------------"
-                        "----------------------T-G---C------N-----A";
-    int c, i, j;
-    for (i = 0, j = len - 1; i < j; i++, j--) {
-        c = read[i];
-        read[i] = comp[read[j]];
-        read[j] = comp[c];
-    }
-}
-
-bool match_window(std::vector<int> pos)
-{
-    if (pos.size() < WMIN) {
-        return false;
-    }
-
-    for (int i = 0; i <= pos.size() - WMIN; i++) {
-        std::vector<int> sub(pos.begin() + i, pos.begin() + i + WMIN);
-        if (sub.back() - sub.front() < WLEN) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-void select_candidate(string sid, string seq, std::vector<int>& pos, int dir)
-{
-    l2p[sid][dir] = pos;
-    // TODO: Switch to unordered_set instead of vector?
-    std::vector<string> kmers;
-    for (int p: pos) {
-        kmers.push_back(seq.substr(p, KMER_LEN));
-    }
-    l2k[sid][dir] = kmers;
-}
-
-void populate_index(string& lid, const std::vector<string>& kmers, int kind,
-                    index_count& keep, index_count& drop)
-{
-    for (string kmer: kmers) {
-        string list;
-        rocksdb::Status status;
-        status = k2i[kind]->Get(rocksdb::ReadOptions(), kmer, &list);
-        if (!status.ok())
-            continue;
-
-        std::unordered_set<string> sids;
-        boost::split(sids, list, boost::is_any_of(" "));
-
-        if (sids.size() > DROP) {
-            drop[kind][kmer] += sids.size();
-            continue;
-        }
-
-        l2i[lid][kind].insert(sids.begin(), sids.end());
-        keep[kind][kmer] += sids.size();
-    }
-}
-
-void get_positions_a(uint64_t bitmap[2], std::vector<int> *pos)
-{
-    for (int i = 0; i < 2; i++) {
-        unsigned long tmp = bitmap[i];
-        int offset = i * 64;
-        while (tmp > 0) {
-            int p = __builtin_ffsl(tmp) - 1;
-            tmp &= (tmp - 1);
-            pos->push_back(p + offset);
-        }
-    }
-}
-
-void get_positions_b(uint64_t bitmap[2], std::vector<int> *pos, int len)
-{
-    for (int i = 0; i < 2; i++) {
-        unsigned long tmp = bitmap[i];
-        int offset = i * 64;
-        while (tmp > 0) {
-            int p = __builtin_ffsl(tmp) - 1;
-            tmp &= (tmp - 1);
-            pos->push_back(len - KMER_LEN - (p + offset));
-        }
-    }
-}
-
 void display_usage()
 {
-    cout << "Usage: sm-group [OPTIONS] -i INPUT_PATH" << endl;
+    cout << "Usage: sm-group [OPTIONS] -r RDB_PATH" << endl;
     cout << "Options:" << endl;
-    cout << " -i, --input INPUT_PATH" << endl;
+    cout << " -r, --rdb RDB_PATH" << endl;
+    cout << " -m, --mapping MAP_FILE" << endl;
+    cout << " -g, --groupers NUM_THREADS" << endl;
+    cout << " -p, --pid PID" << endl;
     cout << " -h, --help" << endl;
 }
 
 int main(int argc, char *argv[])
 {
-    string input;
     string rdb;
     string map_filename;
     int pid = 0;
+    int num_groupers = 1;
 
-    static const char *opts = "i:r:m:p:h";
+    static const char *opts = "r:m:p:g:h";
     static const struct option opts_long[] = {
-        { "input", required_argument, NULL, 'i' },
         { "rdb", required_argument, NULL, 'r' },
         { "mapping", required_argument, NULL, 'm' },
         { "pid", required_argument, NULL, 'p' },
+        { "groupers", required_argument, NULL, 'g' },
         { "help", no_argument, NULL, 'h' },
         { NULL, no_argument, NULL, 0 },
     };
@@ -169,10 +61,10 @@ int main(int argc, char *argv[])
     while (opt != -1) {
         opt = getopt_long(argc, argv, opts, opts_long, &opt_index);
         switch (opt) {
-            case 'i': input = string(optarg); break;
             case 'r': rdb = string(optarg); break;
             case 'm': map_filename = string(optarg); break;
             case 'p': pid = atoi(optarg); break;
+            case 'g': num_groupers = atoi(optarg); break;
             case 'h':
                 display_usage();
                 return 0;
@@ -207,17 +99,30 @@ int main(int argc, char *argv[])
 
     for (int i = 0; i < NUM_SETS; i++) {
         rocksdb::Options options;
+        rocksdb::BlockBasedTableOptions toptions;
+
+        toptions.block_cache = rocksdb::NewLRUCache(8000UL * 1024 * 1024);
+        toptions.filter_policy.reset(rocksdb::NewBloomFilterPolicy(10));
+        options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(toptions));
+
         dir = rdb + "/seq-" + sets[i] + ".rdb";
-        cerr << "Open RocksDB: " << dir << endl;
+        cout << "Open RocksDB: " << dir << endl;
         status = rocksdb::DB::OpenForReadOnly(options, dir, &i2r[i]);
         assert(status.ok());
     }
 
     for (int i = 0; i < NUM_SETS; i++) {
         rocksdb::Options options;
+        rocksdb::BlockBasedTableOptions toptions;
+
+        toptions.block_cache = rocksdb::NewLRUCache(8000UL * 1024 * 1024);
+        toptions.filter_policy.reset(rocksdb::NewBloomFilterPolicy(10));
+        options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(toptions));
+
         options.merge_operator.reset(new IDListOperator());
+
         dir = rdb + "/k2i-" + sets[i] + ".rdb";
-        cerr << "Open RocksDB: " << dir << endl;
+        cout << "Open RocksDB: " << dir << endl;
         status = rocksdb::DB::OpenForReadOnly(options, dir, &k2i[i]);
         assert(status.ok());
     }
@@ -226,15 +131,29 @@ int main(int argc, char *argv[])
     rocksdb::Options options;
     options.merge_operator.reset(new PositionsMapOperator());
     dir = rdb + "/i2p-" + sets[TM] + ".rdb";
-    cerr << "Open RocksDB: " << dir << endl;
+    cout << "Open RocksDB: " << dir << endl;
     status = rocksdb::DB::OpenForReadOnly(options, dir, &i2p);
     assert(status.ok());
+
+    for (int i = 0; i < MAX_GROUPERS; i++) {
+        l2p[i] = new l2p_table();
+        l2k[i] = new l2k_table();
+        l2i[i] = new l2i_table();
+    }
 
     string sid;
     sm_pos_bitmap p;
 
+    int num_all = 0;
+    int num_exist = 0;
+    int num_map = 0;
+    int num_match_a = 0;
+    int num_match_b = 0;
+
     rocksdb::Iterator* it = i2p->NewIterator(rocksdb::ReadOptions());
     for (it->SeekToFirst(); it->Valid(); it->Next()) {
+        num_all++;
+
         sid = it->key().ToString();
         p = decode_pos(it->value().data());
 
@@ -246,6 +165,8 @@ int main(int argc, char *argv[])
         status = i2r[TM]->Get(rocksdb::ReadOptions(), sid, &read);
         if (!status.ok())
             continue;
+
+        num_exist++;
 
         int read_length = read.size();
 
@@ -259,9 +180,11 @@ int main(int argc, char *argv[])
         string sub = read.substr(0, MAP_LEN);
         memcpy(&m, sub.c_str(), MAP_LEN);
         hash_5c_map(m);
-
         if (map_l1[m] != pid)
             continue;
+        int gid = map_l2[m];
+
+        num_map++;
 
         get_positions_a(p.a, &a_pos);
         get_positions_b(p.b, &b_pos, read_length);
@@ -271,7 +194,8 @@ int main(int argc, char *argv[])
         int b_len = b_pos.size();
 
         if (a_len >= KMIN && a_len <= KMAX && b_len > 0 && match_window(a_pos)) {
-            select_candidate(sid, read, a_pos, 0);
+            select_candidate(gid, sid, read, a_pos, 0);
+            num_match_a++;
         }
 
         if (b_len >= KMIN && b_len <= KMAX && a_len > 0 && match_window(b_pos)) {
@@ -279,98 +203,37 @@ int main(int argc, char *argv[])
             copy(read.begin(), read.end(), buf);
             buf[read_length] = '\0';
             rrevcomp(buf, read_length);
-            select_candidate(sid, string(buf), b_pos, 1);
+            select_candidate(gid, sid, string(buf), b_pos, 1);
+            num_match_b++;
         }
     }
+
     delete it;
 
     end = std::chrono::system_clock::now();
     time = end - start;
-    cerr << "Candidate selection time: " << time.count() << endl;
+    cout << "Candidate selection time: " << time.count() << endl;
 
-    cout << "{";
-    start = std::chrono::system_clock::now();
-    bool first_group = true;
-    for (l2k_table::const_iterator it = l2k.begin(); it != l2k.end(); ++it) {
-        string lid = it->first;
-        index_count keep;
-        index_count drop;
-
-        for (int i = 0; i < 2; i++) {
-            for (string kmer: it->second[i]) {
-                keep[i][kmer] = 0;
-                drop[i][kmer] = 0;
-            }
-        }
-
-        populate_index(lid, it->second[0], NN, keep, drop);
-        populate_index(lid, it->second[0], TN, keep, drop);
-        populate_index(lid, it->second[1], NN, keep, drop);
-        populate_index(lid, it->second[1], TN, keep, drop);
-
-        if (!first_group)
-            cout << ",";
-        first_group = false;
-
-        string read;
-        rocksdb::Status status;
-        status = i2r[TM]->Get(rocksdb::ReadOptions(), lid, &read);
-        if (!status.ok())
-            continue;
-
-        cout << "\"" << lid << "\":{";
-        cout << "\"lead\":["
-             << "\"" << lid << "\","
-             << "\"" << read << "\""
-             << "],";
-
-        for (int i = 0; i < 2; i++) {
-            cout << "\"pos-" << comp_code[i] << "\":[";
-            bool first_pos = true;
-            for (int p: l2p[lid][i]) {
-                if (!first_pos)
-                    cout << ",";
-                first_pos = false;
-                cout << p;
-            }
-            cout << "],";
-
-            cout << "\"kmers-" << comp_code[i] << "\":[";
-            bool first_kmer = true;
-            for (string kmer: it->second[i]) {
-                int kept_n = keep[0][kmer];
-                int dropped_n = drop[0][kmer];
-                int kept_t = keep[1][kmer];
-                int dropped_t = drop[1][kmer];
-                if (!first_kmer)
-                    cout << ",";
-                first_kmer = false;
-                cout << "[\"" << kmer << "\"," << kept_n << "," << kept_t << ","
-                     << dropped_n << "," << dropped_t << "]";
-            }
-            cout << "],";
-        }
-
-        for (int i = 0; i < 2; i++) {
-            bool first_read = true;
-            cout << "\"reads-" << kind_code[i] << "\":[";
-            for (string sid: l2i[lid][i]) {
-                if (!first_read)
-                    cout << ",";
-                first_read = false;
-                read = "";
-                status = i2r[i]->Get(rocksdb::ReadOptions(), lid, &read);
-                if (!status.ok())
-                    continue;
-                cout << "[\"" << sid << "\",\"" << read << "\"]";
-            }
-            cout << ( i == 1 ? "]" : "]," );
-        }
-
-        cout << "}";
+    cout << "Number of iterated I2P: " << num_all << endl;
+    cout << "Number of existing I2P: " << num_exist << endl;
+    cout << "Number of mapped I2P: " << num_map << endl;
+    cout << "Number of A-matching I2P: " << num_match_a << endl;
+    cout << "Number of B-matching I2P: " << num_match_b << endl;
+    for (int i = 0; i < MAX_GROUPERS; i++) {
+        cout << "Number of candidates (" << std::to_string(i) << "): "
+             << l2k[i]->size() << endl;
     }
-    cout << "}";
+
+    start = std::chrono::system_clock::now();
+
+    std::vector<std::thread> populators;
+    for (int i = 0; i < num_groupers; i++)
+        populators.push_back(std::thread(populate, pid, i));
+    cout << "Spawned " << populators.size() << " populator threads" << endl;
+    for (auto& populator: populators)
+        populator.join();
+
     end = std::chrono::system_clock::now();
     time = end - start;
-    cerr << "Populate candidates time: " << time.count() << endl;
+    cout << "Populate candidates time: " << time.count() << endl;
 }
