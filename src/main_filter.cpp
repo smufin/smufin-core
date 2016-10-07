@@ -379,7 +379,7 @@ void sm_write_fastq(int set, int pid)
              std::ofstream::app);
     for (std::unordered_set<std::string>::const_iterator it =
          filter_reads[set].begin(); it != filter_reads[set].end(); ++it) {
-        ofs << *it << endl;
+        ofs << *it << "\n";
     }
     ofs.close();
 }
@@ -397,7 +397,7 @@ void sm_write_k2i(int set, int pid)
              sit != it->second.end(); ++sit) {
             ofs << " " << *sit;
         }
-        ofs << endl;
+        ofs << "\n";
     }
     ofs.close();
 }
@@ -411,7 +411,7 @@ void sm_write_i2p(int set, int pid)
         ofs << it->first << " ";
         sm_pos_bitmap p = it->second;
         ofs << p.a[0] << " " << p.a[1] << " ";
-        ofs << p.b[0] << " " << p.b[1] << endl;
+        ofs << p.b[0] << " " << p.b[1] << "\n";
     }
     ofs.close();
 }
