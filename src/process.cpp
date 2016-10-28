@@ -157,8 +157,6 @@ void process_incr(int pid, int sid, int num_loaders)
         }
     }
 
-    cout << "Cache " << sid << ": " << cache.size() << endl;
-
     std::this_thread::sleep_for(std::chrono::seconds(sid * 7));
     string file = string("table-") + std::to_string(pid) + string("-") +
                   std::to_string(sid) + string(".data");
@@ -178,6 +176,9 @@ void process_incr(int pid, int sid, int num_loaders)
         cout << "Failed to serialize table " << pid << "-" << sid << endl;
         exit(1);
     }
+
+    cout << "Cache " << sid << ": " << cache.size() << endl;
+    cout << "Table " << sid << ": " << table.size() << endl;
 
     fclose(fp);
 }
