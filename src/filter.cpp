@@ -86,7 +86,7 @@ void filter_file(int pid, int fid, string file)
                              std::ofstream::app);
                     for (std::unordered_set<string>::const_iterator it =
                          filter_reads[i].begin(); it != filter_reads[i].end(); ++it) {
-                        ofs << *it << endl;
+                        ofs << *it << "\n";
                     }
                     ofs.close();
                     filter_reads[i].clear();
