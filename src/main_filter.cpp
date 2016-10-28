@@ -115,7 +115,8 @@ int main(int argc, char *argv[])
     sm_filter(pid, num_filters);
 #endif
 
-    return 0;
+    fflush(NULL);
+    _exit(0);
 }
 
 void display_usage()
