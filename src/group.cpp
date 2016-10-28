@@ -10,6 +10,37 @@ using std::cout;
 using std::endl;
 using std::string;
 
+void encode_read(std::string& str, sm_read& read)
+{
+    read.len = str.size();
+    for (int i = 0; i < read.len; i += 32) {
+        read.seq[i/32] = strtob4(str.substr(i, 32).c_str());
+    }
+}
+
+void decode_read(sm_read& read, std::string& str)
+{
+    char decode[4] = {'A', 'C', 'G', 'T'};
+    str = "";
+
+    int len_bits = read.len * 2;
+    int pos = len_bits / 64;
+    int shift = 64 - (len_bits % 64);
+    read.seq[pos] = read.seq[pos] << shift;
+
+    int l = 0;
+    int b = 0;
+    while (l < read.len) {
+        int pos = b / 64;
+        int shift = 62 - (b % 64);
+        int i = ((read.seq[pos] >> shift) & 3);
+        char c = decode[i];
+        str += c;
+        l++;
+        b += 2;
+    }
+}
+
 void rrevcomp(char read[], int len)
 {
     const char comp[] = "-------------------------------------------"
@@ -64,15 +95,21 @@ bool match_window(std::vector<int> pos)
     return false;
 }
 
-void select_candidate(int gid, string sid, string seq, std::vector<int>& pos,
-                      int dir)
+void select_candidate(int gid, string& sid, string& seq, string& dseq,
+                      std::vector<int>& pos, int dir)
 {
-    (*l2p[gid])[sid][dir] = pos;
-    // TODO: Switch to unordered_set instead of vector?
     std::vector<string> kmers;
     for (int p: pos) {
-        kmers.push_back(seq.substr(p, KMER_LEN));
+        string kmer = dseq.substr(p, KMER_LEN);
+        kmers.push_back(kmer);
+        kmer_table::const_iterator it = k2i[0]->find(kmer);
+        if (it == k2i[0]->end()) {
+            (*k2i[0])[kmer] = string();
+            (*k2i[1])[kmer] = string();
+        }
     }
+    (*l2r[gid])[sid] = seq;
+    (*l2p[gid])[sid][dir] = pos;
     (*l2k[gid])[sid][dir] = kmers;
 }
 
@@ -87,11 +124,12 @@ void populate(int pid, int gid)
 
     std::ofstream ofs;
     ofs.open("groups." + std::to_string(pid) + "-" + std::to_string(gid) + ".json");
+    ofs << "{";
 
     int num_leads = 0;
-    ofs << "{";
     bool first_group = true;
     for (l2k_table::const_iterator it = l2k[gid]->begin(); it != l2k[gid]->end(); ++it) {
+        num_leads++;
         string lid = it->first;
         index_count keep;
         index_count drop;
@@ -108,11 +146,10 @@ void populate(int pid, int gid)
         populate_index(gid, lid, it->second[1], NN, keep, drop);
         populate_index(gid, lid, it->second[1], TN, keep, drop);
 
-        string read;
-        rocksdb::Status status;
-        status = i2r[TM]->Get(rocksdb::ReadOptions(), lid, &read);
-        if (!status.ok())
+        l2r_table::const_iterator lit = l2r[gid]->find(lid);
+        if (lit == l2r[gid]->end())
             continue;
+        string seq = lit->second;
 
         if (!first_group)
             ofs << ",";
@@ -121,7 +158,7 @@ void populate(int pid, int gid)
         ofs << "\"" << lid << "\":{";
         ofs  << "\"lead\":["
              << "\"" << lid << "\","
-             << "\"" << read << "\""
+             << "\"" << seq << "\""
              << "],";
 
         for (int i = 0; i < 2; i++) {
@@ -155,14 +192,16 @@ void populate(int pid, int gid)
             bool first_read = true;
             ofs << "\"reads-" << kind_code[i] << "\":[";
             for (string sid: (*l2i[gid])[lid][i]) {
+                i2r_table::const_iterator sit = i2r[i]->find(sid);
+                if (sit == i2r[i]->end())
+                    continue;
                 if (!first_read)
                     ofs << ",";
                 first_read = false;
-                read = "";
-                status = i2r[i]->Get(rocksdb::ReadOptions(), lid, &read);
-                if (!status.ok())
-                    continue;
-                ofs << "[\"" << sid << "\",\"" << read << "\"]";
+                sm_read read = sit->second;
+                seq = "";
+                decode_read(read, seq);
+                ofs << "[\"" << sid << "\",\"" << seq << "\"]";
             }
             ofs << ( i == 1 ? "]" : "]," );
         }
@@ -176,8 +215,8 @@ void populate(int pid, int gid)
                  << time.count() << "\n";
             start = std::chrono::system_clock::now();
         }
-        num_leads++;
     }
+
     ofs << "}";
 }
 
@@ -185,12 +224,12 @@ void populate_index(int gid, string& lid, const std::vector<string>& kmers,
                     int kind, index_count& keep, index_count& drop)
 {
     for (string kmer: kmers) {
-        string list;
-        rocksdb::Status status;
-        status = k2i[kind]->Get(rocksdb::ReadOptions(), kmer, &list);
-        if (!status.ok())
+        kmer_table::const_iterator it = k2i[kind]->find(kmer);
+        if (it == k2i[kind]->end()) {
             continue;
+        }
 
+        string list = it->second;
         std::unordered_set<string> sids;
         boost::split(sids, list, boost::is_any_of(" "));
 
