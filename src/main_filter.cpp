@@ -325,7 +325,7 @@ void sm_filter(int pid, int num_filters)
 
 void sm_stats(int num_storers)
 {
-    std::map<uint64_t, uint64_t> hist;
+    std::map<uint64_t, uint64_t> hist_n, hist_t;
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
 
@@ -342,12 +342,13 @@ void sm_stats(int num_storers)
                 for (int l = 0; l < 4; l++) {
                     uint16_t nc = it->second.v[f][l][NORMAL_READ];
                     uint16_t tc = it->second.v[f][l][CANCER_READ];
+                    if (nc > 0)
+                        hist_n[int(log2(nc))]++;
+                    if (tc > 0)
+                        hist_t[int(log2(tc))]++;
                     uint32_t count = nc + tc;
                     if (count == 0)
                         continue;
-                    uint64_t bin = 1;
-                    bin = int(log2(count));
-                    hist[bin]++;
                     part = part + count;
                     part_unique++;
                 }
@@ -361,10 +362,14 @@ void sm_stats(int num_storers)
 
     end = std::chrono::system_clock::now();
 
-    for (std::map<uint64_t, uint64_t>::const_iterator it = hist.begin();
-         it != hist.end(); ++it) {
-        cout << "Histo " << it->first << " " << exp2(it->first)
-             << " " << it->second << endl;
+    for (auto& h: hist_n) {
+        cout << "Histo N: " << h.first << " " << exp2(h.first)
+             << " " << h.second << endl;
+    }
+
+    for (auto& h: hist_t) {
+        cout << "Histo T: " << h.first << " " << exp2(h.first)
+             << " " << h.second << endl;
     }
 
     time = end - start;
