@@ -199,12 +199,12 @@ int main(int argc, char *argv[])
         int a_len = a_pos.size();
         int b_len = b_pos.size();
 
-        if (a_len >= KMIN && a_len <= KMAX && b_len > 0 && match_window(a_pos)) {
+        if (a_len >= KMIN && a_len <= KMAX && match_window(a_pos)) {
             select_candidate(gid, sid, read, read, a_pos, 0);
             num_match_a++;
         }
 
-        if (b_len >= KMIN && b_len <= KMAX && a_len > 0 && match_window(b_pos)) {
+        if (b_len >= KMIN && b_len <= KMAX && match_window(b_pos)) {
             char buf[RMAX + 1];
             copy(read.begin(), read.end(), buf);
             buf[read_length] = '\0';
