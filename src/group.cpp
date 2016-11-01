@@ -230,6 +230,11 @@ void populate_index(int gid, string& lid, const std::vector<string>& kmers,
         }
 
         string list = it->second;
+        boost::trim_if(list, boost::is_any_of(" "));
+        if (list.size() == 0) {
+            continue;
+        }
+
         std::unordered_set<string> sids;
         boost::split(sids, list, boost::is_any_of(" "));
 
