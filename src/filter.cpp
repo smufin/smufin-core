@@ -15,7 +15,7 @@ using std::string;
 
 filter::filter(const sm_config &conf) : stage(conf),
     _alpha{'A','C','G','T'},
-    _sets{{"nn","tm","tn"}}
+    _sets{{"nn","tn","tm"}}
 {
     std::ifstream ifs(_conf.input_file);
     if (!ifs.good()) {
@@ -62,7 +62,7 @@ void filter::dump()
     std::vector<std::thread> k2is;
     for (int i = 0; i < NUM_SETS; i++)
         k2is.push_back(std::thread(&filter::write_k2i, this, i));
-    cout << "Spawned " << fastqs.size() << " K2I writer threads" << endl;
+    cout << "Spawned " << k2is.size() << " K2I writer threads" << endl;
 
     std::thread i2p = std::thread(&filter::write_i2p, this, TM);
     cout << "Spawned I2P writer thread" << endl;
@@ -150,7 +150,7 @@ void filter::load_file(int fid, string file)
                              std::ofstream::app);
                     for (std::unordered_set<string>::const_iterator it =
                          _reads[i].begin(); it != _reads[i].end(); ++it) {
-                        ofs << *it << endl;
+                        ofs << *it << "\n";
                     }
                     ofs.close();
                     _reads[i].clear();
@@ -288,9 +288,9 @@ void filter::filter_kmer(kseq_t *seq, int pos, bool rev, char kmer[], uint32_t n
         }
         if (set == TM) {
             if (!rev)
-                _i2p[set][seq->name.s].a[pos / 64] |= 1 << (pos % 64);
+                _i2p[set][seq->name.s].a[pos / 64] |= 1UL << (pos % 64);
             else
-                _i2p[set][seq->name.s].b[pos / 64] |= 1 << (pos % 64);
+                _i2p[set][seq->name.s].b[pos / 64] |= 1UL << (pos % 64);
         }
         if (_k2i[set][kmer].size() <= MAX_K2I_READS) {
             _k2i[set][kmer].insert(seq->name.s);
@@ -307,7 +307,7 @@ void filter::write_fastq(int set)
              std::ofstream::app);
     for (sm_reads::const_iterator it = _reads[set].begin();
          it != _reads[set].end(); ++it) {
-        ofs << *it << endl;
+        ofs << *it << "\n";
     }
     ofs.close();
 }
@@ -325,7 +325,7 @@ void filter::write_k2i(int set)
              sit != it->second.end(); ++sit) {
             ofs << " " << *sit;
         }
-        ofs << endl;
+        ofs << "\n";
     }
     ofs.close();
 }
@@ -339,7 +339,7 @@ void filter::write_i2p(int set)
         ofs << it->first << " ";
         sm_pos_bitmap p = it->second;
         ofs << p.a[0] << " " << p.a[1] << " ";
-        ofs << p.b[0] << " " << p.b[1] << endl;
+        ofs << p.b[0] << " " << p.b[1] << "\n";
     }
     ofs.close();
 }

@@ -25,14 +25,17 @@ int main(int argc, char *argv[])
     sm_config conf = sm_config();
     conf.exec = "count:run";
 
-    static const char *opts = "i:m:p:l:f:x:h";
+    static const char *opts = "i:m:p:l:f:r:g:x:o:h";
     static const struct option opts_long[] = {
         { "input", required_argument, NULL, 'i' },
         { "mapping", required_argument, NULL, 'm' },
         { "pid", required_argument, NULL, 'p' },
         { "loaders", required_argument, NULL, 'l' },
         { "filters", required_argument, NULL, 'f' },
+        { "mergers", required_argument, NULL, 'r' },
+        { "groupers", required_argument, NULL, 'g' },
         { "exec", required_argument, NULL, 'x' },
+        { "output", required_argument, NULL, 'o' },
         { "help", no_argument, NULL, 'h' },
         { NULL, no_argument, NULL, 0 },
     };
@@ -47,7 +50,10 @@ int main(int argc, char *argv[])
             case 'p': conf.pid = atoi(optarg); break;
             case 'l': conf.num_loaders = atoi(optarg); break;
             case 'f': conf.num_filters = atoi(optarg); break;
+            case 'r': conf.num_mergers = atoi(optarg); break;
+            case 'g': conf.num_groupers = atoi(optarg); break;
             case 'x': conf.exec = string(optarg); break;
+            case 'o': conf.output_path = string(optarg); break;
             case '?': display_usage(); return 1;
             case ':': display_usage(); return 1;
             case 'h': display_usage(); return 0;
@@ -94,6 +100,8 @@ int main(int argc, char *argv[])
     std::unordered_map<string, stage*(*)(const sm_config &conf)> registry;
     registry["count"] = &create_stage<count>;
     registry["filter"] = &create_stage<filter>;
+    registry["merge"] = &create_stage<filter>;
+    registry["group"] = &create_stage<filter>;
 
     std::vector<std::pair<string, stage*>> pipeline;
     for (auto& name: order) {
@@ -128,7 +136,10 @@ void display_usage()
     cout << " -p, --pid ID" << endl;
     cout << " -l, --loaders NUM_LOADER_THREADS" << endl;
     cout << " -f, --filters NUM_FILTER_THREADS" << endl;
+    cout << " -r, --mergers NUM_MERGER_THREADS" << endl;
+    cout << " -g, --groupers NUM_GROUPER_THREADS" << endl;
     cout << " -x, --exec COMMANDS" << endl;
+    cout << " -o, --output OUTPUT_PATH" << endl;
     cout << " -h, --help" << endl;
 }
 

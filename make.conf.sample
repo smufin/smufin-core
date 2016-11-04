@@ -4,14 +4,16 @@
 # Length of kmers; should be equal or smaller than 32.
 KMER_LEN ?= 30
 
-# Google sparsehash and perftools: paths to headers/libraries.
+# Google sparsehash: path to headers.
 GSH_INC = /usr/include
-GPT_INC = /usr/include
-GPT_LIB = /usr/lib
 
 # Boost: paths to headers/libraries.
 BOOST_INC = /usr/include/boost
 BOOST_LIB = /usr/lib
+
+# RocksDB: paths to headers/libraries.
+RDB_INC = /usr/include/rocksdb
+RDB_LIB = /usr/lib
 
 # Additional headers:
 # - moodycamel's ConcurrentQueue

@@ -3,9 +3,9 @@
 
 #include <string>
 
-#include <common.hpp>
-#include <count.hpp>
-#include <stage.hpp>
+#include "common.hpp"
+#include "count.hpp"
+#include "stage.hpp"
 
 class filter : public stage
 {

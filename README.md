@@ -32,15 +32,17 @@ configured changing the `KMER_LEN` variable (defaults to 30).
 ## Run
 
  ```
- Usage: sm-filter [OPTIONS] -i INPUT_FILE -m MAP_FILE
+ Usage: sm [OPTIONS] -i INPUT_FILE -m MAP_FILE -x COMMANDS
  Options:
   -i, --input INPUT_FILE
   -m, --mapping MAP_FILE
   -p, --pid ID
   -l, --loaders NUM_LOADER_THREADS
   -f, --filters NUM_FILTER_THREADS
-  --disable-filter
-  --disable-stats
+  -r, --mergers NUM_MERGER_THREADS
+  -g, --groupers NUM_GROUPER_THREADS
+  -x, --exec COMMANDS
+  -o, --output OUTPUT_PATH
   -h, --help
  ```
 

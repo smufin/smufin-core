@@ -16,8 +16,8 @@
 #include "hash.hpp"
 
 // Expected number of keys per storer/thread.
-#define TABLE_LEN 140000000
-#define CACHE_LEN 600000000
+#define TABLE_LEN 100000000
+#define CACHE_LEN 830000000
 
 #define NUM_STORERS 8
 #define MAX_LOADERS 8
@@ -143,8 +143,8 @@ extern int map_l2[MAP_FILE_LEN];
 #define NUM_SETS 3
 enum sm_set {
     NN, // Normal Non-mutated reads.
-    TM, // Tumor Mutated reads.
     TN, // Tumor Non-mutated reads.
+    TM, // Tumor Mutated reads.
 };
 
 struct sm_config {
@@ -152,9 +152,12 @@ struct sm_config {
     int num_storers = NUM_STORERS;
     int num_loaders = 1;
     int num_filters = 1;
+    int num_mergers = 1;
+    int num_groupers = 1;
     std::string input_file;
     std::string map_file;
     std::string exec;
+    std::string output_path;
 };
 
 KSEQ_INIT(gzFile, gzread);

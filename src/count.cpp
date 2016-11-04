@@ -213,6 +213,7 @@ void count::incr(int sid)
     }
 
     cout << "Cache " << sid << ": " << cache.size() << endl;
+    cout << "Table " << sid << ": " << _tables[sid]->size() << endl;
 }
 
 inline void count::incr_key(int sid, sm_cache* cache, sm_key key,
@@ -268,16 +269,20 @@ void count::dump_table(int sid)
 
     char buf[PATH_MAX] = "";
     if (getcwd(buf, PATH_MAX) != NULL) {
-        cout << "Serialize " << file << " (" << string(buf) << ")" << endl;
+        cout << "Serialize " << string(buf) << "/" << file << endl;
     }
 
     FILE* fp = fopen(file.c_str(), "w");
     if (fp == NULL) {
-        cout << "Failed to open: " << file << " (" << errno << ")" << endl;
+        cout << "Failed to open " << file << " (" << errno << ")" << endl;
         exit(1);
     }
 
-    _tables[sid]->serialize(sm_table::NopointerSerializer(), fp);
+    if (!_tables[sid]->serialize(sm_table::NopointerSerializer(), fp)) {
+        cout << "Failed to serialize table " << _conf.pid << "-" << sid << endl;
+        exit(1);
+    }
+
     fclose(fp);
 }
 
@@ -296,12 +301,12 @@ void count::restore_table(int sid)
 
     char buf[PATH_MAX] = "";
     if (getcwd(buf, PATH_MAX) != NULL) {
-        cout << "Unserialize " << file << " (" << string(buf) << ")" << endl;
+        cout << "Unserialize " << string(buf) << "/" << file << endl;
     }
 
     FILE* fp = fopen(file.c_str(), "r");
     if (fp == NULL) {
-        cout << "Failed to open: " << file << " (" << errno << ")" << endl;
+        cout << "Failed to open " << file << " (" << errno << ")" << endl;
         exit(0);
     }
 
