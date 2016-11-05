@@ -15,8 +15,7 @@ using std::endl;
 using std::string;
 
 filter::filter(const sm_config &conf) : stage(conf),
-    _alpha{'A','C','G','T'},
-    _sets{{"nn","tn","tm"}}
+    _alpha{'A','C','G','T'}
 {
     std::ifstream ifs(_conf.input_file);
     if (!ifs.good()) {
@@ -28,6 +27,8 @@ filter::filter(const sm_config &conf) : stage(conf),
         _input_queue.enqueue(line);
         _input_count++;
     }
+
+    _format = new filter_format(conf);
 
     _executable["run"] = std::bind(&filter::run, this);
     _executable["dump"] = std::bind(&filter::dump, this);
@@ -48,31 +49,12 @@ void filter::run()
 
 void filter::stats()
 {
-    cout << "Filtered NN reads: " << _ids[NN].size() << endl;
-    cout << "Filtered TN reads: " << _ids[TN].size() << endl;
-    cout << "Filtered TM reads: " << _ids[TM].size() << endl;
+    _format->stats();
 }
 
 void filter::dump()
 {
-    std::vector<std::thread> seqs;
-    for (int i = 0; i < NUM_SETS; i++)
-        seqs.push_back(std::thread(&filter::write_seq, this, i));
-    cout << "Spawned " << seqs.size() << " SEQ writer threads" << endl;
-
-    std::vector<std::thread> k2is;
-    for (int i = 0; i < NUM_SETS; i++)
-        k2is.push_back(std::thread(&filter::write_k2i, this, i));
-    cout << "Spawned " << k2is.size() << " K2I writer threads" << endl;
-
-    std::thread i2p = std::thread(&filter::write_i2p, this, TM);
-    cout << "Spawned I2P writer thread" << endl;
-    i2p.join();
-
-    for (auto& k2i: k2is)
-        k2i.join();
-    for (auto& seq: seqs)
-        seq.join();
+    _format->dump();
 }
 
 void filter::load(int fid)
@@ -142,27 +124,10 @@ void filter::load_file(int fid, string file)
         }
 
         if (nreads % 10000000 == 0) {
-            bool disk = false;
-            for (int i = 0; i < NUM_SETS; i++) {
-                _mutex[i].lock();
-                if (_seq[i].size() > 1000000) {
-                    std::ofstream ofs;
-                    ofs.open("filter-" + _sets[i] + "." + std::to_string(_conf.pid) + ".fastq",
-                             std::ofstream::app);
-                    for (auto const &s: _seq[i]) {
-                        ofs << s << "\n";
-                    }
-                    ofs.close();
-                    _seq[i].clear();
-                    _seq[i] = std::unordered_set<string>();
-                    disk = true;
-                }
-                _mutex[i].unlock();
-            }
-
+            bool f = _format->flush();
             end = std::chrono::system_clock::now();
             time = end - start;
-            cout << "W: " << fid << " " << time.count() << " " << disk << endl;
+            cout << "W: " << fid << " " << time.count() << " " << f << endl;
             start = std::chrono::system_clock::now();
         }
     }
@@ -279,27 +244,79 @@ void filter::filter_kmer(kseq_t *seq, int pos, bool rev, char kmer[],
                          uint32_t tsum, sm_set set)
 {
     if (tc >= MIN_TC && nc <= MAX_NC) {
-        char buf[512] = {0};
-        sprintf(buf, "%s %s\n", seq->name.s, seq->seq.s);
-        _mutex[set].lock();
-        auto result = _ids[set].insert(seq->name.s);
-        if (result.second == true) {
-            _seq[set].insert(buf);
-        }
-        if (set == TM) {
-            if (!rev)
-                _i2p[set][seq->name.s].a[pos / 64] |= 1UL << (pos % 64);
-            else
-                _i2p[set][seq->name.s].b[pos / 64] |= 1UL << (pos % 64);
-        }
-        if (_k2i[set][kmer].size() <= MAX_K2I_READS) {
-            _k2i[set][kmer].insert(seq->name.s);
-        }
-        _mutex[set].unlock();
+        _format->update(seq, pos, rev, kmer, set);
     }
 }
 
-void filter::write_seq(int set)
+void filter_format::update(kseq_t *seq, int pos, bool rev, char kmer[],
+                           sm_set set)
+{
+    char buf[512] = {0};
+    sprintf(buf, "%s %s\n", seq->name.s, seq->seq.s);
+
+    _mutex[set].lock();
+    auto result = _ids[set].insert(seq->name.s);
+    if (result.second == true) {
+        _seq[set].insert(buf);
+    }
+    if (set == TM) {
+        if (!rev)
+            _i2p[set][seq->name.s].a[pos / 64] |= 1UL << (pos % 64);
+        else
+            _i2p[set][seq->name.s].b[pos / 64] |= 1UL << (pos % 64);
+    }
+    if (_k2i[set][kmer].size() <= MAX_K2I_READS) {
+        _k2i[set][kmer].insert(seq->name.s);
+    }
+    _mutex[set].unlock();
+}
+
+bool filter_format::flush()
+{
+    bool flushed = false;
+    for (int i = 0; i < NUM_SETS; i++) {
+        _mutex[i].lock();
+        if (_seq[i].size() > 1000000) {
+            write_seq(i);
+            _seq[i].clear();
+            _seq[i] = sm_seq();
+            flushed = true;
+        }
+        _mutex[i].unlock();
+    }
+    return flushed;
+}
+
+void filter_format::stats()
+{
+    cout << "Filtered NN reads: " << _ids[NN].size() << endl;
+    cout << "Filtered TN reads: " << _ids[TN].size() << endl;
+    cout << "Filtered TM reads: " << _ids[TM].size() << endl;
+}
+
+void filter_format::dump()
+{
+    std::vector<std::thread> seqs;
+    for (int i = 0; i < NUM_SETS; i++)
+        seqs.push_back(std::thread(&filter_format::write_seq, this, i));
+    cout << "Spawned " << seqs.size() << " SEQ writer threads" << endl;
+
+    std::vector<std::thread> k2is;
+    for (int i = 0; i < NUM_SETS; i++)
+        k2is.push_back(std::thread(&filter_format::write_k2i, this, i));
+    cout << "Spawned " << k2is.size() << " K2I writer threads" << endl;
+
+    std::thread i2p = std::thread(&filter_format::write_i2p, this, TM);
+    cout << "Spawned I2P writer thread" << endl;
+    i2p.join();
+
+    for (auto& k2i: k2is)
+        k2i.join();
+    for (auto& seq: seqs)
+        seq.join();
+}
+
+void filter_format::write_seq(int set)
 {
     std::ofstream ofs;
     std::ostringstream file;
@@ -312,7 +329,7 @@ void filter::write_seq(int set)
     ofs.close();
 }
 
-void filter::write_k2i(int set)
+void filter_format::write_k2i(int set)
 {
     std::ofstream ofs;
     std::ostringstream file;
@@ -331,7 +348,7 @@ void filter::write_k2i(int set)
     ofs.close();
 }
 
-void filter::write_i2p(int set)
+void filter_format::write_i2p(int set)
 {
     std::ofstream ofs;
     std::ostringstream file;
