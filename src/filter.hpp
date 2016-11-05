@@ -27,7 +27,7 @@ private:
 
     std::mutex _mutex[NUM_SETS];
     sm_ids _ids[NUM_SETS];
-    sm_reads _reads[NUM_SETS];
+    sm_seq _seq[NUM_SETS];
     sm_i2p _i2p[NUM_SETS];
     sm_k2i _k2i[NUM_SETS];
 
@@ -47,7 +47,7 @@ private:
                             uint32_t nc,uint32_t tc, uint32_t nsum,
                             uint32_t tsum, sm_set set);
 
-    void write_fastq(int set);
+    void write_seq(int set);
     void write_k2i(int set);
     void write_i2p(int set);
 };

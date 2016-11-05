@@ -106,7 +106,7 @@ typedef struct sm_pos_bitmap {
 } sm_pos_bitmap;
 
 typedef std::unordered_set<std::string> sm_ids;
-typedef std::unordered_set<std::string> sm_reads;
+typedef std::unordered_set<std::string> sm_seq;
 typedef std::unordered_map<std::string, sm_pos_bitmap> sm_i2p;
 typedef std::unordered_map<std::string, sm_ids> sm_k2i;
 

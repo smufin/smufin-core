@@ -3,6 +3,7 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <map>
 #include <string>
 #include <thread>
@@ -47,17 +48,17 @@ void filter::run()
 
 void filter::stats()
 {
-    cout << "Filtered reads (NN+-): " << _ids[NN].size() << endl;
-    cout << "Filtered reads (TN+-): " << _ids[TN].size() << endl;
-    cout << "Filtered reads (TM+-): " << _ids[TM].size() << endl;
+    cout << "Filtered NN reads: " << _ids[NN].size() << endl;
+    cout << "Filtered TN reads: " << _ids[TN].size() << endl;
+    cout << "Filtered TM reads: " << _ids[TM].size() << endl;
 }
 
 void filter::dump()
 {
-    std::vector<std::thread> fastqs;
+    std::vector<std::thread> seqs;
     for (int i = 0; i < NUM_SETS; i++)
-        fastqs.push_back(std::thread(&filter::write_fastq, this, i));
-    cout << "Spawned " << fastqs.size() << " FASTQ writer threads" << endl;
+        seqs.push_back(std::thread(&filter::write_seq, this, i));
+    cout << "Spawned " << seqs.size() << " SEQ writer threads" << endl;
 
     std::vector<std::thread> k2is;
     for (int i = 0; i < NUM_SETS; i++)
@@ -70,8 +71,8 @@ void filter::dump()
 
     for (auto& k2i: k2is)
         k2i.join();
-    for (auto& fastq: fastqs)
-        fastq.join();
+    for (auto& seq: seqs)
+        seq.join();
 }
 
 void filter::load(int fid)
@@ -144,17 +145,16 @@ void filter::load_file(int fid, string file)
             bool disk = false;
             for (int i = 0; i < NUM_SETS; i++) {
                 _mutex[i].lock();
-                if (_reads[i].size() > 1000000) {
+                if (_seq[i].size() > 1000000) {
                     std::ofstream ofs;
                     ofs.open("filter-" + _sets[i] + "." + std::to_string(_conf.pid) + ".fastq",
                              std::ofstream::app);
-                    for (std::unordered_set<string>::const_iterator it =
-                         _reads[i].begin(); it != _reads[i].end(); ++it) {
-                        ofs << *it << "\n";
+                    for (auto const &s: _seq[i]) {
+                        ofs << s << "\n";
                     }
                     ofs.close();
-                    _reads[i].clear();
-                    _reads[i] = std::unordered_set<string>();
+                    _seq[i].clear();
+                    _seq[i] = std::unordered_set<string>();
                     disk = true;
                 }
                 _mutex[i].unlock();
@@ -274,17 +274,17 @@ void filter::filter_all(int fid, kseq_t *seq, int pos, bool rev,
     }
 }
 
-void filter::filter_kmer(kseq_t *seq, int pos, bool rev, char kmer[], uint32_t nc,
-                         uint32_t tc, uint32_t nsum, uint32_t tsum, sm_set set)
+void filter::filter_kmer(kseq_t *seq, int pos, bool rev, char kmer[],
+                         uint32_t nc, uint32_t tc, uint32_t nsum,
+                         uint32_t tsum, sm_set set)
 {
     if (tc >= MIN_TC && nc <= MAX_NC) {
         char buf[512] = {0};
-        sprintf(buf, "@%s\n%s\n+\n%s", seq->name.s, seq->seq.s, seq->qual.s);
+        sprintf(buf, "%s %s\n", seq->name.s, seq->seq.s);
         _mutex[set].lock();
-        std::pair<std::unordered_set<string>::iterator, bool> result;
-        result = _ids[set].insert(seq->name.s);
+        auto result = _ids[set].insert(seq->name.s);
         if (result.second == true) {
-            _reads[set].insert(buf);
+            _seq[set].insert(buf);
         }
         if (set == TM) {
             if (!rev)
@@ -299,15 +299,15 @@ void filter::filter_kmer(kseq_t *seq, int pos, bool rev, char kmer[], uint32_t n
     }
 }
 
-
-void filter::write_fastq(int set)
+void filter::write_seq(int set)
 {
     std::ofstream ofs;
-    ofs.open("filter-" + _sets[set] + "." + std::to_string(_conf.pid) + ".fastq",
-             std::ofstream::app);
-    for (sm_reads::const_iterator it = _reads[set].begin();
-         it != _reads[set].end(); ++it) {
-        ofs << *it << "\n";
+    std::ostringstream file;
+    file << _conf.output_path << "/filter-seq-" << _sets[set] << "."
+         << _conf.pid << ".txt";
+    ofs.open(file.str(), std::ofstream::app);
+    for (auto const &s: _seq[set]) {
+        ofs << s << "\n";
     }
     ofs.close();
 }
@@ -315,15 +315,16 @@ void filter::write_fastq(int set)
 void filter::write_k2i(int set)
 {
     std::ofstream ofs;
-    ofs.open("filter-" + _sets[set] + "." + std::to_string(_conf.pid) + ".k2i");
-    for (sm_k2i::const_iterator it = _k2i[set].begin();
-         it != _k2i[set].end(); ++it) {
-        if (it->second.size() > MAX_K2I_READS)
+    std::ostringstream file;
+    file << _conf.output_path << "/filter-k2i-" << _sets[set] << "."
+         << _conf.pid << ".txt";
+    ofs.open(file.str());
+    for (auto const &kv: _k2i[set]) {
+        if (kv.second.size() > MAX_K2I_READS)
             continue;
-        ofs << it->first << " " << it->second.size();
-        for (sm_ids::const_iterator sit = it->second.begin();
-             sit != it->second.end(); ++sit) {
-            ofs << " " << *sit;
+        ofs << kv.first << " " << kv.second.size();
+        for (auto const &sid: kv.second) {
+            ofs << " " << sid;
         }
         ofs << "\n";
     }
@@ -333,13 +334,15 @@ void filter::write_k2i(int set)
 void filter::write_i2p(int set)
 {
     std::ofstream ofs;
-    ofs.open("filter-" + _sets[set] + "." + std::to_string(_conf.pid) + ".i2p");
-    for (sm_i2p::const_iterator it = _i2p[set].begin();
-         it != _i2p[set].end(); ++it) {
-        ofs << it->first << " ";
-        sm_pos_bitmap p = it->second;
-        ofs << p.a[0] << " " << p.a[1] << " ";
-        ofs << p.b[0] << " " << p.b[1] << "\n";
+    std::ostringstream file;
+    file << _conf.output_path << "/filter-i2p-" << _sets[set] << "."
+         << _conf.pid << ".txt";
+    ofs.open(file.str());
+    for (auto const &kv: _i2p[set]) {
+        const sm_pos_bitmap *p = &kv.second;
+        ofs << kv.first << " ";
+        ofs << p->a[0] << " " << p->a[1] << " ";
+        ofs << p->b[0] << " " << p->b[1] << "\n";
     }
     ofs.close();
 }
