@@ -124,7 +124,8 @@ int main(int argc, char *argv[])
         num_pipe++;
     }
 
-    return 0;
+    fflush(NULL);
+    _exit(0);
 }
 
 void display_usage()
