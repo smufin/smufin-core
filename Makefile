@@ -10,31 +10,47 @@ MAX_NC ?= 1
 WMIN ?= 7
 WLEN ?= 10
 
-GSH_INC   ?= /usr/include
+VERBOSE ?= 0
+CC_0 = @echo "CC $@"; g++
+CC_1 = g++
+CC = $(CC_$(VERBOSE))
+
+GSH_INC   ?= /usr/include/sparsehash
+MCQ_INC   ?= /usr/include/concurrentqueue
+FOLLY_INC ?= /usr/include/folly
 BOOST_INC ?= /usr/include/boost
+ROCKS_INC ?= /usr/include/rocksdb
 BOOST_LIB ?= /usr/lib
-MCQ_INC   ?= $(HOME)/src/concurrentqueue
-FOLLY_INC ?= $(HOME)/src/folly
-RDB_INC   ?= /usr/include/rocksdb
-RDB_LIB   ?= /usr/lib
+ROCKS_LIB ?= /usr/lib
 
-MAIN_BIN = bin/sm
+BIN = sm
+SRC = $(wildcard src/*.cpp)
+OBJ = $(SRC:.cpp=.o)
+DEP = $(SRC:.cpp=.d)
 
-MAIN_SRC = src/db.cpp src/common.cpp src/count.cpp src/filter.cpp \
-           src/merge.cpp src/group.cpp src/hash.cpp src/stage.cpp src/main.cpp
+DEF = -DKMER_LEN=$(KMER_LEN) \
+      -DMIN_TC=$(MIN_TC) -DMAX_NC=$(MAX_NC) \
+      -DWMIN=$(WMIN) -DWLEN=$(WLEN)
+INC = -Isrc -I$(GSH_INC) -I$(MCQ_INC) -I$(FOLLY_INC) \
+      -I$(BOOST_INC) -I$(ROCKS_INC)
+LIB = -lz -lpthread -lrocksdb
 
-CFLAGS = $(FLAGS) -std=c++11 -DKMER_LEN=$(KMER_LEN) \
-         -DMIN_TC=$(MIN_TC) -DMAX_NC=$(MAX_NC) \
-         -DWMIN=$(WMIN) -DWLEN=$(WLEN)
+CFLAGS += -std=c++11
+LFLAGS += -L$(ROCKS_LIB)
 
-all: $(MAIN_BIN)
+all: $(BIN)
 
-$(MAIN_BIN): $(MAIN_SRC)
-	g++ $(CFLAGS) -Isrc \
-		-I$(GSH_INC) -I$(BOOST_INC) -L$(BOOST_LIB) -I$(MCQ_INC) \
-		-I$(FOLLY_INC) -I$(RDB_INC) \
-		-o $(MAIN_BIN) $(MAIN_SRC) \
-		$(RDB_LIB) -lz -lpthread
+-include $(DEP)
+
+.cpp.o:
+	$(CC) $(CFLAGS) $(DEF) $(INC) -MMD -c -o $@ $<
+
+$(BIN): $(OBJ)
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(BIN) $(OBJ) $(LIB)
 
 clean:
-	rm -f $(MAIN_BIN)
+	rm -f $(BIN)
+
+distclean: clean
+	rm -f $(OBJ)
+	rm -f $(DEP)
