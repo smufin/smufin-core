@@ -1,12 +1,9 @@
 #ifndef __SM_COMMON_H__
 #define __SM_COMMON_H__
 
-#include <mutex>
 #include <string>
 #include <set>
 #include <map>
-#include <unordered_set>
-#include <unordered_map>
 
 #include <zlib.h>
 
@@ -16,10 +13,6 @@
 
 #include "kseq.h"
 #include "hash.hpp"
-
-// Expected number of keys per storer/thread.
-#define TABLE_LEN 100000000
-#define CACHE_LEN 830000000
 
 #define NUM_STORERS 8
 #define MAX_LOADERS 8
@@ -48,14 +41,12 @@
 #define WLEN 10
 #endif
 
-#define MAX_K2I_READS 2000
-
 #define IMER_LEN (KMER_LEN - 2)
 
 #define BULK_LEN 128
 #define QMSG_LEN 512
 
-// Convert a string of 4 chars/bytes of the 4-base ACGT alphabet (32 bits)
+// Convert a string of 5 chars/bytes of the 4-base ACGT alphabet (32 bits)
 // into a unique unsigned int identifier in the [0-256) range (8 bits). The
 // idea is to take the 2nd and 3rd least significant bits of each byte as
 // follows:
@@ -63,11 +54,6 @@
 //   C -> 67 -> 01000011 -> 01
 //   G -> 71 -> 01000111 -> 11
 //   T -> 84 -> 01010100 -> 10
-#define hash_4c_map(h) ({                   \
-        (h) = ((h) & 101058054) >> 1;       \
-        (h) = ((h) & 0xFFFF) + ((h) >> 14); \
-        (h) = ((h) & 0xFF) + ((h) >> 4); })
-
 #define hash_5c_map(h) ({                   \
         (h) = ((h) & 25870861830) >> 1;     \
         (h) = ((h) & 0xFFFF) + ((h) >> 14); \
@@ -107,23 +93,18 @@ typedef struct sm_pos_bitmap {
     uint64_t b[2] = {0};
 } sm_pos_bitmap;
 
-typedef std::unordered_set<std::string> sm_ids;
-typedef std::unordered_set<std::string> sm_seq;
-typedef std::unordered_map<std::string, sm_pos_bitmap> sm_i2p;
-typedef std::unordered_map<std::string, sm_ids> sm_k2i;
-
-// Arrays that map which prefixes are to be processed on the current
-// process (l1), and storer/consumer threads (l2), distributing them as
-// evenly as possible according to MAP_FILE.
-extern int map_l1[MAP_FILE_LEN];
-extern int map_l2[MAP_FILE_LEN];
-
 #define NUM_SETS 3
 enum sm_set {
     NN, // Normal Non-mutated reads.
     TN, // Tumor Non-mutated reads.
     TM, // Tumor Mutated reads.
 };
+
+// Arrays that map which prefixes are to be processed on the current
+// process (l1), and storer/consumer threads (l2), distributing them as
+// evenly as possible according to MAP_FILE.
+extern int map_l1[MAP_FILE_LEN];
+extern int map_l2[MAP_FILE_LEN];
 
 struct sm_config {
     int pid = 0;
@@ -136,6 +117,14 @@ struct sm_config {
     std::string map_file;
     std::string exec;
     std::string output_path;
+
+    // Expected number of keys per storer/thread.
+    int table_size = 100000000;
+    int cache_size = 830000000;
+
+    // Maximum number of reads per kmer. During filtering, kmers with more
+    // than max_k2i_reads associated reads are ignored.
+    int max_k2i_reads = 2000;
 };
 
 namespace sm {

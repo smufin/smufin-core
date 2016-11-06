@@ -183,9 +183,9 @@ inline void count::load_sub(int lid, const char* sub, int len,
 void count::incr(int sid)
 {
     _tables[sid] = new sm_table();
-    _tables[sid]->resize(TABLE_LEN);
+    _tables[sid]->resize(_conf.table_size);
     sm_cache cache = sm_cache();
-    cache.resize(CACHE_LEN);
+    cache.resize(_conf.cache_size);
 
     sm_bulk* pmsg;
     while (!_done) {
@@ -295,7 +295,7 @@ void count::restore()
 void count::restore_table(int sid)
 {
     _tables[sid] = new sm_table();
-    _tables[sid]->resize(TABLE_LEN);
+    _tables[sid]->resize(_conf.table_size);
     string file = string("table-") + std::to_string(_conf.pid) + string("-") +
                   std::to_string(sid) + string(".sht");
 

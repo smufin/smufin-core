@@ -1,7 +1,10 @@
 #ifndef __SM_FILTER_H__
 #define __SM_FILTER_H__
 
+#include <mutex>
 #include <string>
+#include <unordered_set>
+#include <unordered_map>
 
 #include "common.hpp"
 #include "count.hpp"
@@ -22,10 +25,11 @@ private:
     const sm_config &_conf;
 
     std::mutex _mutex[NUM_SETS];
-    sm_ids _ids[NUM_SETS];
-    sm_seq _seq[NUM_SETS];
-    sm_i2p _i2p[NUM_SETS];
-    sm_k2i _k2i[NUM_SETS];
+    std::unordered_set<std::string> _ids[NUM_SETS];
+    std::unordered_set<std::string> _seq[NUM_SETS];
+    std::unordered_map<std::string, sm_pos_bitmap> _i2p[NUM_SETS];
+    std::unordered_map<std::string, std::unordered_set<std::string>>
+        _k2i[NUM_SETS];
 
     void write_seq(int set);
     void write_k2i(int set);

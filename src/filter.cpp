@@ -264,7 +264,7 @@ void filter_format::update(kseq_t *seq, int pos, bool rev, char kmer[],
         else
             _i2p[set][seq->name.s].b[pos / 64] |= 1UL << (pos % 64);
     }
-    if (_k2i[set][kmer].size() <= MAX_K2I_READS) {
+    if (_k2i[set][kmer].size() <= _conf.max_k2i_reads) {
         _k2i[set][kmer].insert(seq->name.s);
     }
     _mutex[set].unlock();
@@ -278,7 +278,7 @@ bool filter_format::flush()
         if (_seq[i].size() > 1000000) {
             write_seq(i);
             _seq[i].clear();
-            _seq[i] = sm_seq();
+            _seq[i] = std::unordered_set<std::string>();
             flushed = true;
         }
         _mutex[i].unlock();
@@ -336,7 +336,7 @@ void filter_format::write_k2i(int set)
          << _conf.pid << ".txt";
     ofs.open(file.str());
     for (auto const &kv: _k2i[set]) {
-        if (kv.second.size() > MAX_K2I_READS)
+        if (kv.second.size() > _conf.max_k2i_reads)
             continue;
         ofs << kv.first << " " << kv.second.size();
         for (auto const &sid: kv.second) {
