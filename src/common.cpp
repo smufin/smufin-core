@@ -16,7 +16,7 @@ uint64_t strtob4(const char *str)
     register char c;
     for (c = *s; c != '\0'; c = *++s) {
         i *= 4;
-        i += code[c] - '0';
+        i += sm::code[c] - '0';
     }
     return i;
 }
@@ -41,8 +41,8 @@ void krevcomp(char kmer[])
     for (i = 0, j = KMER_LEN - 1; i < j; i++, j--)
     {
         c = kmer[i];
-        kmer[i] = comp[kmer[j]];
-        kmer[j] = comp[c];
+        kmer[i] = sm::comp[kmer[j]];
+        kmer[j] = sm::comp[c];
     }
 }
 

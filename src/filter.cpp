@@ -14,8 +14,7 @@ using std::cout;
 using std::endl;
 using std::string;
 
-filter::filter(const sm_config &conf) : stage(conf),
-    _alpha{'A','C','G','T'}
+filter::filter(const sm_config &conf) : stage(conf)
 {
     std::ifstream ifs(_conf.input_file);
     if (!ifs.good()) {
@@ -203,8 +202,8 @@ void filter::filter_branch(int fid, kseq_t *seq, int pos, bool rev,
     sm_table::const_iterator it;
     if (get_value(fid, kmer, &it) != 0)
         return;
-    int f = code[kmer[0]] - '0';
-    int l = code[kmer[KMER_LEN - 1]] - '0';
+    int f = sm::code[kmer[0]] - '0';
+    int l = sm::code[kmer[KMER_LEN - 1]] - '0';
     uint32_t nc = it->second.v[f][l][NORMAL_READ];
     uint32_t tc = it->second.v[f][l][CANCER_READ];
     uint32_t nsum = 0;
@@ -223,7 +222,7 @@ void filter::filter_all(int fid, kseq_t *seq, int pos, bool rev,
     if (get_value(fid, kmer, &it) != 0)
         return;
     for (int f = 0; f < 4; f++) {
-        kmer[0] = _alpha[f];
+        kmer[0] = sm::alpha[f];
         uint32_t nsum = 0;
         uint32_t tsum = 0;
         for (int l = 0; l < 4; l++) {
@@ -231,7 +230,7 @@ void filter::filter_all(int fid, kseq_t *seq, int pos, bool rev,
             tsum += it->second.v[f][l][CANCER_READ];
         }
         for (int l = 0; l < 4; l++) {
-            kmer[KMER_LEN - 1] = _alpha[l];
+            kmer[KMER_LEN - 1] = sm::alpha[l];
             uint32_t nc = it->second.v[f][l][NORMAL_READ];
             uint32_t tc = it->second.v[f][l][CANCER_READ];
             filter_kmer(seq, pos, rev, kmer, nc, tc, nsum, tsum, set);
@@ -320,7 +319,7 @@ void filter_format::write_seq(int set)
 {
     std::ofstream ofs;
     std::ostringstream file;
-    file << _conf.output_path << "/filter-seq-" << _sets[set] << "."
+    file << _conf.output_path << "/filter-seq-" << sm::sets[set] << "."
          << _conf.pid << ".txt";
     ofs.open(file.str(), std::ofstream::app);
     for (auto const &s: _seq[set]) {
@@ -333,7 +332,7 @@ void filter_format::write_k2i(int set)
 {
     std::ofstream ofs;
     std::ostringstream file;
-    file << _conf.output_path << "/filter-k2i-" << _sets[set] << "."
+    file << _conf.output_path << "/filter-k2i-" << sm::sets[set] << "."
          << _conf.pid << ".txt";
     ofs.open(file.str());
     for (auto const &kv: _k2i[set]) {
@@ -352,7 +351,7 @@ void filter_format::write_i2p(int set)
 {
     std::ofstream ofs;
     std::ostringstream file;
-    file << _conf.output_path << "/filter-i2p-" << _sets[set] << "."
+    file << _conf.output_path << "/filter-i2p-" << sm::sets[set] << "."
          << _conf.pid << ".txt";
     ofs.open(file.str());
     for (auto const &kv: _i2p[set]) {

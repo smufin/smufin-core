@@ -41,8 +41,6 @@ void group::run()
     _k2i[0]->resize(30000000);
     _k2i[1]->resize(60000000);
 
-    std::vector<string> sets = {"nn", "tn", "tm"};
-
     string dir;
     rocksdb::Status status;
 
@@ -51,7 +49,7 @@ void group::run()
     options.WAL_ttl_seconds = 0;
     options.WAL_size_limit_MB = 0;
     options.merge_operator.reset(new PositionsMapOperator());
-    dir = _conf.output_path + "/i2p-" + sets[TM] + ".rdb";
+    dir = _conf.output_path + "/i2p-" + sm::sets[TM] + ".rdb";
     cout << "Open RocksDB: " << dir << endl;
     status = rocksdb::DB::OpenForReadOnly(options, dir, &i2p_db);
     assert(status.ok());
@@ -60,7 +58,7 @@ void group::run()
     rocksdb::Options options2;
     options2.WAL_ttl_seconds = 0;
     options2.WAL_size_limit_MB = 0;
-    dir = _conf.output_path + "/seq-" + sets[TM] + ".rdb";
+    dir = _conf.output_path + "/seq-" + sm::sets[TM] + ".rdb";
     cout << "Open RocksDB: " << dir << endl;
     status = rocksdb::DB::OpenForReadOnly(options2, dir, &i2r_tm_db);
     assert(status.ok());
@@ -177,7 +175,7 @@ void group::run()
         options.WAL_ttl_seconds = 0;
         options.WAL_size_limit_MB = 0;
         options.merge_operator.reset(new IDListOperator());
-        dir = _conf.output_path + "/k2i-" + sets[i] + ".rdb";
+        dir = _conf.output_path + "/k2i-" + sm::sets[i] + ".rdb";
         cout << "Open RocksDB: " << dir << endl;
         status = rocksdb::DB::OpenForReadOnly(options, dir, &k2i_db);
         assert(status.ok());
@@ -206,9 +204,9 @@ void group::run()
             }
         }
 
-        cout << "Number of kmers seen (" << sets[i] << "): "
+        cout << "Number of kmers seen (" << sm::sets[i] << "): "
              << num_seen << endl;
-        cout << "Number of IDs seen (" << sets[i] << "): "
+        cout << "Number of IDs seen (" << sm::sets[i] << "): "
              << _i2r[i]->size() << endl;
 
 
@@ -217,7 +215,7 @@ void group::run()
 
         end = std::chrono::system_clock::now();
         time = end - start;
-        cout << "Kmer iteration time (" << sets[i] << "): "
+        cout << "Kmer iteration time (" << sm::sets[i] << "): "
              << time.count() << endl;
     }
 
@@ -227,7 +225,7 @@ void group::run()
         start = std::chrono::system_clock::now();
 
         rocksdb::DB* i2r_db;
-        dir = _conf.output_path + "/seq-" + sets[i] + ".rdb";
+        dir = _conf.output_path + "/seq-" + sm::sets[i] + ".rdb";
         cout << "Open RocksDB: " << dir << endl;
         status = rocksdb::DB::OpenForReadOnly(rocksdb::Options(), dir, &i2r_db);
         assert(status.ok());
@@ -259,7 +257,7 @@ void group::run()
 
         end = std::chrono::system_clock::now();
         time = end - start;
-        cout << "Read iteration time (" << sets[i] << "): "
+        cout << "Read iteration time (" << sm::sets[i] << "): "
              << time.count() << endl;
     }
 
@@ -312,13 +310,11 @@ void group::decode_read(sm_read& read, std::string& str)
 
 void group::rrevcomp(char read[], int len)
 {
-    const char comp[] = "-------------------------------------------"
-                        "----------------------T-G---C------N-----A";
     int c, i, j;
     for (i = 0, j = len - 1; i < j; i++, j--) {
         c = read[i];
-        read[i] = comp[read[j]];
-        read[j] = comp[c];
+        read[i] = sm::comp[read[j]];
+        read[j] = sm::comp[c];
     }
 }
 

@@ -3,6 +3,8 @@
 
 #include <mutex>
 #include <string>
+#include <set>
+#include <map>
 #include <unordered_set>
 #include <unordered_map>
 
@@ -110,30 +112,6 @@ typedef std::unordered_set<std::string> sm_seq;
 typedef std::unordered_map<std::string, sm_pos_bitmap> sm_i2p;
 typedef std::unordered_map<std::string, sm_ids> sm_k2i;
 
-// Use ASCII codes to index base 4 values for ACGT. The array is
-// equivalent to the following map, only slightly faster since it avoids
-// hashing, etc.
-// > std::unordered_map<char, char> code = {
-// >     { 'A', '0' }, // pos. 65
-// >     { 'C', '1' }, // pos. 67
-// >     { 'G', '2' }, // pos. 71
-// >     { 'T', '3' }, // pos. 84
-// > };
-const char code[] = "-------------------------------------------"
-                    "----------------------0-1---2------------3";
-
-// ASCII indexed bases to generate complementary strands.
-// Equivalent to the following map:
-// > std::unordered_map<char, char> comp = {
-// >     { 'A', 'T' }, // pos. 65
-// >     { 'C', 'G' }, // pos. 67
-// >     { 'G', 'C' }, // pos. 71
-// >     { 'N', 'N' }, // pos. 78
-// >     { 'T', 'A' }, // pos. 84
-// > };
-const char comp[] = "-------------------------------------------"
-                    "----------------------T-G---C------N-----A";
-
 // Arrays that map which prefixes are to be processed on the current
 // process (l1), and storer/consumer threads (l2), distributing them as
 // evenly as possible according to MAP_FILE.
@@ -159,6 +137,40 @@ struct sm_config {
     std::string exec;
     std::string output_path;
 };
+
+namespace sm {
+    // Nucleotide alphabet, sorted and indexed by code.
+    const char alpha[] = {'A', 'C', 'G', 'T'};
+
+    // Map ASCII position to internal code. Note that partition maps use a
+    // different encoding based on binary representation instead, see
+    // hash_5c_map.
+    //   A -> 0 (pos. 65)
+    //   C -> 1 (pos. 67)
+    //   G -> 2 (pos. 71)
+    //   T -> 3 (pos. 84)
+    const char code[] = "-------------------------------------------"
+                        "----------------------0-1---2------------3";
+
+    // Map ASCII position to complementary nucleotide.
+    //   A -> T (pos. 65)
+    //   C -> G (pos. 67)
+    //   G -> C (pos. 71)
+    //   N -> N (pos. 78)
+    //   T -> A (pos. 84)
+    const char comp[] = "-------------------------------------------"
+                        "----------------------T-G---C------N-----A";
+
+    // Set names, sorted as the sm_set enum.
+    const std::array<std::string, NUM_SETS> sets = {"nn", "tn", "tm"};
+
+    // Map of filter indexes to valid set names.
+    const std::map<std::string, std::set<std::string>> types = {
+        {"seq", {"nn", "tn", "tm"}},
+        {"k2i", {"nn", "tn", "tm"}},
+        {"i2p", {"tm"}}
+    };
+}
 
 KSEQ_INIT(gzFile, gzread);
 

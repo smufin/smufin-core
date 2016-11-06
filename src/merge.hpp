@@ -1,9 +1,6 @@
 #ifndef __SM_MERGE_H__
 #define __SM_MERGE_H__
 
-#include <map>
-#include <set>
-
 #include <rocksdb/db.h>
 
 #include "common.hpp"
@@ -16,8 +13,6 @@ public:
     void run();
 
 private:
-    const std::map<std::string, std::set<std::string>> _types;
-
     void load(std::string type, std::string set);
     void load_seq(rocksdb::DB* db, std::string set, int i);
     void load_k2i(rocksdb::DB* db, std::string set, int i);

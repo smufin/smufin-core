@@ -13,19 +13,14 @@ using std::endl;
 using std::string;
 using namespace std::placeholders;
 
-merge::merge(const sm_config &conf) : stage(conf),
-    _types{
-        {"seq", {"nn", "tn", "tm"}},
-        {"k2i", {"nn", "tn", "tm"}},
-        {"i2p", {"tm"}}
-    }
+merge::merge(const sm_config &conf) : stage(conf)
 {
     _executable["run"] = std::bind(&merge::run, this);
 }
 
 void merge::run()
 {
-    for (auto& kv: _types) {
+    for (auto& kv: sm::types) {
         for (auto& set: kv.second) {
             load(kv.first, set);
         }
@@ -38,8 +33,8 @@ void merge::load(string type, string set)
     std::chrono::duration<double> time;
     start = std::chrono::system_clock::now();
 
-    auto it_type = _types.find(type);
-    if (it_type == _types.end()) {
+    auto it_type = sm::types.find(type);
+    if (it_type == sm::types.end()) {
         cout << "Failed to merge, wrong type: " << type << endl;
         exit(1);
     }

@@ -10,9 +10,7 @@
 class filter_format
 {
 public:
-    filter_format(const sm_config &conf) :
-        _conf(conf),
-        _sets{{"nn","tn","tm"}} {};
+    filter_format(const sm_config &conf) : _conf(conf) {};
 
     void update(kseq_t *seq, int pos, bool rev, char kmer[], sm_set set);
     bool flush();
@@ -22,7 +20,6 @@ public:
 
 private:
     const sm_config &_conf;
-    const std::array<std::string, NUM_SETS> _sets;
 
     std::mutex _mutex[NUM_SETS];
     sm_ids _ids[NUM_SETS];
@@ -47,8 +44,6 @@ public:
 private:
     moodycamel::ConcurrentQueue<std::string> _input_queue;
     std::atomic<int> _input_count{0};
-
-    const char _alpha[4];
 
     const count* _count;
 

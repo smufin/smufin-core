@@ -164,8 +164,8 @@ inline void count::load_sub(int lid, const char* sub, int len,
         sm_key key = strtob4(imer);
 
         sm_value_offset off;
-        off.first = code[sub[i]] - '0';
-        off.last = code[sub[i + KMER_LEN - 1]] - '0';
+        off.first = sm::code[sub[i]] - '0';
+        off.last = sm::code[sub[i + KMER_LEN - 1]] - '0';
         off.kind = kind;
 
         bulks[sid].array[bulks[sid].num] = sm_msg(key, off);
