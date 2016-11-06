@@ -12,6 +12,8 @@
 
 #include "count.hpp"
 #include "filter.hpp"
+#include "merge.hpp"
+#include "group.hpp"
 
 using std::cout;
 using std::endl;
@@ -100,8 +102,8 @@ int main(int argc, char *argv[])
     std::unordered_map<string, stage*(*)(const sm_config &conf)> registry;
     registry["count"] = &create_stage<count>;
     registry["filter"] = &create_stage<filter>;
-    registry["merge"] = &create_stage<filter>;
-    registry["group"] = &create_stage<filter>;
+    registry["merge"] = &create_stage<merge>;
+    registry["group"] = &create_stage<group>;
 
     std::vector<std::pair<string, stage*>> pipeline;
     for (auto& name: order) {
