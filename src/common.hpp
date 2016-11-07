@@ -108,13 +108,14 @@ extern int map_l2[MAP_FILE_LEN];
 
 struct sm_config {
     int pid = 0;
+    int num_partitions = 1;
     int num_storers = NUM_STORERS;
     int num_loaders = 1;
     int num_filters = 1;
     int num_mergers = 1;
     int num_groupers = 1;
     std::string input_file;
-    std::string map_file;
+    std::string data_path = "data";
     std::string exec;
     std::string output_path;
 

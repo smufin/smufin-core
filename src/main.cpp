@@ -27,14 +27,15 @@ int main(int argc, char *argv[])
     sm_config conf = sm_config();
     conf.exec = "count:run";
 
-    static const char *opts = "i:m:p:l:f:r:g:x:o:h";
+    static const char *opts = "i:d:p:l:f:m:g:x:o:h";
     static const struct option opts_long[] = {
         { "input", required_argument, NULL, 'i' },
-        { "mapping", required_argument, NULL, 'm' },
-        { "pid", required_argument, NULL, 'p' },
+        { "data", required_argument, NULL, 'd' },
+        { "pid", required_argument, NULL, 'P' },
+        { "partitions", required_argument, NULL, 'p' },
         { "loaders", required_argument, NULL, 'l' },
         { "filters", required_argument, NULL, 'f' },
-        { "mergers", required_argument, NULL, 'r' },
+        { "mergers", required_argument, NULL, 'm' },
         { "groupers", required_argument, NULL, 'g' },
         { "exec", required_argument, NULL, 'x' },
         { "output", required_argument, NULL, 'o' },
@@ -48,11 +49,12 @@ int main(int argc, char *argv[])
         opt = getopt_long(argc, argv, opts, opts_long, &opt_index);
         switch (opt) {
             case 'i': conf.input_file = string(optarg); break;
-            case 'm': conf.map_file = string(optarg); break;
-            case 'p': conf.pid = atoi(optarg); break;
+            case 'd': conf.data_path = string(optarg); break;
+            case 'P': conf.pid = atoi(optarg); break;
+            case 'p': conf.num_partitions = atoi(optarg); break;
             case 'l': conf.num_loaders = atoi(optarg); break;
             case 'f': conf.num_filters = atoi(optarg); break;
-            case 'r': conf.num_mergers = atoi(optarg); break;
+            case 'm': conf.num_mergers = atoi(optarg); break;
             case 'g': conf.num_groupers = atoi(optarg); break;
             case 'x': conf.exec = string(optarg); break;
             case 'o': conf.output_path = string(optarg); break;
@@ -62,18 +64,31 @@ int main(int argc, char *argv[])
         }
     }
 
-    std::ifstream map_stream(conf.map_file);
-    if (!map_stream.good()) {
-        display_usage();
-        exit(1);
-    }
-
     if (conf.num_loaders > MAX_LOADERS) {
         cout << "Number of loaders larger than MAX_LOADERS" << endl;
         exit(1);
     }
 
+    if (conf.pid >= conf.num_partitions) {
+        cout << "Partition ID larger than number of partitions" << endl;
+        exit(1);
+    }
+
+    cout << "Partition: " << conf.pid << " [" << conf.num_partitions
+         << "]" << endl;
+
+    std::ostringstream map_file;
+    map_file << conf.data_path << "/mapping/5-" << conf.num_partitions << "-"
+             << conf.num_storers;
+    std::ifstream map_stream(map_file.str());
+    if (!map_stream.good()) {
+        cout << "Failed to load mapping " << map_file.str() << endl;
+        cout << "Wrong data path and/or number of partitions/threads" << endl;
+        exit(1);
+    }
+
     // Initialize 5-mer prefix to partition/storer mapping.
+    cout << "Load mapping: " << map_file.str() << endl;
     for (string line; getline(map_stream, line);) {
         std::vector<string> columns;
         boost::split(columns, line, boost::is_any_of(" "));
@@ -132,14 +147,15 @@ int main(int argc, char *argv[])
 
 void display_usage()
 {
-    cout << "Usage: sm [OPTIONS] -i INPUT_FILE -m MAP_FILE -x COMMANDS" << endl;
+    cout << "Usage: sm [OPTIONS] -i INPUT_FILE -x COMMANDS" << endl;
     cout << "Options:" << endl;
     cout << " -i, --input INPUT_FILE" << endl;
-    cout << " -m, --mapping MAP_FILE" << endl;
-    cout << " -p, --pid ID" << endl;
+    cout << " -d, --data DATA_PATH" << endl;
+    cout << " -p, --partitions NUM_PARTITIONS" << endl;
+    cout << " --pid ID" << endl;
     cout << " -l, --loaders NUM_LOADER_THREADS" << endl;
     cout << " -f, --filters NUM_FILTER_THREADS" << endl;
-    cout << " -r, --mergers NUM_MERGER_THREADS" << endl;
+    cout << " -m, --mergers NUM_MERGER_THREADS" << endl;
     cout << " -g, --groupers NUM_GROUPER_THREADS" << endl;
     cout << " -x, --exec COMMANDS" << endl;
     cout << " -o, --output OUTPUT_PATH" << endl;
