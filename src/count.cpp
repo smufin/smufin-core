@@ -264,13 +264,10 @@ void count::dump()
 
 void count::dump_table(int sid)
 {
-    string file = string("table-") + std::to_string(_conf.pid) + string("-") +
-                  std::to_string(sid) + string(".sht");
-
-    char buf[PATH_MAX] = "";
-    if (getcwd(buf, PATH_MAX) != NULL) {
-        cout << "Serialize " << string(buf) << "/" << file << endl;
-    }
+    std::ostringstream fs;
+    fs << _conf.output_path << "/table." << _conf.pid << "-" << sid << ".sht";
+    string file = fs.str();
+    cout << "Serialize " << file << endl;
 
     FILE* fp = fopen(file.c_str(), "w");
     if (fp == NULL) {
@@ -296,13 +293,11 @@ void count::restore_table(int sid)
 {
     _tables[sid] = new sm_table();
     _tables[sid]->resize(_conf.table_size);
-    string file = string("table-") + std::to_string(_conf.pid) + string("-") +
-                  std::to_string(sid) + string(".sht");
 
-    char buf[PATH_MAX] = "";
-    if (getcwd(buf, PATH_MAX) != NULL) {
-        cout << "Unserialize " << string(buf) << "/" << file << endl;
-    }
+    std::ostringstream fs;
+    fs << _conf.output_path << "/table." << _conf.pid << "-" << sid << ".sht";
+    string file = fs.str();
+    cout << "Unserialize " << file << endl;
 
     FILE* fp = fopen(file.c_str(), "r");
     if (fp == NULL) {
