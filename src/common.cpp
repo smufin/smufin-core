@@ -65,3 +65,10 @@ void spawn(string name, std::function<void(int)> func, int n)
     time = end - start;
     cout << "Spawn " << name << " time: " << time.count() << endl;
 }
+
+// Estimate size in GB of a sparsehash table of n elements, with keys of size
+// k and values of size v.
+float estimate_sparse(uint64_t n, size_t k, size_t v)
+{
+    return (n * (k + v + 1)) / 1024 / 1024 / 1024;
+}

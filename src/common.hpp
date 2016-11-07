@@ -17,6 +17,9 @@
 #define MAX_STORERS 128
 #define MAX_LOADERS 128
 
+#define TABLE_SIZE 12800000000
+#define CACHE_SIZE 106240000000
+
 #define BASE_LEN 4
 #define MAP_LEN 5
 #define MAP_FILE_LEN 1024 // (BASE_LEN ^ MAP_LEN)
@@ -120,8 +123,8 @@ struct sm_config {
     std::string output_path;
 
     // Expected number of keys per storer/thread.
-    int table_size = 100000000;
-    int cache_size = 830000000;
+    uint64_t table_size = TABLE_SIZE;
+    uint64_t cache_size = CACHE_SIZE;
 
     // Maximum number of reads per kmer. During filtering, kmers with more
     // than max_k2i_reads associated reads are ignored.
@@ -168,5 +171,6 @@ uint64_t strtob4(const char *str);
 int lq_count(const char *str, int len);
 void krevcomp(char s[]);
 void spawn(std::string name, std::function<void(int)> func, int n);
+float estimate_sparse(uint64_t n, size_t k, size_t v);
 
 #endif

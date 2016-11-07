@@ -53,6 +53,15 @@ void count::run()
         }
     }
 
+    float table_mem = estimate_sparse(_conf.num_storers * _conf.table_size,
+                                      sizeof(sm_key), sizeof(sm_value));
+    float cache_mem = estimate_sparse(_conf.num_storers * _conf.cache_size,
+                                      sizeof(sm_key), sizeof(uint8_t));
+    cout << "Tables: " << _conf.table_size << " x " << _conf.num_storers
+         << " (estimated ~" << table_mem << "GB for 80bp and 60x)" << endl;
+    cout << "Caches: " << _conf.cache_size << " x " << _conf.num_storers
+         << " (estimated ~" << cache_mem << "GB for 80bp and 60x)" << endl;
+
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
     start = std::chrono::system_clock::now();

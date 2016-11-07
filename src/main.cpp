@@ -96,6 +96,9 @@ int main(int argc, char *argv[])
         map_l2[m] = atoi(columns[2].c_str());
     }
 
+    conf.table_size = TABLE_SIZE / conf.num_partitions / conf.num_storers;
+    conf.cache_size = CACHE_SIZE / conf.num_partitions / conf.num_storers;
+
     // Parse reprogrammable execution.
     std::vector<string> commands;
     std::vector<string> order;
