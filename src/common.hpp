@@ -14,8 +14,8 @@
 #include "kseq.h"
 #include "hash.hpp"
 
-#define NUM_STORERS 8
-#define MAX_LOADERS 8
+#define MAX_STORERS 128
+#define MAX_LOADERS 128
 
 #define BASE_LEN 4
 #define MAP_LEN 5
@@ -109,8 +109,8 @@ extern int map_l2[MAP_FILE_LEN];
 struct sm_config {
     int pid = 0;
     int num_partitions = 1;
-    int num_storers = NUM_STORERS;
     int num_loaders = 1;
+    int num_storers = 1;
     int num_filters = 1;
     int num_mergers = 1;
     int num_groupers = 1;

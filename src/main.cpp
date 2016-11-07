@@ -27,13 +27,14 @@ int main(int argc, char *argv[])
     sm_config conf = sm_config();
     conf.exec = "count:run";
 
-    static const char *opts = "i:d:p:l:f:m:g:x:o:h";
+    static const char *opts = "i:d:p:l:s:f:m:g:x:o:h";
     static const struct option opts_long[] = {
         { "input", required_argument, NULL, 'i' },
         { "data", required_argument, NULL, 'd' },
         { "pid", required_argument, NULL, 'P' },
         { "partitions", required_argument, NULL, 'p' },
         { "loaders", required_argument, NULL, 'l' },
+        { "storers", required_argument, NULL, 's' },
         { "filters", required_argument, NULL, 'f' },
         { "mergers", required_argument, NULL, 'm' },
         { "groupers", required_argument, NULL, 'g' },
@@ -53,6 +54,7 @@ int main(int argc, char *argv[])
             case 'P': conf.pid = atoi(optarg); break;
             case 'p': conf.num_partitions = atoi(optarg); break;
             case 'l': conf.num_loaders = atoi(optarg); break;
+            case 's': conf.num_storers = atoi(optarg); break;
             case 'f': conf.num_filters = atoi(optarg); break;
             case 'm': conf.num_mergers = atoi(optarg); break;
             case 'g': conf.num_groupers = atoi(optarg); break;
@@ -62,11 +64,6 @@ int main(int argc, char *argv[])
             case ':': display_usage(); return 1;
             case 'h': display_usage(); return 0;
         }
-    }
-
-    if (conf.num_loaders > MAX_LOADERS) {
-        cout << "Number of loaders larger than MAX_LOADERS" << endl;
-        exit(1);
     }
 
     if (conf.pid >= conf.num_partitions) {
@@ -154,6 +151,7 @@ void display_usage()
     cout << " -p, --partitions NUM_PARTITIONS" << endl;
     cout << " --pid ID" << endl;
     cout << " -l, --loaders NUM_LOADER_THREADS" << endl;
+    cout << " -s, --storers NUM_STORER_THREADS" << endl;
     cout << " -f, --filters NUM_FILTER_THREADS" << endl;
     cout << " -m, --mergers NUM_MERGER_THREADS" << endl;
     cout << " -g, --groupers NUM_GROUPER_THREADS" << endl;

@@ -16,11 +16,11 @@ public:
 
 private:
     // Hash tables that hold data in memory, one per storer/consumer thread.
-    sm_table* _tables[NUM_STORERS];
+    sm_table* _tables[MAX_STORERS];
 
     // Message queues between loader threads and storer threads. One SPSC
     // queue per loader/storer pair.
-    sm_queue* _queues[NUM_STORERS][MAX_LOADERS];
+    sm_queue* _queues[MAX_STORERS][MAX_LOADERS];
 
     // Signal end of loader threads.
     std::atomic<bool> _done{false};

@@ -28,13 +28,6 @@ count::count(const sm_config &conf) : stage(conf)
         _input_len++;
     }
 
-    // Initialize tables and message queues
-    for (int i = 0; i < NUM_STORERS; i++) {
-        for (int j = 0; j < MAX_LOADERS; j++) {
-            _queues[i][j] = new sm_queue(QMSG_LEN);
-        }
-    }
-
     _executable["run"] = std::bind(&count::run, this);
     _executable["dump"] = std::bind(&count::dump, this);
     _executable["restore"] = std::bind(&count::restore, this);
@@ -43,9 +36,25 @@ count::count(const sm_config &conf) : stage(conf)
 
 void count::run()
 {
+    if (_conf.num_loaders > MAX_LOADERS) {
+        cout << "Number of loaders is larger than MAX_LOADERS" << endl;
+        exit(1);
+    }
+
+    if (_conf.num_storers > MAX_STORERS) {
+        cout << "Number of storers is larger than MAX_STORERS" << endl;
+        exit(1);
+    }
+
+    // Initialize message queues
+    for (int i = 0; i < _conf.num_storers; i++) {
+        for (int j = 0; j < _conf.num_loaders; j++) {
+            _queues[i][j] = new sm_queue(QMSG_LEN);
+        }
+    }
+
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
-
     start = std::chrono::system_clock::now();
 
     std::vector<std::thread> loaders;
@@ -84,7 +93,7 @@ void count::load_file(int lid, string file)
 {
     int len;
     int nreads = 0;
-    sm_bulk bulks[NUM_STORERS];
+    sm_bulk bulks[MAX_STORERS];
     gzFile in = gzopen(file.c_str(), "rb");
 
     // Identify read kind from file name.
@@ -132,7 +141,7 @@ void count::load_file(int lid, string file)
         }
     }
 
-    for (int sid = 0; sid < NUM_STORERS; sid++) {
+    for (int sid = 0; sid < _conf.num_storers; sid++) {
         while (!_queues[sid][lid]->write(bulks[sid])) {
             continue;
         }
@@ -259,7 +268,7 @@ inline void count::incr_key(int sid, sm_cache* cache, sm_key key,
 void count::dump()
 {
     spawn("dump", std::bind(&count::dump_table, this, std::placeholders::_1),
-          NUM_STORERS);
+          _conf.num_storers);
 }
 
 void count::dump_table(int sid)
@@ -286,7 +295,7 @@ void count::dump_table(int sid)
 void count::restore()
 {
     spawn("restore", std::bind(&count::restore_table, this, std::placeholders::_1),
-          NUM_STORERS);
+          _conf.num_storers);
 }
 
 void count::restore_table(int sid)
