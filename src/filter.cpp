@@ -251,7 +251,7 @@ void filter_format::update(kseq_t *seq, int pos, bool rev, char kmer[],
                            sm_set set)
 {
     char buf[512] = {0};
-    sprintf(buf, "%s %s\n", seq->name.s, seq->seq.s);
+    sprintf(buf, "%s %s", seq->name.s, seq->seq.s);
 
     _mutex[set].lock();
     auto result = _ids[set].insert(seq->name.s);
