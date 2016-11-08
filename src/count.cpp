@@ -58,9 +58,9 @@ void count::run()
     float cache_mem = estimate_sparse(_conf.num_storers * _conf.cache_size,
                                       sizeof(sm_key), sizeof(uint8_t));
     cout << "Tables: " << _conf.table_size << " x " << _conf.num_storers
-         << " (estimated ~" << table_mem << "GB for 80bp and 60x)" << endl;
+         << " (estimated up to ~" << table_mem << "GB)" << endl;
     cout << "Caches: " << _conf.cache_size << " x " << _conf.num_storers
-         << " (estimated ~" << cache_mem << "GB for 80bp and 60x)" << endl;
+         << " (estimated up to ~" << cache_mem << "GB)" << endl;
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
@@ -84,7 +84,7 @@ void count::run()
 
     end = std::chrono::system_clock::now();
     time = end - start;
-    cout << "Count run time: " << time.count() << endl;
+    cout << "Time count/run: " << time.count() << endl;
 }
 
 void count::load(int lid)
@@ -385,5 +385,5 @@ void count::stats()
 
     end = std::chrono::system_clock::now();
     time = end - start;
-    cout << "Stats time: " << time.count() << endl;
+    cout << "Time count/stats: " << time.count() << endl;
 }
