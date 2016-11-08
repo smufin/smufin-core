@@ -1,0 +1,2 @@
+00-count-1p1s.test -- -p 1 -s 1
+00-count-2p2s.test -- -p 2 -s 2

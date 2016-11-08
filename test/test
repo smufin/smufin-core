@@ -1,0 +1,34 @@
+#!/bin/sh
+
+bin="../sm"
+data="../data"
+
+file="$1"
+
+if [ "$file" = "" ]; then
+    echo "Usage: $0 test-file" >&2
+    exit 1
+fi
+
+args=$(grep $file *.args | head -n 1 | cut -d" " -f 3-)
+id=$(echo $file | cut -d"-" -f 1)
+tmp=$(mktemp -d)
+
+find $PWD/$id*.fq.gz > $tmp/input-file
+
+$bin -i $tmp/input-file -d $data $args -x "count:run,stats" > $tmp/stdout
+
+select="awk '/Execute: count.stats/{f=1} /Time count.stats/{f=0} f'"
+diff=$(eval $select < $tmp/stdout | diff -u $file -)
+status=$?
+
+rm -rf $tmp
+
+if [ $status -eq 0 ]; then
+    echo "$file: OK"
+    exit 0
+fi
+
+echo "$file: FAILED"
+echo "$diff"
+exit 1
