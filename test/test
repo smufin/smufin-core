@@ -6,17 +6,19 @@ data="../data"
 file="$1"
 
 if [ "$file" = "" ]; then
-    echo "Usage: $0 test-file" >&2
+    echo "Usage: $0 file.test" >&2
     exit 1
 fi
 
-args=$(grep $file *.args | head -n 1 | cut -d" " -f 3-)
 id=$(echo $file | cut -d"-" -f 1)
+conf=$(echo $file | cut -d"-" -f 1-2).conf
+args=$(echo $file | cut -d"-" -f 1-2).args
+options=$(grep $file *.args | head -n 1 | cut -d" " -f 3-)
 tmp=$(mktemp -d)
 
 find $PWD/$id*.fq.gz > $tmp/input-file
 
-$bin -i $tmp/input-file -d $data $args -x "count:run,stats" > $tmp/stdout
+$bin -c $conf -i $tmp/input-file $options > $tmp/stdout
 
 select="awk '/Execute: count.stats/{f=1} /Time count.stats/{f=0} f'"
 diff=$(eval $select < $tmp/stdout | diff -u $file -)
