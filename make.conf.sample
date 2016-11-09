@@ -8,13 +8,11 @@ KMER_LEN ?= 30
 # - Google sparsehash
 # - moodycamel's ConcurrentQueue
 # - Folly's ConsumerProducerQueue
+# - Boost's algorithm
 GSH_INC   = /usr/include
 MCQ_INC   = /usr/include/concurrentqueue
 FOLLY_INC = /usr/include/folly
-
-# Boost: paths to headers/libraries.
 BOOST_INC = /usr/include/boost
-BOOST_LIB = /usr/lib
 
 # RocksDB: paths to headers/libraries.
 ROCKS_INC = /usr/include/rocksdb

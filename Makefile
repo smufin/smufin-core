@@ -20,7 +20,6 @@ MCQ_INC   ?= /usr/include/concurrentqueue
 FOLLY_INC ?= /usr/include/folly
 BOOST_INC ?= /usr/include/boost
 ROCKS_INC ?= /usr/include/rocksdb
-BOOST_LIB ?= /usr/lib
 ROCKS_LIB ?= /usr/lib
 
 BIN = sm
