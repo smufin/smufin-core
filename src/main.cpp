@@ -25,21 +25,18 @@ int map_l2[MAP_FILE_LEN] = {0};
 int main(int argc, char *argv[])
 {
     sm_config conf = sm_config();
-    conf.exec = "count:run";
 
-    static const char *opts = "i:d:p:l:s:f:m:g:x:o:h";
+    static const char *opts = "c:p:l:s:f:i:o:x:h";
     static const struct option opts_long[] = {
-        { "input", required_argument, NULL, 'i' },
-        { "data", required_argument, NULL, 'd' },
+        { "config", required_argument, NULL, 'c' },
         { "pid", required_argument, NULL, 'P' },
         { "partitions", required_argument, NULL, 'p' },
         { "loaders", required_argument, NULL, 'l' },
         { "storers", required_argument, NULL, 's' },
         { "filters", required_argument, NULL, 'f' },
-        { "mergers", required_argument, NULL, 'm' },
-        { "groupers", required_argument, NULL, 'g' },
-        { "exec", required_argument, NULL, 'x' },
+        { "input", required_argument, NULL, 'i' },
         { "output", required_argument, NULL, 'o' },
+        { "exec", required_argument, NULL, 'x' },
         { "help", no_argument, NULL, 'h' },
         { NULL, no_argument, NULL, 0 },
     };
@@ -49,17 +46,15 @@ int main(int argc, char *argv[])
     while (opt != -1) {
         opt = getopt_long(argc, argv, opts, opts_long, &opt_index);
         switch (opt) {
-            case 'i': conf.input_file = string(optarg); break;
-            case 'd': conf.data_path = string(optarg); break;
+            case 'c': conf.load(string(optarg)); break;
             case 'P': conf.pid = atoi(optarg); break;
             case 'p': conf.num_partitions = atoi(optarg); break;
             case 'l': conf.num_loaders = atoi(optarg); break;
             case 's': conf.num_storers = atoi(optarg); break;
             case 'f': conf.num_filters = atoi(optarg); break;
-            case 'm': conf.num_mergers = atoi(optarg); break;
-            case 'g': conf.num_groupers = atoi(optarg); break;
-            case 'x': conf.exec = string(optarg); break;
+            case 'i': conf.input_file = string(optarg); break;
             case 'o': conf.output_path = string(optarg); break;
+            case 'x': conf.exec = string(optarg); break;
             case '?': display_usage(); return 1;
             case ':': display_usage(); return 1;
             case 'h': display_usage(); return 0;
@@ -95,9 +90,6 @@ int main(int argc, char *argv[])
         map_l1[m] = atoi(columns[1].c_str());
         map_l2[m] = atoi(columns[2].c_str());
     }
-
-    conf.table_size = TABLE_SIZE / conf.num_partitions / conf.num_storers;
-    conf.cache_size = CACHE_SIZE / conf.num_partitions / conf.num_storers;
 
     // Parse reprogrammable execution.
     std::vector<string> commands;
@@ -147,19 +139,17 @@ int main(int argc, char *argv[])
 
 void display_usage()
 {
-    cout << "Usage: sm [OPTIONS] -i INPUT_FILE -x COMMANDS" << endl;
+    cout << "Usage: sm -c CONF_FILE [OPTIONS]" << endl;
     cout << "Options:" << endl;
-    cout << " -i, --input INPUT_FILE" << endl;
-    cout << " -d, --data DATA_PATH" << endl;
+    cout << " -c, --config CONF_FILE" << endl;
     cout << " -p, --partitions NUM_PARTITIONS" << endl;
     cout << " --pid ID" << endl;
-    cout << " -l, --loaders NUM_LOADER_THREADS" << endl;
-    cout << " -s, --storers NUM_STORER_THREADS" << endl;
-    cout << " -f, --filters NUM_FILTER_THREADS" << endl;
-    cout << " -m, --mergers NUM_MERGER_THREADS" << endl;
-    cout << " -g, --groupers NUM_GROUPER_THREADS" << endl;
-    cout << " -x, --exec COMMANDS" << endl;
+    cout << " -l, --loaders NUM_LOADERS" << endl;
+    cout << " -s, --storers NUM_STORERS" << endl;
+    cout << " -f, --filters NUM_FILTERS" << endl;
+    cout << " -i, --input INPUT_FILE" << endl;
     cout << " -o, --output OUTPUT_PATH" << endl;
+    cout << " -x, --exec COMMANDS" << endl;
     cout << " -h, --help" << endl;
 }
 

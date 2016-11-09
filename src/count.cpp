@@ -28,6 +28,9 @@ count::count(const sm_config &conf) : stage(conf)
         _input_len++;
     }
 
+    _table_size = _conf.table_size / _conf.num_partitions / _conf.num_storers;
+    _cache_size = _conf.cache_size / _conf.num_partitions / _conf.num_storers;
+
     _executable["run"] = std::bind(&count::run, this);
     _executable["dump"] = std::bind(&count::dump, this);
     _executable["restore"] = std::bind(&count::restore, this);
@@ -53,13 +56,13 @@ void count::run()
         }
     }
 
-    float table_mem = estimate_sparse(_conf.num_storers * _conf.table_size,
+    float table_mem = estimate_sparse(_conf.num_storers * _table_size,
                                       sizeof(sm_key), sizeof(sm_value));
-    float cache_mem = estimate_sparse(_conf.num_storers * _conf.cache_size,
+    float cache_mem = estimate_sparse(_conf.num_storers * _cache_size,
                                       sizeof(sm_key), sizeof(uint8_t));
-    cout << "Tables: " << _conf.table_size << " x " << _conf.num_storers
+    cout << "Tables: " << _table_size << " x " << _conf.num_storers
          << " (estimated up to ~" << table_mem << "GB)" << endl;
-    cout << "Caches: " << _conf.cache_size << " x " << _conf.num_storers
+    cout << "Caches: " << _cache_size << " x " << _conf.num_storers
          << " (estimated up to ~" << cache_mem << "GB)" << endl;
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -201,9 +204,9 @@ inline void count::load_sub(int lid, const char* sub, int len,
 void count::incr(int sid)
 {
     _tables[sid] = new sm_table();
-    _tables[sid]->resize(_conf.table_size);
+    _tables[sid]->resize(_table_size);
     sm_cache cache = sm_cache();
-    cache.resize(_conf.cache_size);
+    cache.resize(_cache_size);
 
     sm_bulk* pmsg;
     while (!_done) {
@@ -310,7 +313,7 @@ void count::restore()
 void count::restore_table(int sid)
 {
     _tables[sid] = new sm_table();
-    _tables[sid]->resize(_conf.table_size);
+    _tables[sid]->resize(_table_size);
 
     std::ostringstream fs;
     fs << _conf.output_path << "/table." << _conf.pid << "-" << sid << ".sht";

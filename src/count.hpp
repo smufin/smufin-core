@@ -15,6 +15,9 @@ public:
     inline const sm_table* operator[](int sid) const { return _tables[sid]; };
 
 private:
+    uint64_t _table_size = 0;
+    uint64_t _cache_size = 0;
+
     // Hash tables that hold data in memory, one per storer/consumer thread.
     sm_table* _tables[MAX_STORERS];
 

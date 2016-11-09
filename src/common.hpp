@@ -11,14 +11,12 @@
 #include <google/sparse_hash_map>
 #include <folly/ProducerConsumerQueue.h>
 
-#include "kseq.h"
+#include "config.hpp"
 #include "hash.hpp"
+#include "kseq.h"
 
 #define MAX_STORERS 128
 #define MAX_LOADERS 128
-
-#define TABLE_SIZE 12800000000
-#define CACHE_SIZE 106240000000
 
 #define BASE_LEN 4
 #define MAP_LEN 5
@@ -108,28 +106,6 @@ enum sm_set {
 // evenly as possible according to MAP_FILE.
 extern int map_l1[MAP_FILE_LEN];
 extern int map_l2[MAP_FILE_LEN];
-
-struct sm_config {
-    int pid = 0;
-    int num_partitions = 1;
-    int num_loaders = 1;
-    int num_storers = 1;
-    int num_filters = 1;
-    int num_mergers = 1;
-    int num_groupers = 1;
-    std::string input_file;
-    std::string data_path = "data";
-    std::string exec;
-    std::string output_path;
-
-    // Expected number of keys per storer/thread.
-    uint64_t table_size = TABLE_SIZE;
-    uint64_t cache_size = CACHE_SIZE;
-
-    // Maximum number of reads per kmer. During filtering, kmers with more
-    // than max_k2i_reads associated reads are ignored.
-    int max_k2i_reads = 2000;
-};
 
 namespace sm {
     // Nucleotide alphabet, sorted and indexed by code.
