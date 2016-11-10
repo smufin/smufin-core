@@ -27,6 +27,9 @@ struct sm_config {
     // than max_k2i_reads associated reads are ignored.
     int max_k2i_reads;
 
+    int window_min;
+    int window_len;
+
     void load(const std::string &filename);
 };
 

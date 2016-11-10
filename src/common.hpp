@@ -28,14 +28,6 @@
 
 #define STEM_LEN (KMER_LEN - 2)
 
-#ifndef WMIN
-#define WMIN 7
-#endif
-
-#ifndef WLEN
-#define WLEN 10
-#endif
-
 #define BULK_LEN 128
 #define QMSG_LEN 512
 

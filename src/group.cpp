@@ -346,13 +346,13 @@ void group::get_positions_b(uint64_t bitmap[2], std::vector<int> *pos, int len)
 
 bool group::match_window(std::vector<int> pos)
 {
-    if (pos.size() < WMIN) {
+    if (pos.size() < _conf.window_min) {
         return false;
     }
 
-    for (int i = 0; i <= pos.size() - WMIN; i++) {
-        std::vector<int> sub(pos.begin() + i, pos.begin() + i + WMIN);
-        if (sub.back() - sub.front() < WLEN) {
+    for (int i = 0; i <= pos.size() - _conf.window_min; i++) {
+        std::vector<int> sub(pos.begin() + i, pos.begin() + i + _conf.window_min);
+        if (sub.back() - sub.front() < _conf.window_len) {
             return true;
         }
     }

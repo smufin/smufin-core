@@ -4,9 +4,6 @@ include make.conf
 
 KMER_LEN ?= 30
 
-WMIN ?= 7
-WLEN ?= 10
-
 VERBOSE ?= 0
 CC_0 = @echo "CC $@"; g++
 CC_1 = g++
