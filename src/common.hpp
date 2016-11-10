@@ -28,14 +28,6 @@
 
 #define STEM_LEN (KMER_LEN - 2)
 
-#ifndef MIN_TC
-#define MIN_TC 4
-#endif
-
-#ifndef MAX_NC
-#define MAX_NC 1
-#endif
-
 #ifndef WMIN
 #define WMIN 7
 #endif

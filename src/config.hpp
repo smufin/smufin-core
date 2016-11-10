@@ -20,6 +20,9 @@ struct sm_config {
     uint64_t table_size;
     uint64_t cache_size;
 
+    int max_nc;
+    int min_tc;
+
     // Maximum number of reads per kmer. During filtering, kmers with more
     // than max_k2i_reads associated reads are ignored.
     int max_k2i_reads;

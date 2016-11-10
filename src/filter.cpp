@@ -242,7 +242,7 @@ void filter::filter_kmer(kseq_t *seq, int pos, bool rev, char kmer[],
                          uint32_t nc, uint32_t tc, uint32_t nsum,
                          uint32_t tsum, sm_set set)
 {
-    if (tc >= MIN_TC && nc <= MAX_NC) {
+    if (tc >= _conf.min_tc && nc <= _conf.max_nc) {
         _format->update(seq, pos, rev, kmer, set);
     }
 }

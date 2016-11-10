@@ -4,9 +4,6 @@ include make.conf
 
 KMER_LEN ?= 30
 
-MIN_TC ?= 4
-MAX_NC ?= 1
-
 WMIN ?= 7
 WLEN ?= 10
 
