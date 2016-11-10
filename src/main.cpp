@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
          << "]" << endl;
 
     std::ostringstream map_file;
-    map_file << conf.data_path << "/mapping/5-" << conf.num_partitions << "-"
+    map_file << conf.data_path << "/maps/5-" << conf.num_partitions << "-"
              << conf.num_storers;
     std::ifstream map_stream(map_file.str());
     if (!map_stream.good()) {
