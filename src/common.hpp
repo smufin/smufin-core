@@ -22,12 +22,6 @@
 #define MAP_LEN 5
 #define MAP_FILE_LEN 1024 // (BASE_LEN ^ MAP_LEN)
 
-#ifndef KMER_LEN
-#define KMER_LEN 30
-#endif
-
-#define STEM_LEN (KMER_LEN - 2)
-
 #define BULK_LEN 128
 #define QMSG_LEN 512
 
@@ -129,7 +123,7 @@ KSEQ_INIT(gzFile, gzread);
 
 uint64_t strtob4(const char *str);
 int lq_count(const char *str, int len);
-void krevcomp(char s[]);
+void revcomp(char seq[], int len);
 void spawn(std::string name, std::function<void(int)> func, int n);
 float estimate_sparse(uint64_t n, size_t k, size_t v);
 

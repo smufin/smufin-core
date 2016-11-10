@@ -137,7 +137,7 @@ void group::run()
             char buf[RMAX + 1];
             copy(read.begin(), read.end(), buf);
             buf[read_length] = '\0';
-            rrevcomp(buf, read_length);
+            revcomp(buf, read_length);
             string directed_read = string(buf);
             select_candidate(gid, sid, read, directed_read, b_pos, 1);
             num_match_b++;
@@ -308,16 +308,6 @@ void group::decode_read(sm_read& read, std::string& str)
     }
 }
 
-void group::rrevcomp(char read[], int len)
-{
-    int c, i, j;
-    for (i = 0, j = len - 1; i < j; i++, j--) {
-        c = read[i];
-        read[i] = sm::comp[read[j]];
-        read[j] = sm::comp[c];
-    }
-}
-
 void group::get_positions_a(uint64_t bitmap[2], std::vector<int> *pos)
 {
     for (int i = 0; i < 2; i++) {
@@ -339,7 +329,7 @@ void group::get_positions_b(uint64_t bitmap[2], std::vector<int> *pos, int len)
         while (tmp > 0) {
             int p = __builtin_ffsl(tmp) - 1;
             tmp &= (tmp - 1);
-            pos->push_back(len - KMER_LEN - (p + offset));
+            pos->push_back(len - _conf.k - (p + offset));
         }
     }
 }
@@ -365,7 +355,7 @@ void group::select_candidate(int gid, string& sid, string& seq, string& dseq,
 {
     std::vector<string> kmers;
     for (int p: pos) {
-        string kmer = dseq.substr(p, KMER_LEN);
+        string kmer = dseq.substr(p, _conf.k);
         kmers.push_back(kmer);
         kmer_table::const_iterator it = _k2i[0]->find(kmer);
         if (it == _k2i[0]->end()) {

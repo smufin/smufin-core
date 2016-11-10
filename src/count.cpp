@@ -167,13 +167,14 @@ void count::load_file(int lid, string file)
 inline void count::load_sub(int lid, const char* sub, int len,
                             sm_read_kind kind, sm_bulk* bulks)
 {
-    if (len < KMER_LEN)
+    if (len < _conf.k)
         return;
 
-    char stem[STEM_LEN + 1];
-    for (int i = 0; i <= len - KMER_LEN; i++) {
-        strncpy(stem, &sub[i + 1], STEM_LEN);
-        stem[STEM_LEN] = '\0';
+    int stem_len = _conf.k - 2;
+    char stem[stem_len + 1];
+    for (int i = 0; i <= len - _conf.k; i++) {
+        strncpy(stem, &sub[i + 1], stem_len);
+        stem[stem_len] = '\0';
 
         uint64_t m = 0;
         memcpy(&m, stem, MAP_LEN);
@@ -186,7 +187,7 @@ inline void count::load_sub(int lid, const char* sub, int len,
 
         sm_value_offset off;
         off.first = sm::code[sub[i]] - '0';
-        off.last = sm::code[sub[i + KMER_LEN - 1]] - '0';
+        off.last = sm::code[sub[i + _conf.k - 1]] - '0';
         off.kind = kind;
 
         bulks[sid].array[bulks[sid].num] = sm_msg(key, off);

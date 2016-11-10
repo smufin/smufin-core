@@ -2,8 +2,6 @@
 # create your own customized make.conf instead, see make.conf.sample.
 include make.conf
 
-KMER_LEN ?= 30
-
 VERBOSE ?= 0
 CC_0 = @echo "CC $@"; g++
 CC_1 = g++
@@ -21,9 +19,6 @@ SRC = $(wildcard src/*.cpp)
 OBJ = $(SRC:.cpp=.o)
 DEP = $(SRC:.cpp=.d)
 
-DEF = -DKMER_LEN=$(KMER_LEN) \
-      -DMIN_TC=$(MIN_TC) -DMAX_NC=$(MAX_NC) \
-      -DWMIN=$(WMIN) -DWLEN=$(WLEN)
 INC = -Isrc -I$(GSH_INC) -I$(MCQ_INC) -I$(FOLLY_INC) \
       -I$(BOOST_INC) -I$(ROCKS_INC)
 LIB = -lz -lpthread -lrocksdb
@@ -36,7 +31,7 @@ all: $(BIN)
 -include $(DEP)
 
 .cpp.o:
-	$(CC) $(CFLAGS) $(DEF) $(INC) -MMD -c -o $@ $<
+	$(CC) $(CFLAGS) $(INC) -MMD -c -o $@ $<
 
 $(BIN): $(OBJ)
 	$(CC) $(CFLAGS) $(LFLAGS) -o $(BIN) $(OBJ) $(LIB)

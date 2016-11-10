@@ -34,15 +34,14 @@ int lq_count(const char *str, int len)
     return lq;
 }
 
-// In-place conversion of kmer to its reverse complement.
-void krevcomp(char kmer[])
+// In-place conversion of sequence to its reverse complement.
+void revcomp(char seq[], int len)
 {
     int c, i, j;
-    for (i = 0, j = KMER_LEN - 1; i < j; i++, j--)
-    {
-        c = kmer[i];
-        kmer[i] = sm::comp[kmer[j]];
-        kmer[j] = sm::comp[c];
+    for (i = 0, j = len - 1; i < j; i++, j--) {
+        c = seq[i];
+        seq[i] = sm::comp[seq[j]];
+        seq[j] = sm::comp[c];
     }
 }
 

@@ -54,7 +54,6 @@ private:
 
     void encode_read(std::string& str, sm_read& read);
     void decode_read(sm_read& read, std::string& str);
-    void rrevcomp(char read[], int len);
     void get_positions_a(uint64_t bitmap[2], std::vector<int> *pos);
     void get_positions_b(uint64_t bitmap[2], std::vector<int> *pos, int len);
 

@@ -2,6 +2,7 @@
 #define __SM_CONFIG_H__
 
 struct sm_config {
+    int k;
     int pid;
     int num_partitions;
     int num_loaders;

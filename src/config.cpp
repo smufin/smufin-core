@@ -19,6 +19,7 @@ void sm_config::load(const string &filename)
 
     boost::property_tree::read_ini(filename, tree);
 
+    k = tree.get<int>("core.k", 30);
     pid = tree.get<int>("core.pid", 0);
     num_partitions = tree.get<int>("core.num-partitions", 1);
     num_loaders = tree.get<int>("core.num-loaders", 1);

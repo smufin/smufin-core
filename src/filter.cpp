@@ -137,37 +137,37 @@ void filter::load_file(int fid, string file)
 
 void filter::filter_normal(int fid, kseq_t *seq, const char *sub, int len)
 {
-    if (len < KMER_LEN)
+    if (len < _conf.k)
         return;
 
-    char kmer[KMER_LEN + 1];
-    for (int i = 0; i <= len - KMER_LEN; i++) {
-        strncpy(kmer, &sub[i], KMER_LEN);
-        kmer[KMER_LEN] = '\0';
+    char kmer[_conf.k + 1];
+    for (int i = 0; i <= len - _conf.k; i++) {
+        strncpy(kmer, &sub[i], _conf.k);
+        kmer[_conf.k] = '\0';
         filter_all(fid, seq, i, false, kmer, NN);
 
-        strncpy(kmer, &sub[i], KMER_LEN);
-        kmer[KMER_LEN] = '\0';
-        krevcomp(kmer);
+        strncpy(kmer, &sub[i], _conf.k);
+        kmer[_conf.k] = '\0';
+        revcomp(kmer, _conf.k);
         filter_all(fid, seq, i, true, kmer, NN);
     }
 }
 
 void filter::filter_cancer(int fid, kseq_t *seq, const char *sub, int len)
 {
-    if (len < KMER_LEN)
+    if (len < _conf.k)
         return;
 
-    char kmer[KMER_LEN + 1];
-    for (int i = 0; i <= len - KMER_LEN; i++) {
-        strncpy(kmer, &sub[i], KMER_LEN);
-        kmer[KMER_LEN] = '\0';
+    char kmer[_conf.k + 1];
+    for (int i = 0; i <= len - _conf.k; i++) {
+        strncpy(kmer, &sub[i], _conf.k);
+        kmer[_conf.k] = '\0';
         filter_branch(fid, seq, i, false, kmer, TM);
         filter_all(fid, seq, i, false, kmer, TN);
 
-        strncpy(kmer, &sub[i], KMER_LEN);
-        kmer[KMER_LEN] = '\0';
-        krevcomp(kmer);
+        strncpy(kmer, &sub[i], _conf.k);
+        kmer[_conf.k] = '\0';
+        revcomp(kmer, _conf.k);
         filter_branch(fid, seq, i, true, kmer, TM);
         filter_all(fid, seq, i, true, kmer, TN);
     }
@@ -175,8 +175,8 @@ void filter::filter_cancer(int fid, kseq_t *seq, const char *sub, int len)
 
 int filter::get_value(int fid, char kmer[], sm_table::const_iterator *it)
 {
-    char last = kmer[KMER_LEN - 1];
-    kmer[KMER_LEN - 1] = '\0';
+    char last = kmer[_conf.k - 1];
+    kmer[_conf.k - 1] = '\0';
 
     uint64_t m = 0;
     memcpy(&m, &kmer[1], MAP_LEN);
@@ -192,7 +192,7 @@ int filter::get_value(int fid, char kmer[], sm_table::const_iterator *it)
     if (*it == table->end())
         return -1;
 
-    kmer[KMER_LEN - 1] = last;
+    kmer[_conf.k - 1] = last;
     return 0;
 }
 
@@ -203,7 +203,7 @@ void filter::filter_branch(int fid, kseq_t *seq, int pos, bool rev,
     if (get_value(fid, kmer, &it) != 0)
         return;
     int f = sm::code[kmer[0]] - '0';
-    int l = sm::code[kmer[KMER_LEN - 1]] - '0';
+    int l = sm::code[kmer[_conf.k - 1]] - '0';
     uint32_t nc = it->second.v[f][l][NORMAL_READ];
     uint32_t tc = it->second.v[f][l][CANCER_READ];
     uint32_t nsum = 0;
@@ -230,7 +230,7 @@ void filter::filter_all(int fid, kseq_t *seq, int pos, bool rev,
             tsum += it->second.v[f][l][CANCER_READ];
         }
         for (int l = 0; l < 4; l++) {
-            kmer[KMER_LEN - 1] = sm::alpha[l];
+            kmer[_conf.k - 1] = sm::alpha[l];
             uint32_t nc = it->second.v[f][l][NORMAL_READ];
             uint32_t tc = it->second.v[f][l][CANCER_READ];
             filter_kmer(seq, pos, rev, kmer, nc, tc, nsum, tsum, set);
