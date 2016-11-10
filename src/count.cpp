@@ -170,19 +170,19 @@ inline void count::load_sub(int lid, const char* sub, int len,
     if (len < KMER_LEN)
         return;
 
-    char imer[IMER_LEN + 1];
+    char stem[STEM_LEN + 1];
     for (int i = 0; i <= len - KMER_LEN; i++) {
-        strncpy(imer, &sub[i + 1], IMER_LEN);
-        imer[IMER_LEN] = '\0';
+        strncpy(stem, &sub[i + 1], STEM_LEN);
+        stem[STEM_LEN] = '\0';
 
         uint64_t m = 0;
-        memcpy(&m, imer, MAP_LEN);
+        memcpy(&m, stem, MAP_LEN);
         hash_5c_map(m);
 
         if (map_l1[m] != _conf.pid)
             continue;
         int sid = map_l2[m];
-        sm_key key = strtob4(imer);
+        sm_key key = strtob4(stem);
 
         sm_value_offset off;
         off.first = sm::code[sub[i]] - '0';

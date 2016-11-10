@@ -26,6 +26,8 @@
 #define KMER_LEN 30
 #endif
 
+#define STEM_LEN (KMER_LEN - 2)
+
 #ifndef MIN_TC
 #define MIN_TC 4
 #endif
@@ -41,8 +43,6 @@
 #ifndef WLEN
 #define WLEN 10
 #endif
-
-#define IMER_LEN (KMER_LEN - 2)
 
 #define BULK_LEN 128
 #define QMSG_LEN 512
