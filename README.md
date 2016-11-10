@@ -11,19 +11,18 @@ corresponding normal genome of the same patient.
 Compiling *shmufin* requires `make`, a compiler such as `gcc` with C++11
 support (>= 4.8), and the following libraries:
 
- - [boost::atomic][boost] (>= 1.55)
  - [sparsehash][sparsehash] (>= 2.0)
- - [folly::ConsumerProducerQueue][folly]
- - [moodycamel::ConcurrentQueue][concurrentq]
+ - [boost][boost] (>= 1.55): Property trees and string algorithms
+ - [folly::ProducerConsumerQueue][folly]: SPSC queue
+ - [moodycamel::ConcurrentQueue][concurrentq]: MPMC queue
 
 The paths for each library can be configured using a custom `make.conf` file,
 see `make.conf.sample` for an example. On Debian-based systems, packages for
 the former two libraries are available as:
 
  ```
- libboost1.55-dev
- libboost-atomic1.55.0
  libsparsehash-dev
+ libboost1.55-dev
  ```
 
 *shmufin*'s k-mer length is determined at compile time, but can be easily
@@ -32,17 +31,16 @@ configured changing the `KMER_LEN` variable (defaults to 30).
 ## Run
 
  ```
- Usage: sm [OPTIONS] -i INPUT_FILE -m MAP_FILE -x COMMANDS
+ Usage: sm -c CONFIG [OPTIONS]
  Options:
-  -i, --input INPUT_FILE
-  -m, --mapping MAP_FILE
-  -p, --pid ID
+  -p, --partitions NUM_PARTITIONS
+  --pid PARTITION_ID
   -l, --loaders NUM_LOADER_THREADS
+  -s, --storers NUM_STORER_THREADS
   -f, --filters NUM_FILTER_THREADS
-  -r, --mergers NUM_MERGER_THREADS
-  -g, --groupers NUM_GROUPER_THREADS
-  -x, --exec COMMANDS
+  -i, --input INPUT_FILE
   -o, --output OUTPUT_PATH
+  -x, --exec COMMANDS
   -h, --help
  ```
 

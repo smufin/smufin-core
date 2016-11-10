@@ -139,11 +139,10 @@ int main(int argc, char *argv[])
 
 void display_usage()
 {
-    cout << "Usage: sm -c CONF_FILE [OPTIONS]" << endl;
+    cout << "Usage: sm -c CONFIG [OPTIONS]" << endl;
     cout << "Options:" << endl;
-    cout << " -c, --config CONF_FILE" << endl;
     cout << " -p, --partitions NUM_PARTITIONS" << endl;
-    cout << " --pid ID" << endl;
+    cout << " --pid PARTITION_ID" << endl;
     cout << " -l, --loaders NUM_LOADERS" << endl;
     cout << " -s, --storers NUM_STORERS" << endl;
     cout << " -f, --filters NUM_FILTERS" << endl;
