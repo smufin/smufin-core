@@ -25,9 +25,6 @@ the former two libraries are available as:
  libboost1.55-dev
  ```
 
-*shmufin*'s k-mer length is determined at compile time, but can be easily
-configured changing the `KMER_LEN` variable (defaults to 30).
-
 ## Run
 
  ```
