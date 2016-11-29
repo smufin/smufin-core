@@ -13,8 +13,9 @@ support (>= 4.8), and the following libraries:
 
  - [sparsehash][sparsehash] (>= 2.0)
  - [boost][boost] (>= 1.55): Property trees and string algorithms
- - [folly::ProducerConsumerQueue][folly]: SPSC queue
  - [moodycamel::ConcurrentQueue][concurrentq]: MPMC queue
+ - [folly::ProducerConsumerQueue][folly]: SPSC queue
+ - [RocksDB][rocksdb] (>= 4.9): Key-value store for flash storage
 
 The paths for each library can be configured using a custom `make.conf` file,
 see `make.conf.sample` for an example. On Debian-based systems, packages for
@@ -49,4 +50,5 @@ Jordà Polo `<jorda.polo@bsc.es>`, 2015-2016.
 [boost]: http://www.boost.org/ "Boost"
 [sparsehash]: https://github.com/sparsehash/sparsehash "Sparse Hash"
 [folly]: https://github.com/facebook/folly "Folly"
+[rocksdb]: https://github.com/facebook/rocksdb "RocksDB"
 [concurrentq]: https://github.com/cameron314/concurrentqueue "ConcurrentQueue"
