@@ -19,11 +19,19 @@ support (>= 4.8), and the following libraries:
 
 The paths for each library can be configured using a custom `make.conf` file,
 see `make.conf.sample` for an example. On Debian-based systems, packages for
-the former two libraries are available as:
+the former two and last libraries are available as:
 
  ```
  libsparsehash-dev
  libboost1.55-dev
+ librocksdb-dev
+ ```
+
+*shmufin*'s makefile defaults to a minimal output. For a more verbose output,
+use the following:
+
+ ```
+ VERBOSE=1 make
  ```
 
 ## Run
@@ -41,6 +49,22 @@ the former two libraries are available as:
   -x, --exec COMMANDS
   -h, --help
  ```
+
+### Commands
+
+ * `count`
+   * `run`
+   * `dump`
+   * `restore`
+   * `stats`
+ * `filter`
+   * `run`
+   * `dump`
+   * `stats`
+ * `merge`
+   * `run`
+ * `group`
+   * `run`
 
 ## Maintainers
 
