@@ -53,18 +53,28 @@ use the following:
 ### Commands
 
  * `count`
-   * `run`
-   * `dump`
-   * `restore`
-   * `stats`
+   * `run`: counts frequency of normal and tumoral kmers in input sequence,
+     ignoring kmers whose stem is only seen once; counters hold values up to
+     2^16.
+   * `dump`: serialize hashtables that contain kmer frequencies to the
+     `core.output` directory; filenames have the following format:
+     `table.<PID>-<SID>.sht`, where `PID` stands for partition ID, and `SID`
+     for storer ID.
+   * `restore`: unserialize hashtables from disk.
+   * `stats`: display frequency stats, including size of different tables, and
+     histograms for normal and tumoral counts.
  * `filter`
-   * `run`
-   * `dump`
-   * `stats`
+   * `run`: build filter normal and tumoral (mutated and non-mutated) indexes
+     containing candidate reads, along with their IDs and positions of
+     candidate kmers.
+   * `dump`: write filter indexes to disk
+   * `stats`: display sizes of the different filters.
  * `merge`
-   * `run`
+   * `run`: read and combine filters from different partitions into a single,
+     unified filter in a RocksDB database.
  * `group`
-   * `run`
+   * `run`: window-based group leader selection and retrieval of related
+     reads.
 
 ## Maintainers
 
