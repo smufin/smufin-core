@@ -1,6 +1,7 @@
 #include "count.hpp"
 
 #include <errno.h>
+#include <math.h>
 
 #include <chrono>
 #include <fstream>
