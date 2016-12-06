@@ -81,7 +81,7 @@ void merge::load(string type, string set)
 
     end = std::chrono::system_clock::now();
     time = end - start;
-    cout << "Merge run time (" << type << "/" << set << "):"
+    cout << "Merge run time (" << type << "/" << set << "): "
          << time.count() << endl;
 }
 
@@ -91,11 +91,12 @@ void merge::load_i2p(rocksdb::DB* db, string set, int i)
     std::chrono::duration<double> time;
     start = std::chrono::system_clock::now();
 
-    string file = _conf.output_path + "/filter-" + set + "." + std::to_string(i) + ".i2p";
-    cout << "Merge: " << file << endl;
-    std::ifstream in(file);
+    std::ostringstream file;
+    file << _conf.output_path << "/filter-i2p-" << set << "." << i << ".txt";
+    cout << "Merge: " << file.str() << endl;
+    std::ifstream in(file.str());
     if (!in.good()) {
-        cout << "Failed to open: " << file << endl;
+        cout << "Failed to open: " << file.str() << endl;
         return;
     }
 
@@ -115,6 +116,8 @@ void merge::load_i2p(rocksdb::DB* db, string set, int i)
         }
         n++;
     }
+
+    in.close();
 }
 
 void merge::load_k2i(rocksdb::DB* db, string set, int i)
@@ -123,11 +126,12 @@ void merge::load_k2i(rocksdb::DB* db, string set, int i)
     std::chrono::duration<double> time;
     start = std::chrono::system_clock::now();
 
-    string file = _conf.output_path + "/filter-" + set + "." + std::to_string(i) + ".k2i";
-    cout << "Merge: " << file << endl;
-    std::ifstream in(file);
+    std::ostringstream file;
+    file << _conf.output_path << "/filter-k2i-" << set << "." << i << ".txt";
+    cout << "Merge: " << file.str() << endl;
+    std::ifstream in(file.str());
     if (!in.good()) {
-        cout << "Failed to open: " << file << endl;
+        cout << "Failed to open: " << file.str() << endl;
         return;
     }
 
@@ -151,6 +155,8 @@ void merge::load_k2i(rocksdb::DB* db, string set, int i)
         }
         n++;
     }
+
+    in.close();
 }
 
 void merge::load_seq(rocksdb::DB* db, std::string set, int i)
@@ -159,22 +165,22 @@ void merge::load_seq(rocksdb::DB* db, std::string set, int i)
     std::chrono::duration<double> time;
     start = std::chrono::system_clock::now();
 
-    string file = _conf.output_path + "/filter-" + set + "." + std::to_string(i) + ".fq.gz";
-    cout << "Merge: " << file << endl;
-    gzFile in = gzopen(file.c_str(), "rb");
-    if (in == NULL) {
-        cout << "Failed to open: " << file << " (" << errno << ")" << endl;
+    std::ostringstream file;
+    file << _conf.output_path << "/filter-seq-" << set << "." << i << ".txt";
+    cout << "Merge: " << file.str() << endl;
+    std::ifstream in(file.str());
+    if (!in.good()) {
+        cout << "Failed to open: " << file.str() << endl;
         return;
     }
 
     int n = 0;
-    int len;
-    kseq_t *seq = kseq_init(in);
+    string id;
+    string seq;
     rocksdb::WriteBatch batch;
-    while ((len = kseq_read(seq)) >= 0) {
-        string id(seq->name.s);
-        string s(seq->seq.s);
-        batch.Put(id, s);
+
+    while (in >> id >> seq) {
+        batch.Put(id, seq);
         if (n % 10000 == 0) {
             db->Write(rocksdb::WriteOptions(), &batch);
             batch.Clear();
@@ -187,7 +193,6 @@ void merge::load_seq(rocksdb::DB* db, std::string set, int i)
         }
         n++;
     }
-    db->Write(rocksdb::WriteOptions(), &batch);
-    kseq_destroy(seq);
-    gzclose(in);
+
+    in.close();
 }
