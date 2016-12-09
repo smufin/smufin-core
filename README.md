@@ -76,6 +76,46 @@ use the following:
    * `run`: window-based group leader selection and retrieval of related
      reads.
 
+## File Formats
+
+### Input Files
+
+Input files consist of a newline-seperated list of gzipped FASTQ files. There
+are two different kinds of FASTQ files: normal and tumoral. Normal files
+contain the string `_N_` in their name, while tumoral files contain `_T_`.
+E.g. sample input file:
+
+ ```
+ ./test/00_N_insertion.fq.gz
+ ./test/00_T_insertion.fq.gz
+ ```
+
+### I2P Files
+
+I2P stands for *ID to Positions*. I2P files contain, for each candidate read
+ID, positions within the read sequence that reference candidate kmers.
+Positions are encoded as four `uint64_t` bitmaps: two in direction A, and two
+in direction B (hence supporting reads of up to 128 bases). E.g.:
+
+ ```
+ chr20-13310454 2047 0 1 0
+ chr20-18864072 0 0 33554176 0
+ ```
+
+### K2I Files
+
+K2I stands for *Kmer to IDs*. K2I files contain, for each candidate kmer, a
+list of sequence IDs that contain that kmer. Every line in a K2I file
+represents a candidate kmer and must have at least 2 columns: the first column
+is the kmer itself, and the second column is the number of associated reads
+that contain the kmer. The remaining columns are a variable space-separated
+list of sequence IDs. E.g.:
+
+ ```
+ GGGGTGCAGGTCCAAGGAAAGTCTTAGTGT 3 chr20-18462176 chr20-5273350 chr20-6534694
+ TGGGGGTGCAGGTCCAAGGAAAGTCTTAGT 1 chr20-18462176
+ ```
+
 ## Maintainers
 
 Jordà Polo `<jorda.polo@bsc.es>`, 2015-2016.
