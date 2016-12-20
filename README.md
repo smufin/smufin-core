@@ -95,7 +95,7 @@ E.g. sample input file:
 I2P stands for *ID to Positions*. I2P files contain, for each candidate read
 ID, positions within the read sequence that reference candidate kmers.
 Positions are encoded as four `uint64_t` bitmaps: two in direction A, and two
-in direction B (hence supporting reads of up to 128 bases). E.g.:
+in direction B (hence supporting reads of up to `128+k-1` bases). E.g.:
 
  ```
  chr20-13310454 2047 0 1 0
