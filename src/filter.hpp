@@ -1,40 +1,12 @@
 #ifndef __SM_FILTER_H__
 #define __SM_FILTER_H__
 
-#include <mutex>
 #include <string>
-#include <unordered_set>
-#include <unordered_map>
 
 #include "common.hpp"
 #include "count.hpp"
+#include "filter_format_plain.hpp"
 #include "stage.hpp"
-
-class filter_format
-{
-public:
-    filter_format(const sm_config &conf) : _conf(conf) {};
-
-    void update(kseq_t *seq, int pos, bool rev, char kmer[], sm_set set);
-    bool flush();
-
-    void dump();
-    void stats();
-
-private:
-    const sm_config &_conf;
-
-    std::mutex _mutex[NUM_SETS];
-    std::unordered_set<std::string> _ids[NUM_SETS];
-    std::unordered_set<std::string> _seq[NUM_SETS];
-    std::unordered_map<std::string, sm_pos_bitmap> _i2p[NUM_SETS];
-    std::unordered_map<std::string, std::unordered_set<std::string>>
-        _k2i[NUM_SETS];
-
-    void write_seq(int set);
-    void write_k2i(int set);
-    void write_i2p(int set);
-};
 
 class filter : public stage
 {
@@ -51,7 +23,7 @@ private:
 
     const count* _count;
 
-    filter_format* _format;
+    filter_format_plain* _format;
 
     void load(int fid);
     void load_file(int fid, std::string file);
