@@ -4,12 +4,14 @@
 #include <sstream>
 #include <string>
 
+#include <rocksdb/db.h>
 #include <rocksdb/merge_operator.h>
 
 #include "common.hpp"
 
 using namespace rocksdb;
 
+rocksdb::Options get_rocks_options(std::string type);
 void encode_pos(std::string &s, sm_pos_bitmap &p);
 sm_pos_bitmap decode_pos(char const *s);
 
