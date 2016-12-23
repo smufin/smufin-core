@@ -1,5 +1,6 @@
 #include "filter_format_rocks.hpp"
 
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -69,6 +70,10 @@ void filter_format_rocks::update(kseq_t *seq, int pos, bool rev, char kmer[],
 
 void filter_format_rocks::stats()
 {
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    std::chrono::duration<double> time;
+    start = std::chrono::system_clock::now();
+
     uint64_t nn, tn, tm;
     rocksdb::Iterator* it;
 
@@ -94,4 +99,8 @@ void filter_format_rocks::stats()
     it = _i2p->NewIterator(rocksdb::ReadOptions());
     for (it->SeekToFirst(); it->Valid(); it->Next()) tm++;
     cout << "Count I2P: " << tm << endl;
+
+    end = std::chrono::system_clock::now();
+    time = end - start;
+    cout << "Time filter/stats: " << time.count() << endl;
 }
