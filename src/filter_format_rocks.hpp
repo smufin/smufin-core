@@ -8,6 +8,17 @@
 #include "common.hpp"
 #include "filter_format.hpp"
 
+// Implementation of a filter_format that creates filtering indexes using
+// RocksDB-backed database.
+//
+// For a particular partition P, the following 7 RocksDB databases are
+// created in the output directory:
+//  - filter-seq-{nn,tn,tm}.P.rdb
+//  - filter-k2i-{nn,tn,tm}.P.rdb
+//  - filter-i2p-tm.P.rdb
+//
+// The flush() and dump() methods are empty since RocksDB already deals with
+// disk synchronization internally.
 class filter_format_rocks : public filter_format
 {
 public:
