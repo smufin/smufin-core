@@ -9,7 +9,6 @@
 
 #include <concurrentqueue.h>
 #include <google/sparse_hash_map>
-#include <folly/ProducerConsumerQueue.h>
 
 #include "config.hpp"
 #include "hash.hpp"
@@ -51,21 +50,6 @@ typedef google::sparse_hash_map<sm_key, uint8_t, sm_hasher<sm_key>> sm_cache;
 enum sm_read_kind : uint8_t {
     NORMAL_READ, CANCER_READ
 };
-
-typedef struct {
-    uint8_t first;
-    uint8_t last;
-    sm_read_kind kind;
-} sm_value_offset;
-
-typedef std::pair<sm_key, sm_value_offset> sm_msg;
-
-typedef struct {
-    uint16_t num = 0;
-    sm_msg array[BULK_LEN];
-} sm_bulk;
-
-typedef folly::ProducerConsumerQueue<sm_bulk> sm_queue;
 
 // Map positions of candidate kmers in a sequence, in both directions: A and
 // B. There are two 64-bit elements in each array/direction, allowing

@@ -3,8 +3,25 @@
 
 #include <string>
 
+#include <folly/ProducerConsumerQueue.h>
+
 #include "common.hpp"
 #include "stage.hpp"
+
+typedef struct {
+    uint8_t first;
+    uint8_t last;
+    sm_read_kind kind;
+} sm_value_offset;
+
+typedef std::pair<sm_key, sm_value_offset> sm_msg;
+
+typedef struct {
+    uint16_t num = 0;
+    sm_msg array[BULK_LEN];
+} sm_bulk;
+
+typedef folly::ProducerConsumerQueue<sm_bulk> sm_queue;
 
 class count : public stage
 {
