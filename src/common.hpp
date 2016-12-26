@@ -67,6 +67,24 @@ typedef struct {
 
 typedef folly::ProducerConsumerQueue<sm_bulk> sm_queue;
 
+// Map positions of candidate kmers in a sequence, in both directions: A and
+// B. There are two 64-bit elements in each array/direction, allowing
+// sequences of up to 128+k-1 bases. The first element in the array maps
+// positions 0..63, while the second element maps 64..127.  Note that a[1] and
+// b[1] are always zero for seequences that don't require indexing more than
+// 64 bases. E.g. The following sequence of 30 bases has two candidate
+// 12-mers starting at positions 0 and 2 in direction A, and one candidate
+// starting at position 3 in direction B:
+//   A: GGGGTGCAGGTCCAAGGAAAGTCTTAGTGT
+//      GGGGTGCAGGTC (0)
+//        GGTGCAGGTCCA (2)
+//   B: AGGGTGCAGGTCCAAGGAAAGTCTTAGTGT
+//         GTGCAGGTCCAA (3)
+// Which results in the following bitmap:
+//   a[0]: 0000000000000000000000000000000000000000000000000000000000000101 = 5
+//   a[1]: 0000000000000000000000000000000000000000000000000000000000000000 = 0
+//   b[0]: 0000000000000000000000000000000000000000000000000000000000001000 = 8
+//   b[1]: 0000000000000000000000000000000000000000000000000000000000000000 = 0
 typedef struct sm_pos_bitmap {
     uint64_t a[2] = {0};
     uint64_t b[2] = {0};
