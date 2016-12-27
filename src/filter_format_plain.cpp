@@ -51,9 +51,19 @@ bool filter_format_plain::flush()
 
 void filter_format_plain::stats()
 {
-    cout << "Filtered NN reads: " << _ids[NN].size() << endl;
-    cout << "Filtered TN reads: " << _ids[TN].size() << endl;
-    cout << "Filtered TM reads: " << _ids[TM].size() << endl;
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    std::chrono::duration<double> time;
+    start = std::chrono::system_clock::now();
+
+    cout << "Size SEQ: " << _ids[NN].size() << " " << _ids[TN].size() << " "
+         << _ids[TM].size() << endl;
+    cout << "Size K2I: " << _k2i[NN].size() << " " << _k2i[TN].size() << " "
+         << _k2i[TM].size() << endl;
+    cout << "Size I2P: " << _i2p[TM].size() << endl;
+
+    end = std::chrono::system_clock::now();
+    time = end - start;
+    cout << "Time filter/stats: " << time.count() << endl;
 }
 
 void filter_format_plain::dump()

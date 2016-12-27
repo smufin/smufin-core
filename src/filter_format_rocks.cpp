@@ -84,7 +84,7 @@ void filter_format_rocks::stats()
     for (it->SeekToFirst(); it->Valid(); it->Next()) tn++;
     it = _seq[TM]->NewIterator(rocksdb::ReadOptions());
     for (it->SeekToFirst(); it->Valid(); it->Next()) tm++;
-    cout << "Count SEQ: " << nn << " " << tn << " " << tm << endl;
+    cout << "Size SEQ: " << nn << " " << tn << " " << tm << endl;
 
     nn = tn = tm = 0;
     it = _k2i[NN]->NewIterator(rocksdb::ReadOptions());
@@ -93,12 +93,12 @@ void filter_format_rocks::stats()
     for (it->SeekToFirst(); it->Valid(); it->Next()) tn++;
     it = _k2i[TM]->NewIterator(rocksdb::ReadOptions());
     for (it->SeekToFirst(); it->Valid(); it->Next()) tm++;
-    cout << "Count K2I: " << nn << " " << tn << " " << tm << endl;
+    cout << "Size K2I: " << nn << " " << tn << " " << tm << endl;
 
     tm = 0;
     it = _i2p->NewIterator(rocksdb::ReadOptions());
     for (it->SeekToFirst(); it->Valid(); it->Next()) tm++;
-    cout << "Count I2P: " << tm << endl;
+    cout << "Size I2P: " << tm << endl;
 
     end = std::chrono::system_clock::now();
     time = end - start;
