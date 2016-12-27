@@ -1,8 +1,10 @@
 #ifndef __SM_GROUP_H__
 #define __SM_GROUP_H__
 
+#include <thread>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 #include <google/sparse_hash_map>
 

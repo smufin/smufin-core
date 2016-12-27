@@ -3,7 +3,9 @@
 
 #include <string>
 
+#include <concurrentqueue.h>
 #include <folly/ProducerConsumerQueue.h>
+#include <google/sparse_hash_map>
 
 #include "common.hpp"
 #include "stage.hpp"

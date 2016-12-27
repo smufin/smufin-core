@@ -1,7 +1,10 @@
 #include "common.hpp"
 
+#include <chrono>
 #include <fstream>
 #include <iostream>
+#include <thread>
+#include <vector>
 
 using std::cout;
 using std::endl;

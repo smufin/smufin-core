@@ -3,6 +3,8 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <thread>
+#include <vector>
 
 using std::cout;
 using std::endl;

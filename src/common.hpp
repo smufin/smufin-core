@@ -1,14 +1,12 @@
 #ifndef __SM_COMMON_H__
 #define __SM_COMMON_H__
 
+#include <functional>
+#include <map>
 #include <string>
 #include <set>
-#include <map>
 
 #include <zlib.h>
-
-#include <concurrentqueue.h>
-#include <google/sparse_hash_map>
 
 #include "config.hpp"
 #include "hash.hpp"
