@@ -8,6 +8,24 @@
 #include "common.hpp"
 #include "stage.hpp"
 
+typedef uint64_t sm_key;
+
+// A value of the hashtable that contains normal and tumoral counters for all
+// inflections of a stem. The multidimensional array `v' is indexed as
+// follows: v[A][B][C], where A and B are the numeric code of the first and
+// last bases (as defined by sm::code), and C is the kind (as defined by
+// sm_read_kind).
+typedef struct sm_value {
+    uint16_t v[4][4][2] = {{{0}}};
+} sm_value;
+
+typedef google::sparse_hash_map<sm_key, sm_value, sm_hasher<sm_key>> sm_table;
+typedef google::sparse_hash_map<sm_key, uint8_t, sm_hasher<sm_key>> sm_cache;
+
+// Contains data to calculate a position within a sm_value multidimensional
+// array. `first' and `last' are integers in the range 0..3 and contain codes
+// representing the first and last bases of a kmer using the same mapping as
+// sm::code.
 typedef struct {
     uint8_t first;
     uint8_t last;
@@ -23,6 +41,11 @@ typedef struct {
 
 typedef folly::ProducerConsumerQueue<sm_bulk> sm_queue;
 
+// Stage that reads input files, splits sequences into kmers, and builds a
+// table of normal and tumoral kmer frequencies. `count' provides an in-memory
+// implementation, and uses a cache that holds kmers that are seen only once.
+// Frequency tables are indexed by stem instead of kmers, and each entry
+// contains normal and tumoral counters for all inflections.
 class count : public stage
 {
 public:

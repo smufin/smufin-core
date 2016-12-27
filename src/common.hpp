@@ -38,15 +38,6 @@
         (h) = ((h) & 0xFF) + ((h) >> 4);    \
         (h) = ((h) & 0xFF) + (((h) & 0xFF00) >> 6); })
 
-typedef uint64_t sm_key;
-
-typedef struct sm_value {
-    uint16_t v[4][4][2] = {{{0}}};
-} sm_value;
-
-typedef google::sparse_hash_map<sm_key, sm_value, sm_hasher<sm_key>> sm_table;
-typedef google::sparse_hash_map<sm_key, uint8_t, sm_hasher<sm_key>> sm_cache;
-
 enum sm_read_kind : uint8_t {
     NORMAL_READ, CANCER_READ
 };
