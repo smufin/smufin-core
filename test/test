@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 
-bin="../sm"
+sm="../sm"
 data="../data"
 
 file="$1"
@@ -11,17 +11,17 @@ if [ "$file" = "" ]; then
 fi
 
 id=$(echo $file | cut -d"-" -f 1)
-conf=$(echo $file | cut -d"-" -f 1-2).conf
-args=$(echo $file | cut -d"-" -f 1-2).args
+bin=$(echo $file | cut -d"-" -f 1-2)
+conf=$bin.conf
+args=$bin.args
 options=$(grep $file *.args | head -n 1 | cut -d" " -f 3-)
 tmp=$(mktemp -d)
 
 find $PWD/$id*.fq.gz > $tmp/input-file
 
-$bin -c $conf -i $tmp/input-file $options > $tmp/stdout
+$sm -c $conf -i $tmp/input-file $options > $tmp/stdout
 
-select="awk '/Execute: count.stats/{f=1} /Time count.stats/{f=0} f'"
-diff=$(eval $select < $tmp/stdout | diff -u $file -)
+diff=$(./$bin < $tmp/stdout | diff -u $file -)
 status=$?
 
 rm -rf $tmp

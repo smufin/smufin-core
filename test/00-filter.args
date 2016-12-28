@@ -1,0 +1,4 @@
+00-filter-1p1f.test -- -p 1 -f 1
+00-filter-1p2f.test -- -p 1 -f 2
+00-filter-2p1f.test -- -p 2 -f 1
+00-filter-2p2f.test -- -p 2 -f 2
