@@ -19,7 +19,7 @@ tmp=$(mktemp -d)
 
 find $PWD/$id*.fq.gz > $tmp/input-file
 
-$sm -c $conf -i $tmp/input-file $options > $tmp/stdout
+$sm -c $conf -i $tmp/input-file -o $tmp $options > $tmp/stdout
 
 diff=$(./$bin < $tmp/stdout | diff -u $file -)
 status=$?
