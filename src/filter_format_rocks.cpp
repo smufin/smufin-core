@@ -46,13 +46,15 @@ void filter_format_rocks::update(kseq_t *seq, int pos, bool rev, char kmer[],
                                  sm_set set)
 {
     string sid = seq->name.s;
+    rocksdb::WriteOptions w_options;
+    w_options.disableWAL = true;
 
-    _seq[set]->Put(rocksdb::WriteOptions(), sid, seq->seq.s);
+    _seq[set]->Put(w_options, sid, seq->seq.s);
 
     // TODO: Honour _conf.max_k2i_reads
-    std::stringstream s;
-    s << sid << " ";
-    _k2i[set]->Merge(rocksdb::WriteOptions(), kmer, s.str());
+    std::stringstream ss;
+    ss << sid << " ";
+    _k2i[set]->Merge(w_options, kmer, ss.str());
 
     if (set == TM) {
         sm_pos_bitmap p;
@@ -64,7 +66,7 @@ void filter_format_rocks::update(kseq_t *seq, int pos, bool rev, char kmer[],
             p.b[pos / 64] |= 1UL << (pos % 64);
 
         encode_pos(serialized, p);
-        _i2p->Merge(rocksdb::WriteOptions(), sid, serialized);
+        _i2p->Merge(w_options, sid, serialized);
     }
 }
 
