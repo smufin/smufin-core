@@ -9,7 +9,28 @@ rocksdb::Options get_rocks_options(std::string type)
 {
     rocksdb::Options options;
     options.create_if_missing = true;
-    options.IncreaseParallelism(4);
+
+    options.disableDataSync = true;
+    options.disable_auto_compactions = true;
+
+    options.num_levels = 2;
+    options.level0_file_num_compaction_trigger = -1;
+    options.level0_slowdown_writes_trigger = -1;
+    options.level0_stop_writes_trigger = -1;
+    options.soft_pending_compaction_bytes_limit = 0;
+    options.hard_pending_compaction_bytes_limit = 0;
+    options.max_write_buffer_number = 6;
+    options.min_write_buffer_number_to_merge = 1;
+    options.max_background_flushes = 4;
+    options.max_background_compactions = 2;
+    options.base_background_compactions = 2;
+    options.target_file_size_base = 512UL * 1024 * 1024;
+
+    options.WAL_ttl_seconds = 0;
+    options.WAL_size_limit_MB = 0;
+
+    options.compression = rocksdb::kLZ4Compression;
+    options.max_open_files = -1;
 
     if (type == "k2i") {
         options.merge_operator.reset(new IDListOperator());
