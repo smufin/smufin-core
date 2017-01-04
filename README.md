@@ -118,7 +118,7 @@ list of sequence IDs. E.g.:
 
 ## Maintainers
 
-Jordà Polo `<jorda.polo@bsc.es>`, 2015-2016.
+Jordà Polo `<jorda.polo@bsc.es>`, 2015-2017.
 
 [smufin]: http://cg.bsc.es/smufin/ "SMUFIN"
 [boost]: http://www.boost.org/ "Boost"
