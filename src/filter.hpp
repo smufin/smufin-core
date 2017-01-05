@@ -5,7 +5,7 @@
 
 #include "common.hpp"
 #include "count.hpp"
-#include "filter_format_plain.hpp"
+#include "filter_format.hpp"
 #include "stage.hpp"
 
 class filter : public stage
@@ -23,7 +23,7 @@ private:
 
     const count* _count;
 
-    filter_format_plain* _format;
+    filter_format* _format;
 
     void load(int fid);
     void load_file(int fid, std::string file);
