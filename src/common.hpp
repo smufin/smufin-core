@@ -1,11 +1,9 @@
 #ifndef __SM_COMMON_H__
 #define __SM_COMMON_H__
 
-#include <functional>
 #include <map>
 #include <string>
 #include <set>
-#include <vector>
 
 #include <zlib.h>
 
@@ -116,11 +114,5 @@ KSEQ_INIT(gzFile, gzread);
 uint64_t strtob4(const char *str);
 int lq_count(const char *str, int len);
 void revcomp(char seq[], int len);
-
-template<typename T>
-void spawn(std::string name, std::function<void(T)> func, std::vector<T> list);
-void spawn(std::string name, std::function<void(int)> func, int n);
-
-float estimate_sparse(uint64_t n, size_t k, size_t v);
 
 #endif

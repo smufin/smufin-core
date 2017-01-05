@@ -6,6 +6,7 @@
 #include <thread>
 
 #include "filter_format_plain.hpp"
+#include "util.hpp"
 
 using std::cout;
 using std::endl;

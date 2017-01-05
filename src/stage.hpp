@@ -1,6 +1,7 @@
 #ifndef __SM_STAGE_H__
 #define __SM_STAGE_H__
 
+#include <functional>
 #include <map>
 #include <string>
 #include <vector>

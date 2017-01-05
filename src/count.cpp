@@ -13,6 +13,8 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include "util.hpp"
+
 using std::cout;
 using std::endl;
 using std::string;
