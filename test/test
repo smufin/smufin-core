@@ -11,7 +11,7 @@ if [ "$file" = "" ]; then
 fi
 
 id=$(echo $file | cut -d"-" -f 1)
-bin=$(echo $file | cut -d"-" -f 1-2)
+bin=$(echo $file | sed -r 's/(-[^-]+){1}.test//g')
 conf=$bin.conf
 args=$bin.args
 options=$(grep $file *.args | head -n 1 | cut -d" " -f 3-)
