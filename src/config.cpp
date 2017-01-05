@@ -37,6 +37,7 @@ void sm_config::load(const string &filename)
     table_size = tree.get<uint64_t>("count.table-size", 12800000000);
     cache_size = tree.get<uint64_t>("count.cache-size", 106240000000);
 
+    filter_format = tree.get<string>("filter.format", "plain");
     max_nc = tree.get<int>("filter.max-normal-count", 1);
     min_tc = tree.get<int>("filter.min-tumor-count", 4);
     max_k2i_reads = tree.get<int>("filter.max-k2i-reads", 2000);

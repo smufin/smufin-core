@@ -26,7 +26,10 @@ filter::filter(const sm_config &conf) : stage(conf)
         _input_count++;
     }
 
-    _format = new filter_format_plain(conf);
+    if (_conf.filter_format == "rocks")
+        _format = new filter_format_rocks(conf);
+    else
+        _format = new filter_format_plain(conf);
 
     _executable["run"] = std::bind(&filter::run, this);
     _executable["dump"] = std::bind(&filter::dump, this);
