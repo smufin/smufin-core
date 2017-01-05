@@ -67,7 +67,8 @@ use the following:
    * `run`: build filter normal and tumoral (mutated and non-mutated) indexes
      containing candidate reads, along with their IDs and positions of
      candidate kmers.
-   * `dump`: write filter indexes to disk
+   * `dump`: finalize writing filter indexes to disk; when using RocksDB
+     indexes, force a compaction.
    * `stats`: display sizes of the different filters.
  * `merge`
    * `run`: read and combine filters from different partitions into a single,
