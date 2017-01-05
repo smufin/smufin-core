@@ -25,7 +25,7 @@ void spawn(std::string name, std::function<void(T)> func, std::vector<T> list)
 
     end = std::chrono::system_clock::now();
     time = end - start;
-    std::cout << "Spawn " << name << " time: " << time.count() << std::endl;
+    std::cout << "Time " << name << " spawn: " << time.count() << std::endl;
 }
 
 void spawn(std::string name, std::function<void(int)> func, int n);
