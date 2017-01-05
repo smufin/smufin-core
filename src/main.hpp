@@ -7,6 +7,4 @@
 int main(int argc, char *argv[]);
 void display_usage();
 
-template<typename T> stage* create_stage(const sm_config &conf);
-
 #endif

@@ -108,10 +108,10 @@ int main(int argc, char *argv[])
     }
 
     std::unordered_map<string, stage*(*)(const sm_config &conf)> registry;
-    registry["count"] = &create_stage<count>;
-    registry["filter"] = &create_stage<filter>;
-    registry["merge"] = &create_stage<merge>;
-    registry["group"] = &create_stage<group>;
+    registry["count"] = &stage::create<count>;
+    registry["filter"] = &stage::create<filter>;
+    registry["merge"] = &stage::create<merge>;
+    registry["group"] = &stage::create<group>;
 
     std::vector<std::pair<string, stage*>> pipeline;
     for (auto& name: order) {
@@ -151,8 +151,4 @@ void display_usage()
     cout << " -o, --output OUTPUT_PATH" << endl;
     cout << " -x, --exec COMMANDS" << endl;
     cout << " -h, --help" << endl;
-}
-
-template<typename T> stage* create_stage(const sm_config &conf) {
-    return new T(conf);
 }
