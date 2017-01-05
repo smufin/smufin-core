@@ -13,18 +13,22 @@ rocksdb::Options get_rocks_options(std::string type)
     options.disableDataSync = true;
     options.disable_auto_compactions = true;
 
+    options.env->SetBackgroundThreads(4, Env::Priority::HIGH);
+    options.env->SetBackgroundThreads(2, Env::Priority::LOW);
+
     options.num_levels = 2;
     options.level0_file_num_compaction_trigger = -1;
     options.level0_slowdown_writes_trigger = -1;
     options.level0_stop_writes_trigger = -1;
     options.soft_pending_compaction_bytes_limit = 0;
     options.hard_pending_compaction_bytes_limit = 0;
-    options.max_write_buffer_number = 6;
+    options.write_buffer_size = 64UL * 1024 * 1024;
+    options.max_write_buffer_number = 8;
     options.min_write_buffer_number_to_merge = 1;
     options.max_background_flushes = 4;
     options.max_background_compactions = 2;
     options.base_background_compactions = 2;
-    options.target_file_size_base = 512UL * 1024 * 1024;
+    options.target_file_size_base = 1024UL * 1024 * 1024;
 
     options.WAL_ttl_seconds = 0;
     options.WAL_size_limit_MB = 0;
