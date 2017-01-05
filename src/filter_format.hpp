@@ -22,6 +22,11 @@ public:
     virtual void dump() = 0;
     virtual void stats() = 0;
 
+    template<typename T> static filter_format* create(const sm_config &conf)
+    {
+        return new T(conf);
+    };
+
 protected:
     const sm_config &_conf;
 };

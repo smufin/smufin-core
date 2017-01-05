@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <thread>
+#include <unordered_map>
 
 #include "filter_format_plain.hpp"
 #include "filter_format_rocks.hpp"
@@ -26,10 +27,18 @@ filter::filter(const sm_config &conf) : stage(conf)
         _input_count++;
     }
 
-    if (_conf.filter_format == "rocks")
-        _format = new filter_format_rocks(conf);
-    else
-        _format = new filter_format_plain(conf);
+    std::unordered_map<string, filter_format*(*)(const sm_config &)> formats;
+    formats["plain"] = &filter_format::create<filter_format_plain>;
+    formats["rocks"] = &filter_format::create<filter_format_rocks>;
+
+    string name = _conf.filter_format;
+    if (formats.find(name) != formats.end()) {
+        cout << "Initialize: filter-" << name << endl;
+        _format = formats[name](_conf);
+    } else {
+        cout << "Unknown filter format: " << name << endl;
+        exit(1);
+    }
 
     _executable["run"] = std::bind(&filter::run, this);
     _executable["dump"] = std::bind(&filter::dump, this);
