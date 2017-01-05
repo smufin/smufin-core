@@ -6,6 +6,7 @@
 #include <sstream>
 
 #include "db.hpp"
+#include "util.hpp"
 
 using std::cout;
 using std::endl;
@@ -68,6 +69,24 @@ void filter_format_rocks::update(kseq_t *seq, int pos, bool rev, char kmer[],
         encode_pos(serialized, p);
         _i2p->Merge(w_options, sid, serialized);
     }
+}
+
+void filter_format_rocks::dump()
+{
+    std::vector<rocksdb::DB*> list;
+    for (int i = 0; i < NUM_SETS; i++) {
+        list.push_back(_seq[i]);
+        list.push_back(_k2i[i]);
+    }
+    list.push_back(_i2p);
+    spawn<rocksdb::DB*>("compact", std::bind(&filter_format_rocks::compact,
+                        this, std::placeholders::_1), list);
+}
+
+void filter_format_rocks::compact(rocksdb::DB* db)
+{
+    rocksdb::CompactRangeOptions c_options = rocksdb::CompactRangeOptions();
+    db->CompactRange(c_options, nullptr, nullptr);
 }
 
 void filter_format_rocks::stats()

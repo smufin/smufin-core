@@ -17,8 +17,9 @@
 //  - filter-k2i-{nn,tn,tm}.P.rdb
 //  - filter-i2p-tm.P.rdb
 //
-// The flush() and dump() methods are empty since RocksDB already deals with
-// disk synchronization internally.
+// The flush() method is empty since RocksDB already deals with disk
+// synchronization internally. On the other hand, dump() is used to force a
+// compaction from L0 to L1.
 class filter_format_rocks : public filter_format
 {
 public:
@@ -26,13 +27,15 @@ public:
 
     void update(kseq_t *seq, int pos, bool rev, char kmer[], sm_set set);
     bool flush() {};
-    void dump() {};
+    void dump();
     void stats();
 
 private:
     rocksdb::DB* _i2p;
     rocksdb::DB* _seq[NUM_SETS];
     rocksdb::DB* _k2i[NUM_SETS];
+
+    void compact(rocksdb::DB* db);
 };
 
 #endif
