@@ -4,7 +4,6 @@
 #include <fstream>
 
 #include "common.hpp"
-#include "filter_format.hpp"
 #include "filter_iterator.hpp"
 
 class seq_plain_iterator : public filter_iterator<seq_t>
