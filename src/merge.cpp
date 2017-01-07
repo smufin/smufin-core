@@ -8,6 +8,7 @@
 #include <thread>
 
 #include "db.hpp"
+#include "filter_iterator_plain.hpp"
 
 using std::cout;
 using std::endl;
@@ -166,22 +167,15 @@ void merge::load_seq(rocksdb::DB* db, std::string set, int i)
     std::chrono::duration<double> time;
     start = std::chrono::system_clock::now();
 
-    std::ostringstream file;
-    file << _conf.output_path << "/filter-seq-" << set << "." << i << ".txt";
-    cout << "Merge: " << file.str() << endl;
-    std::ifstream in(file.str());
-    if (!in.good()) {
-        cout << "Failed to open: " << file.str() << endl;
+    seq_plain_iterator it(_conf, set, i);
+    if (!it.init())
         return;
-    }
 
-    int n = 0;
-    string id;
-    string seq;
+    uint64_t n = 0;
     rocksdb::WriteBatch batch;
-
-    while (in >> id >> seq) {
-        batch.Put(id, seq);
+    while (it.next()) {
+        const seq_t *s = it.get();
+        batch.Put(s->first, s->second);
         if (n % 10000 == 0) {
             db->Write(rocksdb::WriteOptions(), &batch);
             batch.Clear();
@@ -194,6 +188,4 @@ void merge::load_seq(rocksdb::DB* db, std::string set, int i)
         }
         n++;
     }
-
-    in.close();
 }
