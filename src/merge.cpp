@@ -51,7 +51,7 @@ void merge::load(string type, string set)
     rocksdb::Options options;
     options.create_if_missing = true;
     options.IncreaseParallelism(4);
-    string rdb_path = _conf.output_path + "/" + type + "-" + set + ".rdb";
+    string path = _conf.output_path + "/filter-" + type + "-" + set + ".rdb";
     std::function<void(rocksdb::DB* db, std::string set, int i)> func;
 
     if (type == "seq") {
@@ -68,8 +68,8 @@ void merge::load(string type, string set)
         options.merge_operator.reset(new PositionsMapOperator());
     }
 
-    cout << "Open RocksDB: " << rdb_path << endl;
-    rocksdb::Status status = rocksdb::DB::Open(options, rdb_path, &db);
+    cout << "Open RocksDB: " << path << endl;
+    rocksdb::Status status = rocksdb::DB::Open(options, path, &db);
     assert(status.ok());
 
     std::vector<std::thread> threads;
