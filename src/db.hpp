@@ -5,6 +5,7 @@
 #include <string>
 
 #include <rocksdb/db.h>
+#include <rocksdb/env.h>
 #include <rocksdb/merge_operator.h>
 
 #include "common.hpp"
