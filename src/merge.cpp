@@ -163,6 +163,8 @@ void merge::load_seq(rocksdb::DB* db, std::string set, int pid)
         }
         n++;
     }
+
+    db->Write(rocksdb::WriteOptions(), &batch);
 }
 
 void merge::stats()
