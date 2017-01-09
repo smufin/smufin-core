@@ -15,11 +15,11 @@ using std::string;
 filter_format_rocks::filter_format_rocks(const sm_config &conf)
     : filter_format(conf)
 {
-    rocksdb::Options opts;
     rocksdb::Status status;
+    rocksdb::Options opts;
+    set_options_filter(opts);
 
     for (int i = 0; i < NUM_SETS; i++) {
-        opts = get_rocks_options("seq");
         std::ostringstream path;
         path << _conf.output_path << "/filter-seq" << "-" << sm::sets[i]
              << "." << _conf.pid << ".rdb";
@@ -28,7 +28,7 @@ filter_format_rocks::filter_format_rocks(const sm_config &conf)
     }
 
     for (int i = 0; i < NUM_SETS; i++) {
-        opts = get_rocks_options("k2i");
+        set_options_type(opts, "k2i");
         std::ostringstream path;
         path << _conf.output_path << "/filter-k2i" << "-" << sm::sets[i]
              << "." << _conf.pid << ".rdb";
@@ -36,7 +36,7 @@ filter_format_rocks::filter_format_rocks(const sm_config &conf)
         assert(status.ok());
     }
 
-    opts = get_rocks_options("i2p");
+    set_options_type(opts, "i2p");
     std::ostringstream path;
     path << _conf.output_path << "/filter-i2p-tm." << _conf.pid << ".rdb";
     status = rocksdb::DB::Open(opts, path.str(), &_i2p);

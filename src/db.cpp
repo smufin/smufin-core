@@ -5,9 +5,19 @@
 
 #include "common.hpp"
 
-rocksdb::Options get_rocks_options(std::string type)
+void set_options_type(rocksdb::Options &options, std::string type)
 {
-    rocksdb::Options options;
+    if (type == "k2i") {
+        options.merge_operator.reset(new IDListOperator());
+    }
+
+    if (type == "i2p") {
+        options.merge_operator.reset(new PositionsMapOperator());
+    }
+}
+
+void set_options_filter(rocksdb::Options &options)
+{
     options.create_if_missing = true;
 
     options.disableDataSync = true;
@@ -35,16 +45,54 @@ rocksdb::Options get_rocks_options(std::string type)
 
     options.compression = rocksdb::kLZ4Compression;
     options.max_open_files = -1;
+}
 
-    if (type == "k2i") {
-        options.merge_operator.reset(new IDListOperator());
+void set_options_merge(rocksdb::Options &options)
+{
+    options.create_if_missing = true;
+    options.IncreaseParallelism(4);
+}
+
+void open_filter(rocksdb::DB** db, const sm_config &conf, std::string type,
+                 sm_set set, int pid, bool ro)
+{
+    std::ostringstream rdb;
+    rdb << conf.output_path << "/filter-" << type << "-" << sm::sets[set]
+        << "." << pid << ".rdb";
+
+    rocksdb::Status s;
+    rocksdb::Options options;
+    set_options_type(options, type);
+
+    if (ro) {
+        s = rocksdb::DB::OpenForReadOnly(options, rdb.str(), db);
+    } else {
+        set_options_filter(options);
+        s = rocksdb::DB::Open(options, rdb.str(), db);
     }
 
-    if (type == "i2p") {
-        options.merge_operator.reset(new PositionsMapOperator());
+    assert(s.ok());
+}
+
+void open_merge(rocksdb::DB** db, const sm_config &conf, std::string type,
+                sm_set set, bool ro)
+{
+    std::ostringstream rdb;
+    rdb << conf.output_path << "/filter-" << type << "-" << sm::sets[set]
+        << ".rdb";
+
+    rocksdb::Status s;
+    rocksdb::Options options;
+    set_options_type(options, type);
+
+    if (ro) {
+        s = rocksdb::DB::OpenForReadOnly(options, rdb.str(), db);
+    } else {
+        set_options_merge(options);
+        s = rocksdb::DB::Open(options, rdb.str(), db);
     }
 
-    return options;
+    assert(s.ok());
 }
 
 void encode_pos(const sm_pos_bitmap &p, std::string &s)
