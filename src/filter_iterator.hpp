@@ -6,6 +6,8 @@
 #include "filter_format.hpp"
 
 typedef std::pair<std::string, std::string> seq_t;
+typedef std::pair<std::string, std::string> k2i_t;
+typedef std::pair<std::string, sm_pos_bitmap> i2p_t;
 
 template <typename T>
 class filter_iterator
