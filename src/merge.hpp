@@ -11,6 +11,7 @@ class merge : public stage
 public:
     merge(const sm_config &conf);
     void run();
+    void stats();
 
 private:
     void load(std::string type, std::string set);

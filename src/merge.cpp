@@ -18,6 +18,7 @@ using namespace std::placeholders;
 merge::merge(const sm_config &conf) : stage(conf)
 {
     _executable["run"] = std::bind(&merge::run, this);
+    _executable["stats"] = std::bind(&merge::stats, this);
 }
 
 void merge::run()
@@ -162,4 +163,53 @@ void merge::load_seq(rocksdb::DB* db, std::string set, int pid)
         }
         n++;
     }
+}
+
+void merge::stats()
+{
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    std::chrono::duration<double> time;
+    start = std::chrono::system_clock::now();
+
+    rocksdb::DB* i2p;
+    rocksdb::DB* seq[NUM_SETS];
+    rocksdb::DB* k2i[NUM_SETS];
+
+    open_merge(&i2p, _conf, "i2p", TM, true);
+    open_merge(&seq[NN], _conf, "seq", NN, true);
+    open_merge(&seq[TN], _conf, "seq", TN, true);
+    open_merge(&seq[TM], _conf, "seq", TM, true);
+    open_merge(&k2i[NN], _conf, "k2i", NN, true);
+    open_merge(&k2i[TN], _conf, "k2i", TN, true);
+    open_merge(&k2i[TM], _conf, "k2i", TM, true);
+
+    uint64_t nn, tn, tm;
+    rocksdb::Iterator* it;
+
+    nn = tn = tm = 0;
+    it = seq[NN]->NewIterator(rocksdb::ReadOptions());
+    for (it->SeekToFirst(); it->Valid(); it->Next()) nn++;
+    it = seq[TN]->NewIterator(rocksdb::ReadOptions());
+    for (it->SeekToFirst(); it->Valid(); it->Next()) tn++;
+    it = seq[TM]->NewIterator(rocksdb::ReadOptions());
+    for (it->SeekToFirst(); it->Valid(); it->Next()) tm++;
+    cout << "Size SEQ: " << nn << " " << tn << " " << tm << endl;
+
+    nn = tn = tm = 0;
+    it = k2i[NN]->NewIterator(rocksdb::ReadOptions());
+    for (it->SeekToFirst(); it->Valid(); it->Next()) nn++;
+    it = k2i[TN]->NewIterator(rocksdb::ReadOptions());
+    for (it->SeekToFirst(); it->Valid(); it->Next()) tn++;
+    it = k2i[TM]->NewIterator(rocksdb::ReadOptions());
+    for (it->SeekToFirst(); it->Valid(); it->Next()) tm++;
+    cout << "Size K2I: " << nn << " " << tn << " " << tm << endl;
+
+    tm = 0;
+    it = i2p->NewIterator(rocksdb::ReadOptions());
+    for (it->SeekToFirst(); it->Valid(); it->Next()) tm++;
+    cout << "Size I2P: " << tm << endl;
+
+    end = std::chrono::system_clock::now();
+    time = end - start;
+    cout << "Time merge/stats: " << time.count() << endl;
 }
