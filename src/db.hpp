@@ -13,7 +13,7 @@
 using namespace rocksdb;
 
 rocksdb::Options get_rocks_options(std::string type);
-void encode_pos(std::string &s, sm_pos_bitmap &p);
+void encode_pos(const sm_pos_bitmap &p, std::string &s);
 sm_pos_bitmap decode_pos(char const *s);
 
 class PositionsMapOperator : public AssociativeMergeOperator
@@ -34,7 +34,7 @@ public:
         result.a[1] = existing.a[1] | oper.a[1];
         result.b[0] = existing.b[0] | oper.b[0];
         result.b[1] = existing.b[1] | oper.b[1];
-        encode_pos(*new_value, result);
+        encode_pos(result, *new_value);
         return true;
     }
 

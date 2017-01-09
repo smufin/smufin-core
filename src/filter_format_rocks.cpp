@@ -66,7 +66,7 @@ void filter_format_rocks::update(kseq_t *seq, int pos, bool rev, char kmer[],
         else
             p.b[pos / 64] |= 1UL << (pos % 64);
 
-        encode_pos(serialized, p);
+        encode_pos(p, serialized);
         _i2p->Merge(w_options, sid, serialized);
     }
 }

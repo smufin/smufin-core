@@ -87,95 +87,71 @@ void merge::load(string type, string set)
          << time.count() << endl;
 }
 
-void merge::load_i2p(rocksdb::DB* db, string set, int i)
+void merge::load_i2p(rocksdb::DB* db, string set, int pid)
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
     start = std::chrono::system_clock::now();
 
-    std::ostringstream file;
-    file << _conf.output_path << "/filter-i2p-" << set << "." << i << ".txt";
-    cout << "Merge: " << file.str() << endl;
-    std::ifstream in(file.str());
-    if (!in.good()) {
-        cout << "Failed to open: " << file.str() << endl;
+    i2p_plain_iterator it(_conf, set, pid);
+    if (!it.init())
         return;
-    }
 
-    int n = 0;
-    string sid;
-    sm_pos_bitmap p;
-
-    while (in >> sid >> p.a[0] >> p.a[1] >> p.b[0] >> p.b[1]) {
+    uint64_t n = 0;
+    while (it.next()) {
+        const i2p_t *i = it.get();
         string serialized;
-        encode_pos(serialized, p);
-        db->Merge(rocksdb::WriteOptions(), sid, serialized);
+        encode_pos(i->second, serialized);
+        db->Merge(rocksdb::WriteOptions(), i->first, serialized);
         if (n % 100000 == 0) {
             end = std::chrono::system_clock::now();
             time = end - start;
-            cout << "M: " << i << " " << time.count() << endl;
+            cout << "M: " << pid << " " << time.count() << endl;
             start = std::chrono::system_clock::now();
         }
         n++;
     }
-
-    in.close();
 }
 
-void merge::load_k2i(rocksdb::DB* db, string set, int i)
+void merge::load_k2i(rocksdb::DB* db, string set, int pid)
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
     start = std::chrono::system_clock::now();
 
-    std::ostringstream file;
-    file << _conf.output_path << "/filter-k2i-" << set << "." << i << ".txt";
-    cout << "Merge: " << file.str() << endl;
-    std::ifstream in(file.str());
-    if (!in.good()) {
-        cout << "Failed to open: " << file.str() << endl;
+    k2i_plain_iterator it(_conf, set, pid);
+    if (!it.init())
         return;
-    }
 
-    int n = 0;
-    string kmer;
-    int len = 0;
-
-    while (in >> kmer >> len) {
-        std::stringstream s;
-        for (int i = 0; i < len; i++) {
-            string sid;
-            in >> sid;
-            s << sid << " ";
-        }
-        db->Merge(rocksdb::WriteOptions(), kmer, s.str());
+    uint64_t n = 0;
+    while (it.next()) {
+        const k2i_t *i = it.get();
+        db->Merge(rocksdb::WriteOptions(), i->first, i->second);
         if (n % 100000 == 0) {
             end = std::chrono::system_clock::now();
             time = end - start;
-            cout << "M: " << i << " " << time.count() << endl;
+            cout << "M: " << pid << " " << time.count() << endl;
             start = std::chrono::system_clock::now();
         }
         n++;
     }
-
-    in.close();
 }
 
-void merge::load_seq(rocksdb::DB* db, std::string set, int i)
+void merge::load_seq(rocksdb::DB* db, std::string set, int pid)
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
     start = std::chrono::system_clock::now();
 
-    seq_plain_iterator it(_conf, set, i);
+    seq_plain_iterator it(_conf, set, pid);
     if (!it.init())
         return;
 
     uint64_t n = 0;
     rocksdb::WriteBatch batch;
     while (it.next()) {
-        const seq_t *s = it.get();
-        batch.Put(s->first, s->second);
+        const seq_t *i = it.get();
+        batch.Put(i->first, i->second);
         if (n % 10000 == 0) {
             db->Write(rocksdb::WriteOptions(), &batch);
             batch.Clear();
@@ -183,7 +159,7 @@ void merge::load_seq(rocksdb::DB* db, std::string set, int i)
         if (n % 100000 == 0) {
             end = std::chrono::system_clock::now();
             time = end - start;
-            cout << "M: " << i << " " << time.count() << endl;
+            cout << "M: " << pid << " " << time.count() << endl;
             start = std::chrono::system_clock::now();
         }
         n++;

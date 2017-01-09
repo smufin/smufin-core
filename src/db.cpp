@@ -47,7 +47,7 @@ rocksdb::Options get_rocks_options(std::string type)
     return options;
 }
 
-void encode_pos(std::string &s, sm_pos_bitmap &p)
+void encode_pos(const sm_pos_bitmap &p, std::string &s)
 {
     std::stringstream e;
     e << std::hex << p.a[0] << " " << std::hex << p.a[1] << " "
