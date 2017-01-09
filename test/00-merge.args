@@ -1,1 +1,2 @@
-00-merge-1p.test -- -p 1
+00-merge-1p1m.test -- -p 1 -m 1
+00-merge-1p2m.test -- -p 1 -m 2

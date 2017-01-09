@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
 {
     sm_config conf = sm_config();
 
-    static const char *opts = "c:p:l:s:f:i:o:x:h";
+    static const char *opts = "c:p:l:s:f:m:i:o:x:h";
     static const struct option opts_long[] = {
         { "config", required_argument, NULL, 'c' },
         { "pid", required_argument, NULL, 'P' },
@@ -35,6 +35,7 @@ int main(int argc, char *argv[])
         { "loaders", required_argument, NULL, 'l' },
         { "storers", required_argument, NULL, 's' },
         { "filters", required_argument, NULL, 'f' },
+        { "mergers", required_argument, NULL, 'm' },
         { "input", required_argument, NULL, 'i' },
         { "output", required_argument, NULL, 'o' },
         { "exec", required_argument, NULL, 'x' },
@@ -53,6 +54,7 @@ int main(int argc, char *argv[])
             case 'l': conf.num_loaders = atoi(optarg); break;
             case 's': conf.num_storers = atoi(optarg); break;
             case 'f': conf.num_filters = atoi(optarg); break;
+            case 'm': conf.num_mergers = atoi(optarg); break;
             case 'i': conf.input_file = string(optarg); break;
             case 'o': conf.output_path = string(optarg); break;
             case 'x': conf.exec = string(optarg); break;
