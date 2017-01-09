@@ -12,12 +12,21 @@ fi
 
 id=$(echo $file | cut -d"-" -f 1)
 bin=$(echo $file | sed -r 's/(-[^-]+){1}.test//g')
+prev=$(echo $file | sed -r 's/.test/.prev/g')
 conf=$bin.conf
 args=$bin.args
 options=$(grep $file *.args | head -n 1 | cut -d" " -f 3-)
 tmp=$(mktemp -d)
 
 find $PWD/$id*.fq.gz > $tmp/input-file
+
+# Prepare environment with previous executions
+if [ -f "$prev" ]; then
+    while read line; do
+        $sm -c $conf -i $tmp/input-file -o $tmp ${line[0]} \
+            >> $tmp/prev
+    done < "$prev"
+fi
 
 $sm -c $conf -i $tmp/input-file -o $tmp $options > $tmp/stdout
 
