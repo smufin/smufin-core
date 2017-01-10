@@ -72,8 +72,12 @@ use the following:
      indexes, force a compaction.
    * `stats`: display sizes of the different filters.
  * `merge`
-   * `run`: read and combine filters from different partitions into a single,
-     unified filter in a RocksDB database.
+   * `run`: read and combine filter indexes from different partitions into a
+     single, unified index in RocksDB. Merges all possible indexes,
+     sequentially one at a time.
+   * `run_{seq,k2i,i2p}_{nn,tn,tm}`: read and combine specific filter indexes
+     from different partitions into a single RocksDB instance.
+   * `stats`: display sizes of the merged filters.
  * `group`
    * `run`: window-based group leader selection and retrieval of related
      reads.

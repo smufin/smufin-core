@@ -6,6 +6,8 @@
 #include "common.hpp"
 #include "stage.hpp"
 
+// The merge stage combines partial filtering results from multiple partitions
+// into a single set of filter indexes.
 class merge : public stage
 {
 public:

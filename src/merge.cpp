@@ -18,6 +18,15 @@ using namespace std::placeholders;
 merge::merge(const sm_config &conf) : stage(conf)
 {
     _executable["run"] = std::bind(&merge::run, this);
+
+    _executable["run_seq_nn"] = std::bind(&merge::load, this, "seq", "nn");
+    _executable["run_seq_tn"] = std::bind(&merge::load, this, "seq", "tn");
+    _executable["run_seq_tm"] = std::bind(&merge::load, this, "seq", "tm");
+    _executable["run_k2i_nn"] = std::bind(&merge::load, this, "k2i", "nn");
+    _executable["run_k2i_tn"] = std::bind(&merge::load, this, "k2i", "tn");
+    _executable["run_k2i_tm"] = std::bind(&merge::load, this, "k2i", "tm");
+    _executable["run_i2p_tm"] = std::bind(&merge::load, this, "i2p", "tm");
+
     _executable["stats"] = std::bind(&merge::stats, this);
 }
 
