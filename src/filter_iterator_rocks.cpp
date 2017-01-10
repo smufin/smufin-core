@@ -4,14 +4,18 @@
 #include <string>
 #include <sstream>
 
+#include "db.hpp"
+
 using std::cout;
 using std::endl;
 using std::string;
 
-bool seq_rocks_iterator::init()
+template <typename T>
+bool rocks_iterator<T>::init()
 {
     std::ostringstream path;
-    path << _conf.output_path << "/filter-seq-" << _set << "." << _pid << ".rdb";
+    path << this->_conf.output_path << "/filter-" << this->_type << "-"
+         << this->_set << "." << this->_pid << ".rdb";
     cout << "Prepare iterator: " << path.str() << endl;
 
     rocksdb::DB* db;
@@ -31,6 +35,27 @@ bool seq_rocks_iterator::next()
 {
     if (_it->Valid()) {
         _elem = new seq_t(_it->key().ToString(), _it->value().ToString());
+        _it->Next();
+        return true;
+    }
+    return false;
+}
+
+bool k2i_rocks_iterator::next()
+{
+    if (_it->Valid()) {
+        _elem = new k2i_t(_it->key().ToString(), _it->value().ToString());
+        _it->Next();
+        return true;
+    }
+    return false;
+}
+
+bool i2p_rocks_iterator::next()
+{
+    if (_it->Valid()) {
+        sm_pos_bitmap p = decode_pos(_it->value().data());
+        _elem = new i2p_t(_it->key().ToString(), p);
         _it->Next();
         return true;
     }
