@@ -44,6 +44,7 @@ use the following:
   -l, --loaders NUM_LOADER_THREADS
   -s, --storers NUM_STORER_THREADS
   -f, --filters NUM_FILTER_THREADS
+  -m, --mergers NUM_MERGE_THREADS
   -i, --input INPUT_FILE
   -o, --output OUTPUT_PATH
   -x, --exec COMMANDS
