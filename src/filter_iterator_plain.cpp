@@ -8,14 +8,15 @@ using std::cout;
 using std::endl;
 using std::string;
 
-bool seq_plain_iterator::init()
+template <typename T>
+bool plain_iterator<T>::init()
 {
     std::ostringstream file;
-    file << _conf.output_path << "/filter-seq-" << _set << "." << _pid
-         << ".txt";
+    file << this->_conf.output_path << "/filter-" << this->_type << "-"
+         << this->_set << "." << this->_pid << ".txt";
     cout << "Prepare iterator: " << file.str() << endl;
-    _in.open(file.str());
-    if (!_in.good()) {
+    this->_in.open(file.str());
+    if (!this->_in.good()) {
         cout << "Failed to open: " << file.str() << endl;
         return false;
     }
@@ -33,20 +34,6 @@ bool seq_plain_iterator::next()
     return false;
 }
 
-bool k2i_plain_iterator::init()
-{
-    std::ostringstream file;
-    file << _conf.output_path << "/filter-k2i-" << _set << "." << _pid
-         << ".txt";
-    cout << "Prepare iterator: " << file.str() << endl;
-    _in.open(file.str());
-    if (!_in.good()) {
-        cout << "Failed to open: " << file.str() << endl;
-        return false;
-    }
-    return true;
-}
-
 bool k2i_plain_iterator::next()
 {
     string kmer;
@@ -62,20 +49,6 @@ bool k2i_plain_iterator::next()
         return true;
     }
     return false;
-}
-
-bool i2p_plain_iterator::init()
-{
-    std::ostringstream file;
-    file << _conf.output_path << "/filter-i2p-" << _set << "." << _pid
-         << ".txt";
-    cout << "Prepare iterator: " << file.str() << endl;
-    _in.open(file.str());
-    if (!_in.good()) {
-        cout << "Failed to open: " << file.str() << endl;
-        return false;
-    }
-    return true;
 }
 
 bool i2p_plain_iterator::next()
