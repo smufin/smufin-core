@@ -24,7 +24,7 @@ filter::filter(const sm_config &conf) : stage(conf)
 
     for (string line; std::getline(ifs, line);) {
         _input_queue.enqueue(line);
-        _input_count++;
+        _input_len++;
     }
 
     std::unordered_map<string, filter_format*(*)(const sm_config &)> formats;
@@ -70,10 +70,10 @@ void filter::dump()
 void filter::load(int fid)
 {
     string file;
-    while (_input_count > 0) {
+    while (_input_len > 0) {
         while (_input_queue.try_dequeue(file)) {
             load_file(fid, file);
-            _input_count--;
+            _input_len--;
         }
     }
 }
