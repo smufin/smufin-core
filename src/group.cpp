@@ -49,7 +49,7 @@ void group::run()
     options.WAL_ttl_seconds = 0;
     options.WAL_size_limit_MB = 0;
     options.merge_operator.reset(new PositionsMapOperator());
-    dir = _conf.output_path + "/i2p-" + sm::sets[TM] + ".rdb";
+    dir = _conf.output_path + "/filter-i2p-" + sm::sets[TM] + ".rdb";
     cout << "Open RocksDB: " << dir << endl;
     status = rocksdb::DB::OpenForReadOnly(options, dir, &i2p_db);
     assert(status.ok());
@@ -58,7 +58,7 @@ void group::run()
     rocksdb::Options options2;
     options2.WAL_ttl_seconds = 0;
     options2.WAL_size_limit_MB = 0;
-    dir = _conf.output_path + "/seq-" + sm::sets[TM] + ".rdb";
+    dir = _conf.output_path + "/filter-seq-" + sm::sets[TM] + ".rdb";
     cout << "Open RocksDB: " << dir << endl;
     status = rocksdb::DB::OpenForReadOnly(options2, dir, &i2r_tm_db);
     assert(status.ok());
@@ -175,7 +175,7 @@ void group::run()
         options.WAL_ttl_seconds = 0;
         options.WAL_size_limit_MB = 0;
         options.merge_operator.reset(new IDListOperator());
-        dir = _conf.output_path + "/k2i-" + sm::sets[i] + ".rdb";
+        dir = _conf.output_path + "/filter-k2i-" + sm::sets[i] + ".rdb";
         cout << "Open RocksDB: " << dir << endl;
         status = rocksdb::DB::OpenForReadOnly(options, dir, &k2i_db);
         assert(status.ok());
@@ -225,7 +225,7 @@ void group::run()
         start = std::chrono::system_clock::now();
 
         rocksdb::DB* i2r_db;
-        dir = _conf.output_path + "/seq-" + sm::sets[i] + ".rdb";
+        dir = _conf.output_path + "/filter-seq-" + sm::sets[i] + ".rdb";
         cout << "Open RocksDB: " << dir << endl;
         status = rocksdb::DB::OpenForReadOnly(rocksdb::Options(), dir, &i2r_db);
         assert(status.ok());
