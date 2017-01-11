@@ -71,7 +71,7 @@ void merge::load(sm_idx_type type, sm_idx_set set)
 
     end = std::chrono::system_clock::now();
     time = end - start;
-    cout << "Merge run time (" << sm::types[type] << "/" << sm::sets[set]
+    cout << "Time merge/run (" << sm::types[type] << "/" << sm::sets[set]
          << "): " << time.count() << endl;
 }
 
