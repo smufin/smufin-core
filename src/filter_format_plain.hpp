@@ -26,7 +26,7 @@ class filter_format_plain : public filter_format
 public:
     filter_format_plain(const sm_config &conf) : filter_format(conf) {};
 
-    void update(kseq_t *seq, int pos, bool rev, char kmer[], sm_set set);
+    void update(kseq_t *seq, int pos, bool rev, char kmer[], sm_idx_set set);
     bool flush();
     void dump();
     void stats();

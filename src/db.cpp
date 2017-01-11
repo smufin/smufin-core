@@ -5,13 +5,13 @@
 
 #include "common.hpp"
 
-void set_options_type(rocksdb::Options &options, std::string type)
+void set_options_type(rocksdb::Options &options, sm_idx_type type)
 {
-    if (type == "k2i") {
+    if (type == K2I) {
         options.merge_operator.reset(new IDListOperator());
     }
 
-    if (type == "i2p") {
+    if (type == I2P) {
         options.merge_operator.reset(new PositionsMapOperator());
     }
 }
@@ -53,12 +53,12 @@ void set_options_merge(rocksdb::Options &options)
     options.IncreaseParallelism(4);
 }
 
-void open_filter(rocksdb::DB** db, const sm_config &conf, std::string type,
-                 sm_set set, int pid, bool ro)
+void open_filter(rocksdb::DB** db, const sm_config &conf, sm_idx_type type,
+                 sm_idx_set set, int pid, bool ro)
 {
     std::ostringstream rdb;
-    rdb << conf.output_path << "/filter-" << type << "-" << sm::sets[set]
-        << "." << pid << ".rdb";
+    rdb << conf.output_path << "/filter-" << sm::types[type] << "-"
+        << sm::sets[set] << "." << pid << ".rdb";
 
     rocksdb::Status s;
     rocksdb::Options options;
@@ -74,12 +74,12 @@ void open_filter(rocksdb::DB** db, const sm_config &conf, std::string type,
     assert(s.ok());
 }
 
-void open_merge(rocksdb::DB** db, const sm_config &conf, std::string type,
-                sm_set set, bool ro)
+void open_merge(rocksdb::DB** db, const sm_config &conf, sm_idx_type type,
+                sm_idx_set set, bool ro)
 {
     std::ostringstream rdb;
-    rdb << conf.output_path << "/filter-" << type << "-" << sm::sets[set]
-        << ".rdb";
+    rdb << conf.output_path << "/filter-" << sm::types[type] << "-"
+        << sm::sets[set] << ".rdb";
 
     rocksdb::Status s;
     rocksdb::Options options;

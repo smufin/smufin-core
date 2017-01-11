@@ -208,7 +208,7 @@ int filter::get_value(int fid, char kmer[], sm_table::const_iterator *it)
 }
 
 void filter::filter_branch(int fid, kseq_t *seq, int pos, bool rev,
-                           char kmer[], sm_set set)
+                           char kmer[], sm_idx_set set)
 {
     sm_table::const_iterator it;
     if (get_value(fid, kmer, &it) != 0)
@@ -227,7 +227,7 @@ void filter::filter_branch(int fid, kseq_t *seq, int pos, bool rev,
 }
 
 void filter::filter_all(int fid, kseq_t *seq, int pos, bool rev,
-                        char kmer[], sm_set set)
+                        char kmer[], sm_idx_set set)
 {
     sm_table::const_iterator it;
     if (get_value(fid, kmer, &it) != 0)
@@ -251,7 +251,7 @@ void filter::filter_all(int fid, kseq_t *seq, int pos, bool rev,
 
 void filter::filter_kmer(kseq_t *seq, int pos, bool rev, char kmer[],
                          uint32_t nc, uint32_t tc, uint32_t nsum,
-                         uint32_t tsum, sm_set set)
+                         uint32_t tsum, sm_idx_set set)
 {
     if (tc >= _conf.min_tc && nc <= _conf.max_nc) {
         _format->update(seq, pos, rev, kmer, set);

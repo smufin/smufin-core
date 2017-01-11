@@ -13,7 +13,7 @@ template <typename T>
 class filter_iterator
 {
 public:
-    filter_iterator(const sm_config &conf, std::string set, int pid)
+    filter_iterator(const sm_config &conf, sm_idx_set set, int pid)
         : _conf(conf), _set(set), _pid(pid) {};
 
     virtual bool init() = 0;
@@ -22,7 +22,7 @@ public:
 
 protected:
     const sm_config &_conf;
-    const std::string _set;
+    const sm_idx_set _set;
     const int _pid;
     const T* _elem;
 };

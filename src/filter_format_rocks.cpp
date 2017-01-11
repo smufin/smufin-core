@@ -28,7 +28,7 @@ filter_format_rocks::filter_format_rocks(const sm_config &conf)
     }
 
     for (int i = 0; i < NUM_SETS; i++) {
-        set_options_type(opts, "k2i");
+        set_options_type(opts, K2I);
         std::ostringstream path;
         path << _conf.output_path << "/filter-k2i" << "-" << sm::sets[i]
              << "." << _conf.pid << ".rdb";
@@ -36,7 +36,7 @@ filter_format_rocks::filter_format_rocks(const sm_config &conf)
         assert(status.ok());
     }
 
-    set_options_type(opts, "i2p");
+    set_options_type(opts, I2P);
     std::ostringstream path;
     path << _conf.output_path << "/filter-i2p-tm." << _conf.pid << ".rdb";
     status = rocksdb::DB::Open(opts, path.str(), &_i2p);
@@ -44,7 +44,7 @@ filter_format_rocks::filter_format_rocks(const sm_config &conf)
 }
 
 void filter_format_rocks::update(kseq_t *seq, int pos, bool rev, char kmer[],
-                                 sm_set set)
+                                 sm_idx_set set)
 {
     string sid = seq->name.s;
     rocksdb::WriteOptions w_options;

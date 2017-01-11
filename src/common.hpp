@@ -62,18 +62,19 @@ typedef struct sm_pos_bitmap {
     uint64_t b[2] = {0};
 } sm_pos_bitmap;
 
+#define NUM_TYPES 3
+enum sm_idx_type {
+    SEQ, // Sequence ID to sequence
+    K2I, // Kmer to sequence IDs
+    I2P, // ID to positions
+};
+
 #define NUM_SETS 3
-enum sm_set {
+enum sm_idx_set {
     NN, // Normal Non-mutated reads.
     TN, // Tumor Non-mutated reads.
     TM, // Tumor Mutated reads.
 };
-
-// Arrays that map which prefixes are to be processed on the current
-// process (l1), and storer/consumer threads (l2), distributing them as
-// evenly as possible according to MAP_FILE.
-extern int map_l1[MAP_FILE_LEN];
-extern int map_l2[MAP_FILE_LEN];
 
 namespace sm {
     // Nucleotide alphabet, sorted and indexed by code.
@@ -98,16 +99,24 @@ namespace sm {
     const char comp[] = "-------------------------------------------"
                         "----------------------T-G---C------N-----A";
 
-    // Set names, sorted as the sm_set enum.
+    // Index and set names, sorted as the sm_index and sm_set enums,
+    // respectively.
+    const std::array<std::string, NUM_TYPES> types = {"seq", "k2i", "i2p"};
     const std::array<std::string, NUM_SETS> sets = {"nn", "tn", "tm"};
 
     // Map of filter indexes to valid set names.
-    const std::map<std::string, std::set<std::string>> types = {
-        {"seq", {"nn", "tn", "tm"}},
-        {"k2i", {"nn", "tn", "tm"}},
-        {"i2p", {"tm"}}
+    const std::map<sm_idx_type, std::set<sm_idx_set>> indexes = {
+        {SEQ, {NN, TN, TM}},
+        {K2I, {NN, TN, TM}},
+        {I2P, {TM}}
     };
 }
+
+// Arrays that map which prefixes are to be processed on the current
+// process (l1), and storer/consumer threads (l2), distributing them as
+// evenly as possible according to MAP_FILE.
+extern int map_l1[MAP_FILE_LEN];
+extern int map_l2[MAP_FILE_LEN];
 
 KSEQ_INIT(gzFile, gzread);
 

@@ -14,8 +14,8 @@ template <typename T>
 bool rocks_iterator<T>::init()
 {
     std::ostringstream path;
-    path << this->_conf.output_path << "/filter-" << this->_type << "-"
-         << this->_set << "." << this->_pid << ".rdb";
+    path << this->_conf.output_path << "/filter-" << sm::types[this->_type]
+         << "-" << sm::sets[this->_set] << "." << this->_pid << ".rdb";
     cout << "Prepare iterator: " << path.str() << endl;
 
     rocksdb::DB* db;

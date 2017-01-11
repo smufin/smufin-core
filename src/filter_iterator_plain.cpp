@@ -12,8 +12,8 @@ template <typename T>
 bool plain_iterator<T>::init()
 {
     std::ostringstream file;
-    file << this->_conf.output_path << "/filter-" << this->_type << "-"
-         << this->_set << "." << this->_pid << ".txt";
+    file << this->_conf.output_path << "/filter-" << sm::types[this->_type]
+         << "-" << sm::sets[this->_set] << "." << this->_pid << ".txt";
     cout << "Prepare iterator: " << file.str() << endl;
     this->_in.open(file.str());
     if (!this->_in.good()) {

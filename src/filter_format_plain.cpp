@@ -11,7 +11,7 @@ using std::endl;
 using std::string;
 
 void filter_format_plain::update(kseq_t *seq, int pos, bool rev, char kmer[],
-                                 sm_set set)
+                                 sm_idx_set set)
 {
     char buf[512] = {0};
     sprintf(buf, "%s %s", seq->name.s, seq->seq.s);
