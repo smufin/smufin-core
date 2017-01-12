@@ -81,7 +81,6 @@ void merge::load_partitions(load_f load_part, rocksdb::DB* db, sm_idx_set set)
 {
     int pid;
     while (_partition_queue.try_dequeue(pid)) {
-        cout << "Dequeued: " << pid << endl;
         load_part(db, set, pid);
     }
 }
