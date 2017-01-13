@@ -34,7 +34,7 @@ typedef struct sm_read {
     uint64_t seq[ENCODED_READ_LEN] = {0};
 } sm_read;
 
-typedef google::sparse_hash_map<std::string, sm_read> i2r_table;
+typedef google::sparse_hash_map<std::string, sm_read> seq_table;
 typedef google::sparse_hash_map<std::string, std::string> kmer_table;
 
 typedef std::array<std::unordered_map<std::string, int>, 2> index_count;
@@ -51,7 +51,7 @@ private:
     l2i_table* _l2i[MAX_GROUPERS];
     l2r_table* _l2r[MAX_GROUPERS];
 
-    i2r_table* _i2r[2];
+    seq_table* _seq[2];
     kmer_table* _k2i[2];
 
     void encode_read(std::string& str, sm_read& read);

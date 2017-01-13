@@ -32,36 +32,22 @@ void group::run()
     }
 
     for (int i = 0; i < 2; i++) {
-        _i2r[i] = new i2r_table();
+        _seq[i] = new seq_table();
         _k2i[i] = new kmer_table();
     }
 
-    _i2r[0]->resize(420000000);
-    _i2r[1]->resize(500000000);
-    _k2i[0]->resize(30000000);
-    _k2i[1]->resize(60000000);
+    _seq[NN]->resize(420000000);
+    _seq[TN]->resize(500000000);
+    _k2i[NN]->resize(30000000);
+    _k2i[TN]->resize(60000000);
 
     string dir;
     rocksdb::Status status;
 
-    rocksdb::DB* i2p_db;
-    rocksdb::Options options;
-    options.WAL_ttl_seconds = 0;
-    options.WAL_size_limit_MB = 0;
-    options.merge_operator.reset(new PositionsMapOperator());
-    dir = _conf.output_path + "/filter-i2p-" + sm::sets[TM] + ".rdb";
-    cout << "Open RocksDB: " << dir << endl;
-    status = rocksdb::DB::OpenForReadOnly(options, dir, &i2p_db);
-    assert(status.ok());
-
-    rocksdb::DB* i2r_tm_db;
-    rocksdb::Options options2;
-    options2.WAL_ttl_seconds = 0;
-    options2.WAL_size_limit_MB = 0;
-    dir = _conf.output_path + "/filter-seq-" + sm::sets[TM] + ".rdb";
-    cout << "Open RocksDB: " << dir << endl;
-    status = rocksdb::DB::OpenForReadOnly(options2, dir, &i2r_tm_db);
-    assert(status.ok());
+    rocksdb::DB* i2p_tm;
+    rocksdb::DB* seq_tm;
+    open_merge(&i2p_tm, _conf, I2P, TM, true);
+    open_merge(&seq_tm, _conf, SEQ, TM, true);
 
     string sid;
     sm_pos_bitmap p;
@@ -78,7 +64,7 @@ void group::run()
 
     // 1. Iterate through candidates.
 
-    rocksdb::Iterator* it = i2p_db->NewIterator(rocksdb::ReadOptions());
+    rocksdb::Iterator* it = i2p_tm->NewIterator(rocksdb::ReadOptions());
     for (it->SeekToFirst(); it->Valid(); it->Next()) {
         num_all++;
 
@@ -90,7 +76,7 @@ void group::run()
 
         string read;
         rocksdb::Status status;
-        status = i2r_tm_db->Get(rocksdb::ReadOptions(), sid, &read);
+        status = seq_tm->Get(rocksdb::ReadOptions(), sid, &read);
         if (!status.ok())
             continue;
 
@@ -145,8 +131,8 @@ void group::run()
     }
 
     delete it;
-    delete i2p_db;
-    delete i2r_tm_db;
+    delete i2p_tm;
+    delete seq_tm;
 
     end = std::chrono::system_clock::now();
     time = end - start;
@@ -167,18 +153,11 @@ void group::run()
 
     // 2. Iterate K2I retrieving all k-mers seen in candidate positions.
 
-    for (int i = 0; i < 2; i++) {
+    std::vector<sm_idx_set> sets = {NN, TN};
+    for (auto& set: sets) {
         start = std::chrono::system_clock::now();
-
         rocksdb::DB* k2i_db;
-        rocksdb::Options options;
-        options.WAL_ttl_seconds = 0;
-        options.WAL_size_limit_MB = 0;
-        options.merge_operator.reset(new IDListOperator());
-        dir = _conf.output_path + "/filter-k2i-" + sm::sets[i] + ".rdb";
-        cout << "Open RocksDB: " << dir << endl;
-        status = rocksdb::DB::OpenForReadOnly(options, dir, &k2i_db);
-        assert(status.ok());
+        open_merge(&k2i_db, _conf, K2I, set, true);
 
         int num_seen = 0;
         int num_kmer = 0;
@@ -189,25 +168,25 @@ void group::run()
 
             string kmer = it->key().ToString();
             string list = it->value().ToString();
-            kmer_table::const_iterator kit = _k2i[i]->find(kmer);
-            if (kit != _k2i[i]->end()) {
-                (*_k2i[i])[kmer] = list;
+            kmer_table::const_iterator kit = _k2i[set]->find(kmer);
+            if (kit != _k2i[set]->end()) {
+                (*_k2i[set])[kmer] = list;
                 num_seen++;
             }
 
             if (num_kmer % 1000000 == 0) {
                 iend = std::chrono::system_clock::now();
                 itime = iend - istart;
-                cout << "K: " << i << " " << num_kmer << " " << num_seen << " "
-                     << itime.count() << endl;
+                cout << "K: " << sm::sets[set] << " " << num_kmer << " "
+                     << num_seen << " " << itime.count() << endl;
                 istart = std::chrono::system_clock::now();
             }
         }
 
-        cout << "Number of kmers seen (" << sm::sets[i] << "): "
+        cout << "Number of kmers seen (" << sm::sets[set] << "): "
              << num_seen << endl;
-        cout << "Number of IDs seen (" << sm::sets[i] << "): "
-             << _i2r[i]->size() << endl;
+        cout << "Number of IDs seen (" << sm::sets[set] << "): "
+             << _seq[set]->size() << endl;
 
 
         delete it;
@@ -215,49 +194,46 @@ void group::run()
 
         end = std::chrono::system_clock::now();
         time = end - start;
-        cout << "Kmer iteration time (" << sm::sets[i] << "): "
+        cout << "Kmer iteration time (" << sm::sets[set] << "): "
              << time.count() << endl;
     }
 
     // 3. Iterate & collect reads.
 
-    for (int i = 0; i < 2; i++) {
+    for (auto& set: sets) {
         start = std::chrono::system_clock::now();
 
-        rocksdb::DB* i2r_db;
-        dir = _conf.output_path + "/filter-seq-" + sm::sets[i] + ".rdb";
-        cout << "Open RocksDB: " << dir << endl;
-        status = rocksdb::DB::OpenForReadOnly(rocksdb::Options(), dir, &i2r_db);
-        assert(status.ok());
+        rocksdb::DB* seq_db;
+        open_merge(&seq_db, _conf, SEQ, set, true);
 
         int num_seen = 0;
         int num_read = 0;
         istart = std::chrono::system_clock::now();
-        it = i2r_db->NewIterator(rocksdb::ReadOptions());
+        it = seq_db->NewIterator(rocksdb::ReadOptions());
         for (it->SeekToFirst(); it->Valid(); it->Next()) {
             num_read++;
 
             string sid = it->key().ToString();
-            string seq = it->value().ToString();
+            string read_str = it->key().ToString();
             sm_read read;
-            encode_read(seq, read);
-            (*_i2r[i])[sid] = read;
+            encode_read(read_str, read);
+            (*_seq[set])[sid] = read;
 
             if (num_read % 10000000 == 0) {
                 iend = std::chrono::system_clock::now();
                 itime = iend - istart;
-                cout << "R: " << i << " " << num_read << " " << num_seen << " "
-                     << itime.count() << endl;
+                cout << "R: " << sm::sets[set] << " " << num_read << " "
+                     << num_seen << " " << itime.count() << endl;
                 istart = std::chrono::system_clock::now();
             }
         }
 
         delete it;
-        delete i2r_db;
+        delete seq_db;
 
         end = std::chrono::system_clock::now();
         time = end - start;
-        cout << "Read iteration time (" << sm::sets[i] << "): "
+        cout << "Read iteration time (" << sm::sets[set] << "): "
              << time.count() << endl;
     }
 
@@ -449,8 +425,8 @@ void group::populate(int gid)
             bool first_read = true;
             ofs << "\"reads-" << kind_code[i] << "\":[";
             for (string sid: (*_l2i[gid])[lid][i]) {
-                i2r_table::const_iterator sit = _i2r[i]->find(sid);
-                if (sit == _i2r[i]->end())
+                seq_table::const_iterator sit = _seq[i]->find(sid);
+                if (sit == _seq[i]->end())
                     continue;
                 if (!first_read)
                     ofs << ",";
