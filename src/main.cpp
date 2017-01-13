@@ -15,6 +15,7 @@
 #include "filter.hpp"
 #include "merge.hpp"
 #include "group.hpp"
+#include "util.hpp"
 
 using std::cout;
 using std::endl;
@@ -72,27 +73,7 @@ int main(int argc, char *argv[])
     cout << "Partition: " << conf.pid << " [" << conf.num_partitions
          << "]" << endl;
 
-    std::ostringstream map_file;
-    map_file << conf.data_path << "/maps/5-" << conf.num_partitions << "-"
-             << conf.num_storers;
-    std::ifstream map_stream(map_file.str());
-    if (!map_stream.good()) {
-        cout << "Failed to load mapping " << map_file.str() << endl;
-        cout << "Wrong data path and/or number of partitions/threads" << endl;
-        exit(1);
-    }
-
-    // Initialize 5-mer prefix to partition/storer mapping.
-    cout << "Load mapping: " << map_file.str() << endl;
-    for (string line; getline(map_stream, line);) {
-        std::vector<string> columns;
-        boost::split(columns, line, boost::is_any_of(" "));
-        uint64_t m = 0;
-        memcpy(&m, columns[0].c_str(), MAP_LEN);
-        hash_5c_map(m);
-        map_l1[m] = atoi(columns[1].c_str());
-        map_l2[m] = atoi(columns[2].c_str());
-    }
+    init_mapping(conf, conf.num_partitions, conf.num_storers, map_l1, map_l2);
 
     // Parse reprogrammable execution.
     std::vector<string> commands;

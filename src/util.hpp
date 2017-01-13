@@ -8,6 +8,8 @@
 #include <thread>
 #include <vector>
 
+#include "common.hpp"
+
 template<typename T>
 void spawn(std::string name, std::function<void(T)> func, std::vector<T> list)
 {
@@ -29,6 +31,8 @@ void spawn(std::string name, std::function<void(T)> func, std::vector<T> list)
 }
 
 void spawn(std::string name, std::function<void(int)> func, int n);
+
+void init_mapping(const sm_config &conf, int n1, int n2, int l1[], int l2[]);
 
 float estimate_sparse(uint64_t n, size_t k, size_t v);
 
