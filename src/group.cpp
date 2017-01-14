@@ -8,6 +8,7 @@
 #include <rocksdb/db.h>
 
 #include "db.hpp"
+#include "util.hpp"
 
 using std::cout;
 using std::endl;
@@ -15,6 +16,8 @@ using std::string;
 
 group::group(const sm_config &conf) : stage(conf)
 {
+    init_mapping(conf, _conf.num_partitions, _conf.num_groupers,
+                 _group_map_l1, _group_map_l2);
     _executable["run"] = std::bind(&group::run, this);
 }
 
@@ -24,7 +27,7 @@ void group::run()
     std::chrono::duration<double> time;
     start = std::chrono::system_clock::now();
 
-    for (int i = 0; i < MAX_GROUPERS; i++) {
+    for (int i = 0; i < _conf.num_groupers; i++) {
         _l2p[i] = new l2p_table(100000);
         _l2k[i] = new l2k_table(100000);
         _l2i[i] = new l2i_table(100000);
@@ -101,9 +104,9 @@ void group::run()
         string sub = read.substr(0, MAP_LEN);
         memcpy(&m, sub.c_str(), MAP_LEN);
         hash_5c_map(m);
-        if (map_l1[m] != _conf.pid)
+        if (_group_map_l1[m] != _conf.pid)
             continue;
-        int gid = map_l2[m];
+        int gid = _group_map_l2[m];
 
         num_map++;
 
@@ -143,13 +146,10 @@ void group::run()
     cout << "Number of mapped I2P: " << num_map << endl;
     cout << "Number of A-matching I2P: " << num_match_a << endl;
     cout << "Number of B-matching I2P: " << num_match_b << endl;
-    for (int i = 0; i < MAX_GROUPERS; i++) {
+    for (int i = 0; i < _conf.num_groupers; i++) {
         cout << "Number of candidates (" << std::to_string(i) << "): "
              << _l2k[i]->size() << endl;
     }
-
-    cout << "Number of kmers (0): " << _k2i[0]->size() << endl;
-    cout << "Number of kmers (1): " << _k2i[1]->size() << endl;
 
     // 2. Iterate K2I retrieving all k-mers seen in candidate positions.
 
@@ -183,6 +183,8 @@ void group::run()
             }
         }
 
+        cout << "Number of kmers (" << sm::sets[set] << "): "
+             << _k2i[set]->size() << endl;
         cout << "Number of kmers seen (" << sm::sets[set] << "): "
              << num_seen << endl;
         cout << "Number of IDs seen (" << sm::sets[set] << "): "

@@ -16,7 +16,7 @@
 #define KMAX 100
 #define DROP 500
 
-#define MAX_GROUPERS 8
+#define MAX_GROUPERS 128
 
 #define ENCODED_READ_LEN 4 // ceil(max_read_len, 64/2)
 
@@ -53,6 +53,9 @@ private:
 
     seq_table* _seq[2];
     kmer_table* _k2i[2];
+
+    int _group_map_l1[MAP_FILE_LEN] = {0};
+    int _group_map_l2[MAP_FILE_LEN] = {0};
 
     void encode_read(std::string& str, sm_read& read);
     void decode_read(sm_read& read, std::string& str);
