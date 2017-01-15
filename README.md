@@ -122,6 +122,44 @@ list of sequence IDs. E.g.:
  TGGGGGTGCAGGTCCAAGGAAAGTCTTAGT 1 chr20-18462176
  ```
 
+### Groups File
+
+A JSON file containing a dict of groups indexed with the sequence ID of their
+leader as key. The schema of a JSON groups file is as follows:
+
+```
+{
+    "ID" : {
+        "lead" : READ,
+        "pos-f" : POS,
+        "pos-r" : POS,
+        "kmers-f" : [ KMER, KMER, ... ],
+        "kmers-r" : [ KMER, KMER, ... ],
+        "reads-n" : [ READ, READ, ... ],
+        "reads-t" : [ READ, READ, ... ]
+    },
+    "ID" : { ... },
+    ...
+}
+```
+
+Where upper-case words stand for:
+
+ - ID: Unique string that identifies a sequence, e.g. `chr20.b-20231724/2`,
+ - POS: List of integers corresponding to candidate positions in a sequence,
+   e.g. `[ 19, 20, 21 ]`.
+ - KMER: Tuple formed by a string and four integers. The string of length K
+   represents a candidate kmer. The first two integers represent number of
+   retrieved reads (normal and tumoral), while the other two represent
+   discarded reads. E.g. `[ "CTCTCCCTCTCACACACACACACACACA", 20, 19, 0, 0 ]`.
+ - READ: Tuple of 2 strings: ID and read sequence; e.g.
+```
+[
+   "chr20.b-20231724/2",
+   "TCTCTTCTGTGCCCTGAATTCTCTCTCTCTCCCTCTCACACACACACACACACACACACACGCACG",
+]
+```
+
 ## Maintainers
 
 Jordà Polo `<jorda.polo@bsc.es>`, 2015-2017.
