@@ -38,7 +38,7 @@ list of sequence IDs. E.g.:
  TGGGGGTGCAGGTCCAAGGAAAGTCTTAGT 1 chr20-18462176
  ```
 
-## Groups File
+## Groups Files
 
 A JSON file containing a dict of groups indexed with the sequence ID of their
 leader as key. The schema of a JSON groups file is as follows:
@@ -47,10 +47,10 @@ leader as key. The schema of a JSON groups file is as follows:
 {
     "ID" : {
         "lead" : READ,
-        "pos-f" : POS,
-        "pos-r" : POS,
-        "kmers-f" : [ KMER, KMER, ... ],
-        "kmers-r" : [ KMER, KMER, ... ],
+        "pos-a" : POS,
+        "pos-b" : POS,
+        "kmers-a" : [ KMER, KMER, ... ],
+        "kmers-b" : [ KMER, KMER, ... ],
         "reads-n" : [ READ, READ, ... ],
         "reads-t" : [ READ, READ, ... ]
     },
