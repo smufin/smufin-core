@@ -82,6 +82,10 @@ use the following:
    * `run`: window-based group leader selection and retrieval of related
      reads.
 
+## Advanced Documentation
+
+ * [File Formats][formats]
+
 ## Maintainers
 
 Jordà Polo `<jorda.polo@bsc.es>`, 2015-2017.
@@ -92,3 +96,4 @@ Jordà Polo `<jorda.polo@bsc.es>`, 2015-2017.
 [folly]: https://github.com/facebook/folly "Folly"
 [rocksdb]: https://github.com/facebook/rocksdb "RocksDB"
 [concurrentq]: https://github.com/cameron314/concurrentqueue "ConcurrentQueue"
+[formats]: https://github.com/HiEST/shmufin/blob/master/doc/formats.md
