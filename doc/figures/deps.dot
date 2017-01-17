@@ -1,0 +1,57 @@
+digraph stage_deps {
+    graph [fontname = "Liberation Mono", nodesep = 0.5];
+    node [fontname = "Liberation Mono", shape = box];
+    edge [fontname = "Liberation Mono"];
+
+    rankdir=LR;
+
+    subgraph cluster_0 {
+        label = "count"
+        color = black;
+        "count:run" [label = run];
+        "count:dump" [label = dump];
+        "count:stats" [label = stats];
+        "count:restore" [label = restore];
+    }
+
+    subgraph cluster_1 {
+        label = "filter"
+        color = black;
+        "filter:run" [label = run];
+        "filter:dump" [label = dump];
+        "filter:stats" [label = stats];
+    }
+
+    subgraph cluster_2 {
+        label = "merge"
+        color = black;
+        "merge:run" [label = run];
+        "merge:run_{seq,k2i,i2p}_{nn,tn,tm}"
+            [label = "run_{seq,k2i,i2p}_{nn,tn,tm}"];
+        "merge:stats" [label = stats];
+    }
+
+    subgraph cluster_3 {
+        label = "group"
+        color = black;
+        "group:run" [label = run];
+    }
+
+    "count:run" -> "count:dump"
+    "count:run" -> "count:stats"
+    "count:dump" -> "count:restore"
+    "count:restore" -> "count:stats"
+    "count:run" -> "filter:run"
+    "count:restore" -> "filter:run"
+
+    "filter:run" -> "filter:dump"
+    "filter:run" -> "filter:stats"
+    "filter:dump" -> "merge:run"
+    "filter:dump" -> "merge:run_{seq,k2i,i2p}_{nn,tn,tm}"
+
+    "merge:run" -> "merge:stats"
+    "merge:run" -> "group:run"
+    "merge:run_{seq,k2i,i2p}_{nn,tn,tm}" -> "group:run"
+
+    "filter:dump" -> "group:run" [xlabel = "1 partition"];
+}
