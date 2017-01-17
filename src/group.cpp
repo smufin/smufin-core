@@ -241,18 +241,8 @@ void group::run()
 
     // 4. Populate candidate groups.
 
-    start = std::chrono::system_clock::now();
-
-    std::vector<std::thread> populators;
-    for (int i = 0; i < _conf.num_groupers; i++)
-        populators.push_back(std::thread(&group::populate, this, i));
-    cout << "Spawned " << populators.size() << " populator threads" << endl;
-    for (auto& populator: populators)
-        populator.join();
-
-    end = std::chrono::system_clock::now();
-    time = end - start;
-    cout << "Populate candidates time: " << time.count() << endl;
+    spawn("populate", std::bind(&group::populate, this, std::placeholders::_1),
+          _conf.num_groupers);
 }
 
 void group::encode_read(std::string& str, sm_read& read)
