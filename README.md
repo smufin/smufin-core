@@ -83,7 +83,13 @@ use the following:
    * `run`: window-based group leader selection and retrieval of related
      reads.
 
-## Advanced Documentation
+Commands need to follow a certain order, and some stages can't be executed
+without running earlier stages first. The following graph shows the
+dependencies between *shmufin* commands:
+
+![Command dependency graph](doc/figures/deps.png)
+
+## Additional Documentation
 
  * [File Formats][formats]
 
