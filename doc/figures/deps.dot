@@ -35,6 +35,7 @@ digraph stage_deps {
         label = "group"
         color = black;
         "group:run" [label = run];
+        "group:stats" [label = stats];
     }
 
     "count:run" -> "count:dump"
@@ -54,4 +55,6 @@ digraph stage_deps {
     "merge:run_{seq,k2i,i2p}_{nn,tn,tm}" -> "group:run"
 
     "filter:dump" -> "group:run" [xlabel = "1 partition"];
+
+    "group:run" -> "group:stats"
 }
