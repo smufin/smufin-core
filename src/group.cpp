@@ -493,5 +493,5 @@ void group::stats()
 
     end = std::chrono::system_clock::now();
     time = end - start;
-    cout << "Time count/stats: " << time.count() << endl;
+    cout << "Time group/stats: " << time.count() << endl;
 }
