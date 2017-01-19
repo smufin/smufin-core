@@ -478,10 +478,6 @@ void group::populate_index(int gid, string& lid,
 
 void group::stats()
 {
-    std::chrono::time_point<std::chrono::system_clock> start, end;
-    std::chrono::duration<double> time;
-    start = std::chrono::system_clock::now();
-
     uint64_t total = 0;
 
     for (int i = 0; i < _conf.num_groupers; i++) {
@@ -490,8 +486,4 @@ void group::stats()
     }
 
     cout << "Number of groups: " << total << endl;
-
-    end = std::chrono::system_clock::now();
-    time = end - start;
-    cout << "Time group/stats: " << time.count() << endl;
 }

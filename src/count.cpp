@@ -69,10 +69,6 @@ void count::run()
     cout << "Caches: " << _cache_size << " x " << _conf.num_storers
          << " (estimated up to ~" << cache_mem << "GB)" << endl;
 
-    std::chrono::time_point<std::chrono::system_clock> start, end;
-    std::chrono::duration<double> time;
-    start = std::chrono::system_clock::now();
-
     std::vector<std::thread> loaders;
     for (int i = 0; i < _conf.num_loaders; i++)
         loaders.push_back(std::thread(&count::load, this, i));
@@ -88,10 +84,6 @@ void count::run()
     _done = true;
     for (auto& storer: storers)
         storer.join();
-
-    end = std::chrono::system_clock::now();
-    time = end - start;
-    cout << "Time count/run: " << time.count() << endl;
 }
 
 void count::load(int lid)
@@ -338,10 +330,6 @@ void count::restore_table(int sid)
 void count::stats()
 {
     std::map<uint64_t, uint64_t> hist_n, hist_t;
-    std::chrono::time_point<std::chrono::system_clock> start, end;
-    std::chrono::duration<double> time;
-
-    start = std::chrono::system_clock::now();
 
     uint64_t total_stems = 0;
     uint64_t total_kmers = 0;
@@ -390,8 +378,4 @@ void count::stats()
     cout << "Number of stems: " << total_stems << endl;
     cout << "Number of kmers: " << total_kmers << endl;
     cout << "Sum of counters: " << total_sum << endl;
-
-    end = std::chrono::system_clock::now();
-    time = end - start;
-    cout << "Time count/stats: " << time.count() << endl;
 }

@@ -43,10 +43,6 @@ void merge::run()
 // partitions for a given type and set.
 void merge::load(sm_idx_type type, sm_idx_set set)
 {
-    std::chrono::time_point<std::chrono::system_clock> start, end;
-    std::chrono::duration<double> time;
-    start = std::chrono::system_clock::now();
-
     for (int i = 0; i < _conf.num_partitions; i++) {
         _partition_queue.enqueue(i);
     }
@@ -68,11 +64,6 @@ void merge::load(sm_idx_type type, sm_idx_set set)
         thread.join();
 
     delete db;
-
-    end = std::chrono::system_clock::now();
-    time = end - start;
-    cout << "Time merge/run (" << sm::types[type] << "/" << sm::sets[set]
-         << "): " << time.count() << endl;
 }
 
 // Load all partitions of a certain type using `load_part' and the given set
@@ -171,10 +162,6 @@ void merge::load_seq(rocksdb::DB* db, sm_idx_set set, int pid)
 
 void merge::stats()
 {
-    std::chrono::time_point<std::chrono::system_clock> start, end;
-    std::chrono::duration<double> time;
-    start = std::chrono::system_clock::now();
-
     rocksdb::DB* i2p;
     rocksdb::DB* seq[NUM_SETS];
     rocksdb::DB* k2i[NUM_SETS];
@@ -212,8 +199,4 @@ void merge::stats()
     it = i2p->NewIterator(rocksdb::ReadOptions());
     for (it->SeekToFirst(); it->Valid(); it->Next()) tm++;
     cout << "Size I2P: " << tm << endl;
-
-    end = std::chrono::system_clock::now();
-    time = end - start;
-    cout << "Time merge/stats: " << time.count() << endl;
 }
