@@ -19,6 +19,7 @@ group::group(const sm_config &conf) : stage(conf)
     init_mapping(conf, _conf.num_partitions, _conf.num_groupers,
                  _group_map_l1, _group_map_l2);
     _executable["run"] = std::bind(&group::run, this);
+    _executable["stats"] = std::bind(&group::stats, this);
 }
 
 void group::run()
@@ -351,10 +352,9 @@ void group::populate(int gid)
     ofs.open(file);
     ofs << "{";
 
-    int num_leads = 0;
+    uint64_t num_groups = 0;
     bool first_group = true;
     for (l2k_table::const_iterator it = _l2k[gid]->begin(); it != _l2k[gid]->end(); ++it) {
-        num_leads++;
         string lid = it->first;
         index_count keep;
         index_count drop;
@@ -432,17 +432,19 @@ void group::populate(int gid)
         }
 
         ofs << "}";
+        num_groups++;
 
-        if (num_leads % 100 == 0) {
+        if (num_groups % 100 == 0) {
             end = std::chrono::system_clock::now();
             time = end - start;
-            cout << "P: " << gid << " " << num_leads << " "
+            cout << "P: " << gid << " " << num_groups << " "
                  << time.count() << "\n";
             start = std::chrono::system_clock::now();
         }
     }
 
     ofs << "}";
+    _num_groups[gid] = num_groups;
 }
 
 void group::populate_index(int gid, string& lid,
@@ -472,4 +474,24 @@ void group::populate_index(int gid, string& lid,
         (*_l2i[gid])[lid][kind].insert(sids.begin(), sids.end());
         keep[kind][kmer] += sids.size();
     }
+}
+
+void group::stats()
+{
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    std::chrono::duration<double> time;
+    start = std::chrono::system_clock::now();
+
+    uint64_t total = 0;
+
+    for (int i = 0; i < _conf.num_groupers; i++) {
+        cout << "Groups " << i << ": " << _num_groups[i] << endl;
+        total += _num_groups[i];
+    }
+
+    cout << "Number of groups: " << total << endl;
+
+    end = std::chrono::system_clock::now();
+    time = end - start;
+    cout << "Time count/stats: " << time.count() << endl;
 }
