@@ -11,15 +11,9 @@
 #include "hash.hpp"
 #include "kseq.h"
 
-#define MAX_STORERS 128
-#define MAX_LOADERS 128
-
 #define BASE_LEN 4
 #define MAP_LEN 5
 #define MAP_FILE_LEN 1024 // (BASE_LEN ^ MAP_LEN)
-
-#define BULK_LEN 128
-#define QMSG_LEN 512
 
 // Convert a string of 5 chars/bytes of the 4-base ACGT alphabet (32 bits)
 // into a unique unsigned int identifier in the [0-256) range (8 bits). The

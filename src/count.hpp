@@ -10,6 +10,12 @@
 #include "common.hpp"
 #include "stage.hpp"
 
+#define MAX_STORERS 128
+#define MAX_LOADERS 128
+
+#define BULK_LEN 128
+#define QMSG_LEN 512
+
 typedef uint64_t sm_key;
 
 // A value of the hashtable that contains normal and tumoral counters for all
