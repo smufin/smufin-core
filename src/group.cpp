@@ -37,7 +37,7 @@ void group::run()
 
     for (int i = 0; i < 2; i++) {
         _seq[i] = new seq_table();
-        _k2i[i] = new kmer_table();
+        _k2i[i] = new k2i_table();
     }
 
     _seq[NN]->resize(420000000);
@@ -169,7 +169,7 @@ void group::run()
 
             string kmer = it->key().ToString();
             string list = it->value().ToString();
-            kmer_table::const_iterator kit = _k2i[set]->find(kmer);
+            k2i_table::const_iterator kit = _k2i[set]->find(kmer);
             if (kit != _k2i[set]->end()) {
                 (*_k2i[set])[kmer] = list;
                 num_seen++;
@@ -326,7 +326,7 @@ void group::select_candidate(int gid, string& sid, string& seq, string& dseq,
     for (int p: pos) {
         string kmer = dseq.substr(p, _conf.k);
         kmers.push_back(kmer);
-        kmer_table::const_iterator it = _k2i[0]->find(kmer);
+        k2i_table::const_iterator it = _k2i[0]->find(kmer);
         if (it == _k2i[0]->end()) {
             (*_k2i[0])[kmer] = string();
             (*_k2i[1])[kmer] = string();
@@ -356,8 +356,8 @@ void group::populate(int gid)
     bool first_group = true;
     for (l2k_table::const_iterator it = _l2k[gid]->begin(); it != _l2k[gid]->end(); ++it) {
         string lid = it->first;
-        index_count keep;
-        index_count drop;
+        kmer_count keep;
+        kmer_count drop;
 
         for (int i = 0; i < 2; i++) {
             for (string kmer: it->second[i]) {
@@ -449,10 +449,10 @@ void group::populate(int gid)
 
 void group::populate_index(int gid, string& lid,
                            const std::vector<string>& kmers, int kind,
-                           index_count& keep, index_count& drop)
+                           kmer_count& keep, kmer_count& drop)
 {
     for (string kmer: kmers) {
-        kmer_table::const_iterator it = _k2i[kind]->find(kmer);
+        k2i_table::const_iterator it = _k2i[kind]->find(kmer);
         if (it == _k2i[kind]->end()) {
             continue;
         }
