@@ -354,22 +354,24 @@ void group::populate(int gid)
 
     uint64_t num_groups = 0;
     bool first_group = true;
-    for (l2k_table::const_iterator it = _l2k[gid]->begin(); it != _l2k[gid]->end(); ++it) {
-        string lid = it->first;
+    for (const auto& it: *_l2k[gid]) {
+        const string& lid = it.first;
+        const k_value& kmers = it.second;
+
         kmer_count keep;
         kmer_count drop;
 
         for (int i = 0; i < 2; i++) {
-            for (string kmer: it->second[i]) {
+            for (string kmer: kmers[i]) {
                 keep[i][kmer] = 0;
                 drop[i][kmer] = 0;
             }
         }
 
-        populate_index(gid, lid, it->second[0], NN, keep, drop);
-        populate_index(gid, lid, it->second[0], TN, keep, drop);
-        populate_index(gid, lid, it->second[1], NN, keep, drop);
-        populate_index(gid, lid, it->second[1], TN, keep, drop);
+        populate_index(gid, lid, kmers[0], NN, keep, drop);
+        populate_index(gid, lid, kmers[0], TN, keep, drop);
+        populate_index(gid, lid, kmers[1], NN, keep, drop);
+        populate_index(gid, lid, kmers[1], TN, keep, drop);
 
         l2r_table::const_iterator lit = _l2r[gid]->find(lid);
         if (lit == _l2r[gid]->end())
@@ -399,7 +401,7 @@ void group::populate(int gid)
 
             ofs << "\"kmers-" << comp_code[i] << "\":[";
             bool first_kmer = true;
-            for (string kmer: it->second[i]) {
+            for (string kmer: kmers[i]) {
                 int kept_n = keep[0][kmer];
                 int dropped_n = drop[0][kmer];
                 int kept_t = keep[1][kmer];
@@ -447,7 +449,7 @@ void group::populate(int gid)
     _num_groups[gid] = num_groups;
 }
 
-void group::populate_index(int gid, string& lid,
+void group::populate_index(int gid, const string& lid,
                            const std::vector<string>& kmers, int kind,
                            kmer_count& keep, kmer_count& drop)
 {

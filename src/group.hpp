@@ -101,7 +101,7 @@ private:
                           std::string& dseq, std::vector<int>& pos, int dir);
 
     void populate(int gid);
-    void populate_index(int gid, std::string& lid,
+    void populate_index(int gid, const std::string& lid,
                         const std::vector<std::string>& kmers, int kind,
                         kmer_count& keep, kmer_count& drop);
 };
