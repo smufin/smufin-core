@@ -191,7 +191,7 @@ int filter::get_value(int fid, char kmer[], sm_table::const_iterator *it)
 
     uint64_t m = 0;
     memcpy(&m, &kmer[1], MAP_LEN);
-    hash_5c_map(m);
+    hash_5mer(m);
 
     if (map_l1[m] != _conf.pid)
         return -1;

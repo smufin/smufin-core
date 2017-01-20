@@ -15,15 +15,15 @@
 #define MAP_LEN 5
 #define MAP_FILE_LEN 1024 // (BASE_LEN ^ MAP_LEN)
 
-// Convert a string of 5 chars/bytes of the 4-base ACGT alphabet (32 bits)
-// into a unique unsigned int identifier in the [0-256) range (8 bits). The
+// Convert a string of 5 chars/bytes of the 4-base ACGT alphabet (40 bits)
+// into a unique unsigned int identifier in the [0-1024) range (10 bits). The
 // idea is to take the 2nd and 3rd least significant bits of each byte as
 // follows:
 //   A -> 65 -> 01000001 -> 00
 //   C -> 67 -> 01000011 -> 01
 //   G -> 71 -> 01000111 -> 11
 //   T -> 84 -> 01010100 -> 10
-#define hash_5c_map(h) ({                   \
+#define hash_5mer(h) ({                   \
         (h) = ((h) & 25870861830) >> 1;     \
         (h) = ((h) & 0xFFFF) + ((h) >> 14); \
         (h) = ((h) & 0xFF) + ((h) >> 4);    \
@@ -76,7 +76,7 @@ namespace sm {
 
     // Map ASCII position to internal code. Note that partition maps use a
     // different encoding based on binary representation instead, see
-    // hash_5c_map.
+    // hash_5mer.
     //   A -> 0 (pos. 65)
     //   C -> 1 (pos. 67)
     //   G -> 2 (pos. 71)
