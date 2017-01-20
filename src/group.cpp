@@ -217,7 +217,7 @@ void group::run()
             num_read++;
 
             string sid = it->key().ToString();
-            string read_str = it->key().ToString();
+            string read_str = it->value().ToString();
             sm_read read;
             encode_read(read_str, read);
             (*_seq[set])[sid] = read;
