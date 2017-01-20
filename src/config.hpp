@@ -25,12 +25,17 @@ struct sm_config {
     int max_nc;
     int min_tc;
 
-    // Maximum number of reads per kmer. During filtering, kmers with more
-    // than max_k2i_reads associated reads are ignored.
-    int max_k2i_reads;
+    // Maximum number of reads per kmer while filtering; kmers with more than
+    // max_filter_reads associated reads are ignored.
+    int max_filter_reads;
 
     int window_min;
     int window_len;
+
+    // Maximum number of reads per kmer while grouping; reads from kmers with
+    // more than max_group_reads reads are dropped and marked as such in the
+    // groups file.
+    int max_group_reads;
 
     void load(const std::string &filename);
 };

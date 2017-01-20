@@ -466,7 +466,7 @@ void group::populate_index(int gid, string& lid,
         std::unordered_set<string> sids;
         boost::split(sids, list, boost::is_any_of(" "));
 
-        if (sids.size() > DROP) {
+        if (sids.size() > _conf.max_group_reads) {
             drop[kind][kmer] += sids.size();
             continue;
         }

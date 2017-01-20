@@ -40,8 +40,9 @@ void sm_config::load(const string &filename)
     filter_format = tree.get<string>("filter.format", "plain");
     max_nc = tree.get<int>("filter.max-normal-count", 1);
     min_tc = tree.get<int>("filter.min-tumor-count", 4);
-    max_k2i_reads = tree.get<int>("filter.max-k2i-reads", 2000);
+    max_filter_reads = tree.get<int>("filter.max-reads", 2000);
 
     window_min = tree.get<int>("group.window-min", 7);
     window_len = tree.get<int>("group.window-len", 10);
+    max_group_reads = tree.get<int>("group.max-reads", 500);
 }

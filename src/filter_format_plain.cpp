@@ -27,7 +27,7 @@ void filter_format_plain::update(kseq_t *seq, int pos, bool rev, char kmer[],
         else
             _i2p[set][seq->name.s].b[pos / 64] |= 1UL << (pos % 64);
     }
-    if (_k2i[set][kmer].size() <= _conf.max_k2i_reads) {
+    if (_k2i[set][kmer].size() <= _conf.max_filter_reads) {
         _k2i[set][kmer].insert(seq->name.s);
     }
     _mutex[set].unlock();
@@ -109,7 +109,7 @@ void filter_format_plain::write_k2i(int set)
          << _conf.pid << ".txt";
     ofs.open(file.str());
     for (auto const &kv: _k2i[set]) {
-        if (kv.second.size() > _conf.max_k2i_reads)
+        if (kv.second.size() > _conf.max_filter_reads)
             continue;
         ofs << kv.first << " " << kv.second.size();
         for (auto const &sid: kv.second) {

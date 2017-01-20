@@ -14,7 +14,6 @@
 #define RMAX 100
 #define KMIN 0
 #define KMAX 100
-#define DROP 500
 
 #define MAX_GROUPERS 128
 

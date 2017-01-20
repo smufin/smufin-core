@@ -52,7 +52,7 @@ void filter_format_rocks::update(kseq_t *seq, int pos, bool rev, char kmer[],
 
     _seq[set]->Put(w_options, sid, seq->seq.s);
 
-    // TODO: Honour _conf.max_k2i_reads
+    // TODO: Honour _conf.max_filter_reads
     std::stringstream ss;
     ss << sid << " ";
     _k2i[set]->Merge(w_options, kmer, ss.str());
