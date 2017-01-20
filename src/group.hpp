@@ -93,8 +93,7 @@ private:
 
     void encode_read(std::string& str, sm_read& read);
     void decode_read(sm_read& read, std::string& str);
-    void get_positions_a(uint64_t bitmap[2], std::vector<int> *pos);
-    void get_positions_b(uint64_t bitmap[2], std::vector<int> *pos, int len);
+    void get_positions(uint64_t bitmap[2], std::vector<int> *pos);
 
     bool match_window(std::vector<int> pos);
     void select_candidate(int gid, std::string& sid, std::string& seq,

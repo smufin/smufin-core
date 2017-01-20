@@ -111,9 +111,8 @@ void group::run()
 
         num_map++;
 
-        get_positions_a(p.a, &a_pos);
-        get_positions_b(p.b, &b_pos, read_length);
-        std::reverse(b_pos.begin(), b_pos.end());
+        get_positions(p.a, &a_pos);
+        get_positions(p.b, &b_pos);
 
         int a_len = a_pos.size();
         int b_len = b_pos.size();
@@ -277,7 +276,7 @@ void group::decode_read(sm_read& read, std::string& str)
     }
 }
 
-void group::get_positions_a(uint64_t bitmap[2], std::vector<int> *pos)
+void group::get_positions(uint64_t bitmap[2], std::vector<int> *pos)
 {
     for (int i = 0; i < 2; i++) {
         unsigned long tmp = bitmap[i];
@@ -286,19 +285,6 @@ void group::get_positions_a(uint64_t bitmap[2], std::vector<int> *pos)
             int p = __builtin_ffsl(tmp) - 1;
             tmp &= (tmp - 1);
             pos->push_back(p + offset);
-        }
-    }
-}
-
-void group::get_positions_b(uint64_t bitmap[2], std::vector<int> *pos, int len)
-{
-    for (int i = 0; i < 2; i++) {
-        unsigned long tmp = bitmap[i];
-        int offset = i * 64;
-        while (tmp > 0) {
-            int p = __builtin_ffsl(tmp) - 1;
-            tmp &= (tmp - 1);
-            pos->push_back(len - _conf.k - (p + offset));
         }
     }
 }

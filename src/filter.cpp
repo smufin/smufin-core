@@ -254,6 +254,11 @@ void filter::filter_kmer(kseq_t *seq, int pos, bool rev, char kmer[],
                          uint32_t tsum, sm_idx_set set)
 {
     if (tc >= _conf.min_tc && nc <= _conf.max_nc) {
+        if (rev) {
+            // Recalculate reverse-complement position since the loops, and
+            // thus the passed `pos', follow the forward sequence.
+            pos = seq->seq.l - _conf.k - pos;
+        }
         _format->update(seq, pos, rev, kmer, set);
     }
 }
