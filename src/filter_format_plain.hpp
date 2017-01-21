@@ -13,9 +13,9 @@
 // memory using standard maps, and mutexes to ensure atomicity, generating and
 // dumping these maps as plain space-separated text files to disk.
 //
-// For a particular partition P, the following 7 files are generated:
+// For a particular partition P, the following 6 files are generated:
 //  - filter-seq-{nn,tn,tm}.P.txt
-//  - filter-k2i-{nn,tn,tm}.P.txt
+//  - filter-k2i-{nn,tn}.P.txt
 //  - filter-i2p-tm.P.txt
 //
 // SEQ index files are periodically flushed to disk during filter execution so

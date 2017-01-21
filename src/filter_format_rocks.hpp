@@ -11,10 +11,10 @@
 // Implementation of a filter_format that creates filtering indexes using
 // RocksDB-backed database.
 //
-// For a particular partition P, the following 7 RocksDB databases are
+// For a particular partition P, the following 6 RocksDB databases are
 // created in the output directory:
 //  - filter-seq-{nn,tn,tm}.P.rdb
-//  - filter-k2i-{nn,tn,tm}.P.rdb
+//  - filter-k2i-{nn,tn}.P.rdb
 //  - filter-i2p-tm.P.rdb
 //
 // The flush() method is empty since RocksDB already deals with disk

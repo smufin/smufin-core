@@ -52,11 +52,6 @@ void filter_format_rocks::update(kseq_t *seq, int pos, bool rev, char kmer[],
 
     _seq[set]->Put(w_options, sid, seq->seq.s);
 
-    // TODO: Honour _conf.max_filter_reads
-    std::stringstream ss;
-    ss << sid << " ";
-    _k2i[set]->Merge(w_options, kmer, ss.str());
-
     if (set == TM) {
         sm_pos_bitmap p;
         string serialized;
@@ -68,6 +63,11 @@ void filter_format_rocks::update(kseq_t *seq, int pos, bool rev, char kmer[],
 
         encode_pos(p, serialized);
         _i2p->Merge(w_options, sid, serialized);
+    } else {
+        // TODO: Honour _conf.max_filter_reads
+        std::stringstream ss;
+        ss << sid << " ";
+        _k2i[set]->Merge(w_options, kmer, ss.str());
     }
 }
 
@@ -107,14 +107,12 @@ void filter_format_rocks::stats()
     for (it->SeekToFirst(); it->Valid(); it->Next()) tm++;
     cout << "Size SEQ: " << nn << " " << tn << " " << tm << endl;
 
-    nn = tn = tm = 0;
+    nn = tn = 0;
     it = _k2i[NN]->NewIterator(rocksdb::ReadOptions());
     for (it->SeekToFirst(); it->Valid(); it->Next()) nn++;
     it = _k2i[TN]->NewIterator(rocksdb::ReadOptions());
     for (it->SeekToFirst(); it->Valid(); it->Next()) tn++;
-    it = _k2i[TM]->NewIterator(rocksdb::ReadOptions());
-    for (it->SeekToFirst(); it->Valid(); it->Next()) tm++;
-    cout << "Size K2I: " << nn << " " << tn << " " << tm << endl;
+    cout << "Size K2I: " << nn << " " << tn << endl;
 
     tm = 0;
     it = _i2p->NewIterator(rocksdb::ReadOptions());

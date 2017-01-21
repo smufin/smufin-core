@@ -24,7 +24,6 @@ merge::merge(const sm_config &conf) : stage(conf)
     _executable["run_seq_tm"] = std::bind(&merge::load, this, SEQ, TM);
     _executable["run_k2i_nn"] = std::bind(&merge::load, this, K2I, NN);
     _executable["run_k2i_tn"] = std::bind(&merge::load, this, K2I, TN);
-    _executable["run_k2i_tm"] = std::bind(&merge::load, this, K2I, TM);
     _executable["run_i2p_tm"] = std::bind(&merge::load, this, I2P, TM);
 
     _executable["stats"] = std::bind(&merge::stats, this);
@@ -166,13 +165,12 @@ void merge::stats()
     rocksdb::DB* seq[NUM_SETS];
     rocksdb::DB* k2i[NUM_SETS];
 
-    open_merge(&i2p, _conf, I2P, TM, true);
     open_merge(&seq[NN], _conf, SEQ, NN, true);
     open_merge(&seq[TN], _conf, SEQ, TN, true);
     open_merge(&seq[TM], _conf, SEQ, TM, true);
     open_merge(&k2i[NN], _conf, K2I, NN, true);
     open_merge(&k2i[TN], _conf, K2I, TN, true);
-    open_merge(&k2i[TM], _conf, K2I, TM, true);
+    open_merge(&i2p, _conf, I2P, TM, true);
 
     uint64_t nn, tn, tm;
     rocksdb::Iterator* it;
@@ -186,14 +184,12 @@ void merge::stats()
     for (it->SeekToFirst(); it->Valid(); it->Next()) tm++;
     cout << "Size SEQ: " << nn << " " << tn << " " << tm << endl;
 
-    nn = tn = tm = 0;
+    nn = tn = 0;
     it = k2i[NN]->NewIterator(rocksdb::ReadOptions());
     for (it->SeekToFirst(); it->Valid(); it->Next()) nn++;
     it = k2i[TN]->NewIterator(rocksdb::ReadOptions());
     for (it->SeekToFirst(); it->Valid(); it->Next()) tn++;
-    it = k2i[TM]->NewIterator(rocksdb::ReadOptions());
-    for (it->SeekToFirst(); it->Valid(); it->Next()) tm++;
-    cout << "Size K2I: " << nn << " " << tn << " " << tm << endl;
+    cout << "Size K2I: " << nn << " " << tn << endl;
 
     tm = 0;
     it = i2p->NewIterator(rocksdb::ReadOptions());

@@ -101,7 +101,7 @@ namespace sm {
     // Map of filter indexes to valid set names.
     const std::map<sm_idx_type, std::set<sm_idx_set>> indexes = {
         {SEQ, {NN, TN, TM}},
-        {K2I, {NN, TN, TM}},
+        {K2I, {NN, TN}},
         {I2P, {TM}}
     };
 }

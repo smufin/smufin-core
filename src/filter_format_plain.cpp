@@ -26,8 +26,7 @@ void filter_format_plain::update(kseq_t *seq, int pos, bool rev, char kmer[],
             _i2p[set][seq->name.s].a[pos / 64] |= 1UL << (pos % 64);
         else
             _i2p[set][seq->name.s].b[pos / 64] |= 1UL << (pos % 64);
-    }
-    if (_k2i[set][kmer].size() <= _conf.max_filter_reads) {
+    } else if (_k2i[set][kmer].size() <= _conf.max_filter_reads) {
         _k2i[set][kmer].insert(seq->name.s);
     }
     _mutex[set].unlock();
@@ -57,8 +56,7 @@ void filter_format_plain::stats()
 
     cout << "Size SEQ: " << _ids[NN].size() << " " << _ids[TN].size() << " "
          << _ids[TM].size() << endl;
-    cout << "Size K2I: " << _k2i[NN].size() << " " << _k2i[TN].size() << " "
-         << _k2i[TM].size() << endl;
+    cout << "Size K2I: " << _k2i[NN].size() << " " << _k2i[TN].size() << endl;
     cout << "Size I2P: " << _i2p[TM].size() << endl;
 
     end = std::chrono::system_clock::now();
