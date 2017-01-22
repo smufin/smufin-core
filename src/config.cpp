@@ -45,4 +45,9 @@ void sm_config::load(const string &filename)
     window_min = tree.get<int>("group.window-min", 7);
     window_len = tree.get<int>("group.window-len", 10);
     max_group_reads = tree.get<int>("group.max-reads", 500);
+
+    if (sm::formats.find(filter_format) == sm::formats.end()) {
+        cout << "Invalid filter format " << filter_format << endl;
+        exit(1);
+    }
 }

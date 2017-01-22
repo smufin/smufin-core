@@ -104,6 +104,9 @@ namespace sm {
         {K2I, {NN, TN}},
         {I2P, {TM}}
     };
+
+    // Supported filter format names.
+    const std::set<std::string> formats = {"plain", "rocks"};
 }
 
 // Arrays that map which prefixes are to be processed on the current
