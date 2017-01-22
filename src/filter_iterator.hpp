@@ -27,4 +27,10 @@ protected:
     const T* _elem;
 };
 
+template<typename T>
+T* create_iterator(const sm_config &conf, sm_idx_set set, int pid)
+{
+    return new T(conf, set, pid);
+};
+
 #endif
