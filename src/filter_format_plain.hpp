@@ -35,13 +35,12 @@ private:
     std::mutex _mutex[NUM_SETS];
     std::unordered_set<std::string> _ids[NUM_SETS];
     std::unordered_set<std::string> _seq[NUM_SETS];
-    std::unordered_map<std::string, sm_pos_bitmap> _i2p[NUM_SETS];
-    std::unordered_map<std::string, std::unordered_set<std::string>>
-        _k2i[NUM_SETS];
+    std::unordered_map<std::string, std::unordered_set<std::string>> _k2i[2];
+    std::unordered_map<std::string, sm_pos_bitmap> _i2p;
 
-    void write_seq(int set);
-    void write_k2i(int set);
-    void write_i2p(int set);
+    void write_seq(sm_idx_set set);
+    void write_k2i(sm_idx_set set);
+    void write_i2p(sm_idx_set set);
 };
 
 #endif
