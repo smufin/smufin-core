@@ -19,20 +19,20 @@ filter_format_rocks::filter_format_rocks(const sm_config &conf)
     rocksdb::Options opts;
     set_options_filter(opts);
 
-    for (int i = 0; i < NUM_SETS; i++) {
+    for (auto set: {NN, TN, TM}) {
         std::ostringstream path;
-        path << _conf.output_path << "/filter-seq" << "-" << sm::sets[i]
+        path << _conf.output_path << "/filter-seq" << "-" << sm::sets[set]
              << "." << _conf.pid << ".rdb";
-        status = rocksdb::DB::Open(opts, path.str(), &_seq[i]);
+        status = rocksdb::DB::Open(opts, path.str(), &_seq[set]);
         assert(status.ok());
     }
 
-    for (int i = 0; i < NUM_SETS; i++) {
+    for (auto set: {NN, TN}) {
         set_options_type(opts, K2I);
         std::ostringstream path;
-        path << _conf.output_path << "/filter-k2i" << "-" << sm::sets[i]
+        path << _conf.output_path << "/filter-k2i" << "-" << sm::sets[set]
              << "." << _conf.pid << ".rdb";
-        status = rocksdb::DB::Open(opts, path.str(), &_k2i[i]);
+        status = rocksdb::DB::Open(opts, path.str(), &_k2i[set]);
         assert(status.ok());
     }
 
@@ -74,10 +74,10 @@ void filter_format_rocks::update(kseq_t *seq, int pos, bool rev, char kmer[],
 void filter_format_rocks::dump()
 {
     std::vector<rocksdb::DB*> list;
-    for (int i = 0; i < NUM_SETS; i++) {
-        list.push_back(_seq[i]);
-        list.push_back(_k2i[i]);
-    }
+    for (auto set: {NN, TN, TM})
+        list.push_back(_seq[set]);
+    for (auto set: {NN, TN})
+        list.push_back(_k2i[set]);
     list.push_back(_i2p);
     spawn<rocksdb::DB*>("compact", std::bind(&filter_format_rocks::compact,
                         this, std::placeholders::_1), list);

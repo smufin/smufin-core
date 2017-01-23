@@ -31,9 +31,9 @@ public:
     void stats();
 
 private:
-    rocksdb::DB* _i2p;
     rocksdb::DB* _seq[NUM_SETS];
-    rocksdb::DB* _k2i[NUM_SETS];
+    rocksdb::DB* _k2i[2];
+    rocksdb::DB* _i2p;
 
     void compact(rocksdb::DB* db);
 };
