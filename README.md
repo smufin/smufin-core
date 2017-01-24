@@ -15,7 +15,7 @@ support (>= 4.8), and the following libraries:
  - [boost][boost] (>= 1.55): Property trees and string algorithms
  - [moodycamel::ConcurrentQueue][concurrentq]: MPMC queue
  - [folly::ProducerConsumerQueue][folly]: SPSC queue
- - [libbf][libbf]: Bloom filter library
+ - [libbf][libbf]: Bloom filters
  - [RocksDB][rocksdb] (>= 4.9): Key-value store for flash storage
 
 The paths for each library can be configured using a custom `make.conf` file,
