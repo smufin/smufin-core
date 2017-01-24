@@ -13,8 +13,9 @@
 
 #include "count.hpp"
 #include "filter.hpp"
-#include "merge.hpp"
 #include "group.hpp"
+#include "merge.hpp"
+#include "prune.hpp"
 #include "util.hpp"
 
 using std::cout;
@@ -93,6 +94,7 @@ int main(int argc, char *argv[])
     }
 
     std::unordered_map<string, stage*(*)(const sm_config &conf)> registry;
+    registry["prune"] = &stage::create<prune>;
     registry["count"] = &stage::create<count>;
     registry["filter"] = &stage::create<filter>;
     registry["merge"] = &stage::create<merge>;

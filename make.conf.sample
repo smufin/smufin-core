@@ -11,6 +11,10 @@ MCQ_INC   = /usr/include/concurrentqueue
 FOLLY_INC = /usr/include/folly
 BOOST_INC = /usr/include/boost
 
+# libbf: paths to headers/libraries.
+BF_INC = /usr/include/libbf
+BF_LIB = /usr/lib
+
 # RocksDB: paths to headers/libraries.
 ROCKS_INC = /usr/include/rocksdb
 ROCKS_LIB = /usr/lib

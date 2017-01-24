@@ -8,15 +8,11 @@
 #include <google/sparse_hash_map>
 
 #include "common.hpp"
+#include "prune.hpp"
 #include "stage.hpp"
 
-#define MAX_STORERS 128
-#define MAX_LOADERS 128
-
-#define BULK_LEN 128
-#define QMSG_LEN 512
-
-typedef uint64_t sm_key;
+#define BULK_MSG_LEN 128
+#define COUNT_QUEUE_LEN 512
 
 // A value of the hashtable that contains normal and tumoral counters for all
 // inflections of a stem. The multidimensional array `v' is indexed as
@@ -44,10 +40,10 @@ typedef std::pair<sm_key, sm_value_offset> sm_msg;
 
 typedef struct {
     uint16_t num = 0;
-    sm_msg array[BULK_LEN];
-} sm_bulk;
+    sm_msg array[BULK_MSG_LEN];
+} sm_bulk_msg;
 
-typedef folly::ProducerConsumerQueue<sm_bulk> sm_queue;
+typedef folly::ProducerConsumerQueue<sm_bulk_msg> sm_queue;
 
 // Stage that reads input files, splits sequences into kmers, and builds a
 // table of normal and tumoral kmer frequencies. `count' provides an in-memory
@@ -59,6 +55,7 @@ class count : public stage
 public:
     count(const sm_config &conf);
     void run();
+    void chain(const stage* prev);
 
     inline const sm_table* operator[](int sid) const { return _tables[sid]; };
 
@@ -73,6 +70,9 @@ private:
     // queue per loader/storer pair.
     sm_queue* _queues[MAX_STORERS][MAX_LOADERS];
 
+    bool _enable_prune = false;
+    const prune* _prune;
+
     // Signal end of loader threads.
     std::atomic<bool> _done{false};
 
@@ -85,7 +85,7 @@ private:
     void load(int lid);
     void load_file(int lid, std::string file);
     inline void load_sub(int lid, const char* sub, int len,
-                         sm_read_kind kind, sm_bulk* bulks);
+                         sm_read_kind kind, sm_bulk_msg* bulks);
 
     void incr(int sid);
     inline void incr_key(int sid, sm_cache* cache, sm_key key,

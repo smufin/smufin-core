@@ -17,6 +17,10 @@ struct sm_config {
 
     std::string exec;
 
+    double false_positive_rate;
+    uint64_t all_size;
+    uint64_t allowed_size;
+
     // Total number of table and cache keys.
     uint64_t table_size;
     uint64_t cache_size;

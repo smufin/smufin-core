@@ -34,6 +34,10 @@ void sm_config::load(const string &filename)
 
     exec = tree.get<string>("core.exec", "count:run,stats");
 
+    false_positive_rate = tree.get<double>("prune.false-positive-rate", 0.05);
+    all_size = tree.get<uint64_t>("prune.all-size", 100000000000);
+    allowed_size = tree.get<uint64_t>("prune.allowed-size", 10000000000);
+
     table_size = tree.get<uint64_t>("count.table-size", 12800000000);
     cache_size = tree.get<uint64_t>("count.cache-size", 106240000000);
 

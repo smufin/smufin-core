@@ -41,6 +41,13 @@ count::count(const sm_config &conf) : stage(conf)
     _executable["stats"] = std::bind(&count::stats, this);
 }
 
+void count::chain(const stage* prev)
+{
+    cout << "Chain: count" << endl;
+    _prune = static_cast<const prune*>(prev);
+    _enable_prune = true;
+}
+
 void count::run()
 {
     if (_conf.num_loaders > MAX_LOADERS) {
@@ -56,7 +63,7 @@ void count::run()
     // Initialize message queues
     for (int i = 0; i < _conf.num_storers; i++) {
         for (int j = 0; j < _conf.num_loaders; j++) {
-            _queues[i][j] = new sm_queue(QMSG_LEN);
+            _queues[i][j] = new sm_queue(COUNT_QUEUE_LEN);
         }
     }
 
@@ -101,7 +108,7 @@ void count::load_file(int lid, string file)
 {
     int len;
     int nreads = 0;
-    sm_bulk bulks[MAX_STORERS];
+    sm_bulk_msg bulks[MAX_STORERS];
     gzFile in = gzopen(file.c_str(), "rb");
 
     // Identify read kind from file name.
@@ -161,7 +168,7 @@ void count::load_file(int lid, string file)
 }
 
 inline void count::load_sub(int lid, const char* sub, int len,
-                            sm_read_kind kind, sm_bulk* bulks)
+                            sm_read_kind kind, sm_bulk_msg* bulks)
 {
     if (len < _conf.k)
         return;
@@ -181,6 +188,10 @@ inline void count::load_sub(int lid, const char* sub, int len,
         int sid = map_l2[m];
         sm_key key = strtob4(stem);
 
+        if (_enable_prune && !(*_prune)[sid]->lookup(key)) {
+            continue;
+        }
+
         sm_value_offset off;
         off.first = sm::code[sub[i]] - '0';
         off.last = sm::code[sub[i + _conf.k - 1]] - '0';
@@ -189,7 +200,7 @@ inline void count::load_sub(int lid, const char* sub, int len,
         bulks[sid].array[bulks[sid].num] = sm_msg(key, off);
         bulks[sid].num++;
 
-        if (bulks[sid].num == BULK_LEN) {
+        if (bulks[sid].num == BULK_MSG_LEN) {
             while (!_queues[sid][lid]->write(bulks[sid])) {
                 continue;
             }
@@ -205,7 +216,7 @@ void count::incr(int sid)
     sm_cache cache = sm_cache();
     cache.resize(_cache_size);
 
-    sm_bulk* pmsg;
+    sm_bulk_msg* pmsg;
     while (!_done) {
         for (int lid = 0; lid < _conf.num_loaders; lid++) {
             pmsg = _queues[sid][lid]->frontPtr();

@@ -11,6 +11,8 @@ GSH_INC   ?= /usr/include/sparsehash
 MCQ_INC   ?= /usr/include/concurrentqueue
 FOLLY_INC ?= /usr/include/folly
 BOOST_INC ?= /usr/include/boost
+BF_INC    ?= /usr/include/libbf
+BF_LIB    ?= /usr/lib
 ROCKS_INC ?= /usr/include/rocksdb
 ROCKS_LIB ?= /usr/lib
 
@@ -20,11 +22,11 @@ OBJ = $(SRC:.cpp=.o)
 DEP = $(SRC:.cpp=.d)
 
 INC = -Isrc -I$(GSH_INC) -I$(MCQ_INC) -I$(FOLLY_INC) \
-      -I$(BOOST_INC) -I$(ROCKS_INC)
-LIB = -lz -lpthread -lrocksdb
+      -I$(BOOST_INC) -I$(BF_INC) -I$(ROCKS_INC)
+LIB = -lz -lpthread -lbf -lrocksdb
 
 CFLAGS += -std=c++11
-LFLAGS += -L$(ROCKS_LIB)
+LFLAGS += -L$(BF_LIB) -L$(ROCKS_LIB)
 
 all: $(BIN)
 

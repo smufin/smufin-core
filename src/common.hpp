@@ -15,6 +15,9 @@
 #define MAP_LEN 5
 #define MAP_FILE_LEN 1024 // (BASE_LEN ^ MAP_LEN)
 
+#define MAX_STORERS 128
+#define MAX_LOADERS 128
+
 // Convert a string of 5 chars/bytes of the 4-base ACGT alphabet (40 bits)
 // into a unique unsigned int identifier in the [0-1024) range (10 bits). The
 // idea is to take the 2nd and 3rd least significant bits of each byte as
@@ -28,6 +31,8 @@
         (h) = ((h) & 0xFFFF) + ((h) >> 14); \
         (h) = ((h) & 0xFF) + ((h) >> 4);    \
         (h) = ((h) & 0xFF) + (((h) & 0xFF00) >> 6); })
+
+typedef uint64_t sm_key;
 
 enum sm_read_kind : uint8_t {
     NORMAL_READ, CANCER_READ
