@@ -62,7 +62,5 @@ digraph stage_deps {
     "merge:run" -> "group:run"
     "merge:run_{seq,k2i,i2p}_{nn,tn,tm}" -> "group:run"
 
-    "filter:dump" -> "group:run" [xlabel = "1 partition"];
-
     "group:run" -> "group:stats"
 }
