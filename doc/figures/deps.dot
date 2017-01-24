@@ -6,6 +6,12 @@ digraph stage_deps {
     rankdir=LR;
 
     subgraph cluster_0 {
+        label = "prune"
+        color = black;
+        "prune:run" [label = run];
+    }
+
+    subgraph cluster_1 {
         label = "count"
         color = black;
         "count:run" [label = run];
@@ -14,7 +20,7 @@ digraph stage_deps {
         "count:restore" [label = restore];
     }
 
-    subgraph cluster_1 {
+    subgraph cluster_2 {
         label = "filter"
         color = black;
         "filter:run" [label = run];
@@ -22,7 +28,7 @@ digraph stage_deps {
         "filter:stats" [label = stats];
     }
 
-    subgraph cluster_2 {
+    subgraph cluster_3 {
         label = "merge"
         color = black;
         "merge:run" [label = run];
@@ -31,12 +37,14 @@ digraph stage_deps {
         "merge:stats" [label = stats];
     }
 
-    subgraph cluster_3 {
+    subgraph cluster_4 {
         label = "group"
         color = black;
         "group:run" [label = run];
         "group:stats" [label = stats];
     }
+
+    "prune:run" -> "count:run" [style = dashed]
 
     "count:run" -> "count:dump"
     "count:run" -> "count:stats"
