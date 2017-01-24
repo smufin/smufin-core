@@ -15,6 +15,7 @@ support (>= 4.8), and the following libraries:
  - [boost][boost] (>= 1.55): Property trees and string algorithms
  - [moodycamel::ConcurrentQueue][concurrentq]: MPMC queue
  - [folly::ProducerConsumerQueue][folly]: SPSC queue
+ - [libbf][libbf]: Bloom filter library
  - [RocksDB][rocksdb] (>= 4.9): Key-value store for flash storage
 
 The paths for each library can be configured using a custom `make.conf` file,
@@ -108,4 +109,5 @@ Jordà Polo `<jorda.polo@bsc.es>`, 2015-2017.
 [folly]: https://github.com/facebook/folly "Folly"
 [rocksdb]: https://github.com/facebook/rocksdb "RocksDB"
 [concurrentq]: https://github.com/cameron314/concurrentqueue "ConcurrentQueue"
+[libbf]: https://github.com/mavam/libbf "libbf"
 [formats]: https://github.com/HiEST/shmufin/blob/master/doc/formats.md
