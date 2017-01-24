@@ -54,6 +54,10 @@ use the following:
 
 ### Commands
 
+ * `prune`
+   * `run`: generates a bloom filter of stems that have been observed in the
+     input more than once; optional stage that can be run first to save memory
+     during `count`.
  * `count`
    * `run`: counts frequency of normal and tumoral kmers in input sequence,
      ignoring kmers whose stem is only seen once; counters hold values up to
