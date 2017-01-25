@@ -91,6 +91,9 @@ void count::run()
     _done = true;
     for (auto& storer: storers)
         storer.join();
+
+    for (int i = 0; i < _conf.num_storers; i++)
+        cout << "Table " << i << ": " << _tables[i]->size() << endl;
 }
 
 void count::load(int lid)
@@ -213,8 +216,11 @@ void count::incr(int sid)
 {
     _tables[sid] = new sm_table();
     _tables[sid]->resize(_table_size);
-    sm_cache cache = sm_cache();
-    cache.resize(_cache_size);
+
+    if (_conf.enable_cache) {
+        _caches[sid] = new sm_cache();
+        _caches[sid]->resize(_cache_size);
+    }
 
     sm_bulk_msg* pmsg;
     while (!_done) {
@@ -222,7 +228,7 @@ void count::incr(int sid)
             pmsg = _queues[sid][lid]->frontPtr();
             while (pmsg) {
                 for (int i = 0; i < pmsg->num; i++) {
-                    incr_key(sid, &cache, pmsg->array[i].first, pmsg->array[i].second);
+                    incr_key(sid, pmsg->array[i].first, pmsg->array[i].second);
                 }
                 _queues[sid][lid]->popFront();
                 pmsg = _queues[sid][lid]->frontPtr();
@@ -234,19 +240,19 @@ void count::incr(int sid)
         pmsg = _queues[sid][lid]->frontPtr();
         while (pmsg) {
             for (int i = 0; i < pmsg->num; i++) {
-                incr_key(sid, &cache, pmsg->array[i].first, pmsg->array[i].second);
+                incr_key(sid, pmsg->array[i].first, pmsg->array[i].second);
             }
             _queues[sid][lid]->popFront();
             pmsg = _queues[sid][lid]->frontPtr();
         }
     }
 
-    cout << "Cache " << sid << ": " << cache.size() << endl;
-    cout << "Table " << sid << ": " << _tables[sid]->size() << endl;
+    if (_conf.enable_cache) {
+        delete _caches[sid];
+    }
 }
 
-inline void count::incr_key(int sid, sm_cache* cache, sm_key key,
-                            sm_value_offset off)
+inline void count::incr_key(int sid, sm_key key, sm_value_offset off)
 {
     // Use sm_cache to hold keys with a single appearance; as soon as a key in
     // increased more than once, it is placed into sm_table. The steps are as
@@ -255,25 +261,31 @@ inline void count::incr_key(int sid, sm_cache* cache, sm_key key,
     // - Find key in cache.
     //   - Key doesn't exist in cache: insert in cache.
     //   - Key exists in cache: find key in table.
-    //     - Key doesn't exist in table: insert key and cache in table.
+    //     - Key doesn't exist in table: insert key and cache value in table.
     //     - Key exists in table: update entry if there's no overflow.
 
-    sm_cache::const_iterator cit = cache->find(key);
-    if (cit == cache->end()) {
-        uint8_t val = (off.first << 6) | (off.last << 4) | (off.kind << 2);
-        cache->insert(std::pair<sm_key, uint8_t>(key, val));
-        return;
+    sm_cache::const_iterator cit;
+
+    if (_conf.enable_cache) {
+        cit = _caches[sid]->find(key);
+        if (cit == _caches[sid]->end()) {
+            uint8_t val = (off.first << 6) | (off.last << 4) | (off.kind << 2);
+            _caches[sid]->insert(std::pair<sm_key, uint8_t>(key, val));
+            return;
+        }
     }
 
     sm_table::const_iterator it = _tables[sid]->find(key);
     if (it == _tables[sid]->end()) {
-        uint8_t cache_value = cit->second;
-        sm_value_offset coff;
-        coff.first = cache_value >> 6;
-        coff.last = (cache_value >> 4) & 0x03;
-        coff.kind = (sm_read_kind) ((cache_value >> 2) & 0x03);
         sm_value val;
-        val.v[coff.first][coff.last][coff.kind] = 1;
+        if (_conf.enable_cache) {
+            uint8_t cache_value = cit->second;
+            sm_value_offset coff;
+            coff.first = cache_value >> 6;
+            coff.last = (cache_value >> 4) & 0x03;
+            coff.kind = (sm_read_kind) ((cache_value >> 2) & 0x03);
+            val.v[coff.first][coff.last][coff.kind] = 1;
+        }
         val.v[off.first][off.last][off.kind]++;
         _tables[sid]->insert(std::pair<sm_key, sm_value>(key, val));
     } else {

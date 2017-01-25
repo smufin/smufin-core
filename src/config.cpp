@@ -38,6 +38,7 @@ void sm_config::load(const string &filename)
     all_size = tree.get<uint64_t>("prune.all-size", 100000000000);
     allowed_size = tree.get<uint64_t>("prune.allowed-size", 10000000000);
 
+    enable_cache = tree.get<bool>("count.enable-cache", true);
     table_size = tree.get<uint64_t>("count.table-size", 12800000000);
     cache_size = tree.get<uint64_t>("count.cache-size", 106240000000);
 

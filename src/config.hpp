@@ -21,6 +21,8 @@ struct sm_config {
     uint64_t all_size;
     uint64_t allowed_size;
 
+    bool enable_cache;
+
     // Total number of table and cache keys.
     uint64_t table_size;
     uint64_t cache_size;

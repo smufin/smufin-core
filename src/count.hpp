@@ -65,6 +65,7 @@ private:
 
     // Hash tables that hold data in memory, one per storer/consumer thread.
     sm_table* _tables[MAX_STORERS];
+    sm_cache* _caches[MAX_STORERS];
 
     // Message queues between loader threads and storer threads. One SPSC
     // queue per loader/storer pair.
@@ -88,8 +89,7 @@ private:
                          sm_read_kind kind, sm_bulk_msg* bulks);
 
     void incr(int sid);
-    inline void incr_key(int sid, sm_cache* cache, sm_key key,
-                         sm_value_offset off);
+    inline void incr_key(int sid, sm_key key, sm_value_offset off);
 
     void dump();
     void dump_table(int sid);
