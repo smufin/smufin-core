@@ -1,0 +1,2 @@
+00-prune-1p1s.test -- -p 1 -s 1
+00-prune-1p2s.test -- -p 1 -s 2
