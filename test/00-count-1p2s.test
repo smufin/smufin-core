@@ -1,6 +1,6 @@
 Execute: count/stats
-Table 0: 270 374 3097
-Table 1: 253 358 3012
+Table 0: 270 0 374 3097
+Table 1: 253 0 358 3012
 Histo N: 0 1 89
 Histo N: 1 2 34
 Histo N: 2 4 130
@@ -11,5 +11,6 @@ Histo T: 2 4 105
 Histo T: 3 8 222
 Histo T: 4 16 6
 Number of stems: 523
+Number of stems seen once: 0
 Number of kmers: 732
 Sum of counters: 6109
