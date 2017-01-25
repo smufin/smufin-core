@@ -1,0 +1,3 @@
+#!/bin/bash
+
+awk '/Execute: count.stats/{f=1} /Time count.stats/{f=0} f' -
