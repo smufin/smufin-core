@@ -355,11 +355,13 @@ void count::stats()
     std::map<uint64_t, uint64_t> hist_n, hist_t;
 
     uint64_t total_stems = 0;
+    uint64_t total_once = 0;
     uint64_t total_kmers = 0;
     uint64_t total_sum = 0;
 
     for (int i = 0; i < _conf.num_storers; i++) {
         uint64_t num_stems = _tables[i]->size();
+        uint64_t num_once = 0;
         uint64_t num_kmers = 0;
         uint64_t sum = 0;
         for (sm_table::const_iterator it = _tables[i]->begin();
@@ -379,11 +381,14 @@ void count::stats()
                 hist_n[int(log2(sum_n))]++;
             if (sum_t > 0)
                 hist_t[int(log2(sum_t))]++;
+            if (sum_n + sum_t == 1)
+                num_once++;
             sum += sum_n + sum_t;
         }
-        cout << "Table " << i << ": " << num_stems << " " << num_kmers
-             << " " << sum << endl;
+        cout << "Table " << i << ": " << num_stems << " " << num_once << " "
+             << num_kmers << " " << sum << endl;
         total_stems += num_stems;
+        total_once += num_once;
         total_kmers += num_kmers;
         total_sum += sum;
     }
@@ -399,6 +404,7 @@ void count::stats()
     }
 
     cout << "Number of stems: " << total_stems << endl;
+    cout << "Number of stems seen once: " << total_once << endl;
     cout << "Number of kmers: " << total_kmers << endl;
     cout << "Sum of counters: " << total_sum << endl;
 }
