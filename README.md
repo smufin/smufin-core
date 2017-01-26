@@ -1,14 +1,14 @@
-# shmufin: Hash-based Mutation Finder
+# smufin: Mutation Finder and Genome Comparison Toolset
 
-*shmufin* is the codename of a SMUFIN redesign based on hashtables. More
-specifically, *shmufin* stands for Sparse Hash-based Mutation Finder, and is
-pronounced /ʃmʌfɪn/. In turn, [SMUFIN][smufin] is a reference-free method to
-identify mutations on tumor genomes, comparing them directly against the
-corresponding normal genome of the same patient.
+*smufin* is a mutation finder and side-by-side genome comparison and
+manipulation toolset based on k-mers. It's both the current reference
+implementation and a redesign of the original [SMUFIN][smufin], a
+reference-free method to identify mutations on tumor genomes, comparing them
+directly against the corresponding normal genome of the same patient.
 
 ## Compile
 
-Compiling *shmufin* requires `make`, a compiler such as `gcc` with C++11
+Compiling *smufin* requires `make`, a compiler such as `gcc` with C++11
 support (>= 4.8), and the following libraries:
 
  - [sparsehash][sparsehash] (>= 2.0)
@@ -28,7 +28,7 @@ the former two and last libraries are available as:
  librocksdb-dev
  ```
 
-*shmufin*'s makefile defaults to a minimal output. For a more verbose output,
+*smufin*'s makefile defaults to a minimal output. For a more verbose output,
 use the following:
 
  ```
@@ -91,7 +91,7 @@ use the following:
 
 Commands need to follow a certain order, and some stages can't be executed
 without running earlier stages first. The following graph shows the
-dependencies between *shmufin* commands:
+dependencies between *smufin* commands:
 
 ![Command dependency graph](doc/figures/deps.png)
 
@@ -110,4 +110,4 @@ Jordà Polo `<jorda.polo@bsc.es>`, 2015-2017.
 [rocksdb]: https://github.com/facebook/rocksdb "RocksDB"
 [concurrentq]: https://github.com/cameron314/concurrentqueue "ConcurrentQueue"
 [libbf]: https://github.com/mavam/libbf "libbf"
-[formats]: https://github.com/HiEST/shmufin/blob/master/doc/formats.md
+[formats]: https://github.com/HiEST/smufin/blob/master/doc/formats.md
