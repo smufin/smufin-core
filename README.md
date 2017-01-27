@@ -6,6 +6,12 @@ implementation and a redesign of the original [SMUFIN][smufin], a
 reference-free method to identify mutations on tumor genomes, comparing them
 directly against the corresponding normal genome of the same patient.
 
+*smufin* has been designed as a reconfigurable set of checkpointable stages,
+and supports different modes of execution to adapt to the characteristics of
+the hardware where it's running: from scale-out executions in large data
+centers to scale-up solutions that take advantage of accelerators and storage
+class memory in a single machine.
+
 ## Compile
 
 Compiling *smufin* requires `make`, a compiler such as `gcc` with C++11
