@@ -1,4 +1,4 @@
-# smufin: Mutation Finder and Genome Comparison Toolset
+# smufin: Mutation Finder and Genome Comparison
 
 *smufin* is a mutation finder and side-by-side genome comparison and
 manipulation toolset based on k-mers. It's both the current reference
