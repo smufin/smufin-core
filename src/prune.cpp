@@ -7,6 +7,7 @@
 #include <sstream>
 #include <string>
 
+#include "input_iterator.hpp"
 #include "util.hpp"
 
 using std::cout;
@@ -82,42 +83,26 @@ void prune::load(int lid)
 
 void prune::load_file(int lid, string file)
 {
-    int len;
-    int nreads = 0;
-    sm_bulk_key bulks[MAX_STORERS];
-    gzFile in = gzopen(file.c_str(), "rb");
-
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
     start = std::chrono::system_clock::now();
 
-    kseq_t *seq = kseq_init(in);
-    while ((len = kseq_read(seq)) >= 0) {
-        nreads++;
+    uint64_t num_reads = 0;
+    sm_split_read read;
+    sm_bulk_key bulks[MAX_STORERS];
 
-        if (lq_count(seq->qual.s, seq->qual.l) > len/10)
-            continue;
+    input_iterator it(_conf);
+    it.init(file);
+    while (it.next(&read)) {
+        num_reads++;
 
-        int p = 0;
-        int l = seq->seq.l;
-        int n = seq->seq.l;
-        char *ps;
-
-        while ((ps = (char*) memchr(&seq->seq.s[p], 'N', l - p)) != NULL) {
-            n = ps - &seq->seq.s[p];
-            if (n > 0) {
-                load_sub(lid, &seq->seq.s[p], n, bulks);
-                p += n;
-            }
-            p++;
+        for (int i = 0; i < read.num_splits; i++) {
+            int p = read.splits[i][0];
+            int n = read.splits[i][1];
+            load_sub(lid, &read.seq->seq.s[p], n, bulks);
         }
 
-        n = l - p;
-        if (n > 0) {
-            load_sub(lid, &seq->seq.s[p], n, bulks);
-        }
-
-        if (nreads % 100000 == 0) {
+        if (num_reads % 100000 == 0) {
             end = std::chrono::system_clock::now();
             time = end - start;
             cout << "P: " << lid << " " << time.count() << endl;
@@ -131,9 +116,6 @@ void prune::load_file(int lid, string file)
         }
         bulks[sid].num = 0;
     }
-
-    kseq_destroy(seq);
-    gzclose(in);
 }
 
 inline void prune::load_sub(int lid, const char* sub, int len,

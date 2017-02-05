@@ -8,6 +8,7 @@
 
 #include "filter_format_plain.hpp"
 #include "filter_format_rocks.hpp"
+#include "input_iterator.hpp"
 #include "util.hpp"
 
 using std::cout;
@@ -80,60 +81,36 @@ void filter::load(int fid)
 
 void filter::load_file(int fid, string file)
 {
-    // Identify read kind from file name.
-    sm_read_kind kind = NORMAL_READ;
-    std::size_t found = file.find("_T_");
-    if (found != std::string::npos)
-        kind = CANCER_READ;
-
-    int len;
-    int nreads = 0;
-    gzFile in = gzopen(file.c_str(), "rb");
-
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
     start = std::chrono::system_clock::now();
 
-    kseq_t *seq = kseq_init(in);
-    while ((len = kseq_read(seq)) >= 0) {
-        nreads++;
+    uint64_t num_reads = 0;
+    sm_split_read read;
+    sm_bulk_msg bulks[MAX_STORERS];
 
-        if (lq_count(seq->qual.s, seq->qual.l) > len/10)
-            continue;
+    input_iterator it(_conf);
+    it.init(file);
+    while (it.next(&read)) {
+        num_reads++;
 
-        int p = 0;
-        int l = seq->seq.l;
-        int n = seq->seq.l;
-        char *ps;
-
-        while ((ps = (char*) memchr(&seq->seq.s[p], 'N', l - p)) != NULL) {
-            n = ps - &seq->seq.s[p];
-            if (n > 0) {
-                if (kind == CANCER_READ)
-                    filter_cancer(fid, seq, &seq->seq.s[p], n);
-                else
-                    filter_normal(fid, seq, &seq->seq.s[p], n);
-                p += n;
-            }
-            p++;
-        }
-
-        n = l - p;
-        if (n > 0) {
-            if (kind == CANCER_READ)
-                filter_cancer(fid, seq, &seq->seq.s[p], n);
+        for (int i = 0; i < read.num_splits; i++) {
+            int p = read.splits[i][0];
+            int n = read.splits[i][1];
+            if (read.kind == CANCER_READ)
+                filter_cancer(fid, read.seq, &read.seq->seq.s[p], n);
             else
-                filter_normal(fid, seq, &seq->seq.s[p], n);
+                filter_normal(fid, read.seq, &read.seq->seq.s[p], n);
         }
 
-        if (nreads % 100000 == 0) {
+        if (num_reads % 100000 == 0) {
             end = std::chrono::system_clock::now();
             time = end - start;
             cout << "F: " << fid << " " << time.count() << endl;
             start = std::chrono::system_clock::now();
         }
 
-        if (nreads % 10000000 == 0) {
+        if (num_reads % 10000000 == 0) {
             bool f = _format->flush();
             end = std::chrono::system_clock::now();
             time = end - start;
@@ -141,9 +118,6 @@ void filter::load_file(int fid, string file)
             start = std::chrono::system_clock::now();
         }
     }
-
-    kseq_destroy(seq);
-    gzclose(in);
 }
 
 void filter::filter_normal(int fid, kseq_t *seq, const char *sub, int len)
