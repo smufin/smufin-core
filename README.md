@@ -120,5 +120,5 @@ Jordà Polo `<jorda.polo@bsc.es>`, 2015-2017.
 [rocksdb]: https://github.com/facebook/rocksdb "RocksDB"
 [concurrentq]: https://github.com/cameron314/concurrentqueue "ConcurrentQueue"
 [libbf]: https://github.com/mavam/libbf "libbf"
-[formats]: https://github.com/HiEST/smufin/blob/master/doc/formats.md
-[smufinconf]: https://github.com/HiEST/smufin/blob/master/smufin.conf
+[formats]: doc/formats.md
+[smufinconf]: smufin.conf
