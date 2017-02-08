@@ -1,4 +1,4 @@
-#include "input_iterator.hpp"
+#include "input_iterator_fastq.hpp"
 
 #include <iostream>
 #include <string>
@@ -7,7 +7,7 @@ using std::cout;
 using std::endl;
 using std::string;
 
-bool input_iterator::init(string file)
+bool input_iterator_fastq::init(string file)
 {
     gzFile _in = gzopen(file.c_str(), "rb");
 
@@ -22,7 +22,7 @@ bool input_iterator::init(string file)
     return true;
 }
 
-bool input_iterator::next(sm_split_read *read)
+bool input_iterator_fastq::next(sm_split_read *read)
 {
     while (kseq_read(_seq) >= 0) {
         if (lq_count(_seq->qual.s, _seq->qual.l) > _seq->qual.l / 10)

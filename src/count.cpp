@@ -13,7 +13,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include "input_iterator.hpp"
+#include "input_iterator_fastq.hpp"
 #include "util.hpp"
 
 using std::cout;
@@ -118,7 +118,7 @@ void count::load_file(int lid, string file)
     sm_split_read read;
     sm_bulk_msg bulks[MAX_STORERS];
 
-    input_iterator it(_conf);
+    input_iterator_fastq it(_conf);
     it.init(file);
     while (it.next(&read)) {
         num_reads++;

@@ -1,5 +1,5 @@
-#ifndef __SM_INPUT_ITERATOR_H__
-#define __SM_INPUT_ITERATOR_H__
+#ifndef __SM_INPUT_ITERATOR_FASTQ_H__
+#define __SM_INPUT_ITERATOR_FASTQ_H__
 
 #include "common.hpp"
 
@@ -12,10 +12,10 @@ typedef struct {
     int splits[MAX_SPLITS][2] = {{0}};
 } sm_split_read;
 
-class input_iterator
+class input_iterator_fastq
 {
 public:
-    input_iterator(const sm_config &conf) : _conf(conf) {};
+    input_iterator_fastq(const sm_config &conf) : _conf(conf) {};
     bool init(std::string file);
     bool next(sm_split_read *read);
 

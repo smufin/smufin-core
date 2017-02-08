@@ -7,7 +7,7 @@
 #include <sstream>
 #include <string>
 
-#include "input_iterator.hpp"
+#include "input_iterator_fastq.hpp"
 #include "util.hpp"
 
 using std::cout;
@@ -91,7 +91,7 @@ void prune::load_file(int lid, string file)
     sm_split_read read;
     sm_bulk_key bulks[MAX_STORERS];
 
-    input_iterator it(_conf);
+    input_iterator_fastq it(_conf);
     it.init(file);
     while (it.next(&read)) {
         num_reads++;
