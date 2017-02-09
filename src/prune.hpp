@@ -8,6 +8,7 @@
 #include <folly/ProducerConsumerQueue.h>
 
 #include "common.hpp"
+#include "input_iterator_fastq.hpp"
 #include "stage.hpp"
 
 #define BULK_KEY_LEN 512
@@ -40,14 +41,10 @@ private:
 
     sm_prune_queue* _queues[MAX_STORERS][MAX_LOADERS];
 
+    input_queue* _input_queue;
+
     // Signal end of loader threads.
     std::atomic<bool> _done{false};
-
-    // SPMC queue to be initialized at startup time with the list of input
-    // files to be processed. Idle producer threads will read from the queue
-    // until there are no input files left.
-    moodycamel::ConcurrentQueue<std::string> _input_queue;
-    std::atomic<int> _input_len{0};
 
     void load(int lid);
     void load_file(int lid, std::string file);

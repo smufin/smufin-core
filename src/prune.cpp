@@ -7,7 +7,6 @@
 #include <sstream>
 #include <string>
 
-#include "input_iterator_fastq.hpp"
 #include "util.hpp"
 
 using std::cout;
@@ -16,16 +15,7 @@ using std::string;
 
 prune::prune(const sm_config &conf) : stage(conf)
 {
-    std::ifstream ifs(_conf.input_file);
-    if (!ifs.good()) {
-        cout << "Invalid input file" << endl;
-        exit(1);
-    }
-
-    for (string line; std::getline(ifs, line);) {
-        _input_queue.enqueue(line);
-        _input_len++;
-    }
+    _input_queue = new input_queue(conf);
 
     _all_size = _conf.all_size / _conf.num_partitions / _conf.num_storers;
     _allowed_size = _conf.allowed_size / _conf.num_partitions /
@@ -73,10 +63,10 @@ void prune::run()
 void prune::load(int lid)
 {
     string file;
-    while (_input_len > 0) {
-        while (_input_queue.try_dequeue(file)) {
+    while (_input_queue->len > 0) {
+        while (_input_queue->try_dequeue(file)) {
             load_file(lid, file);
-            _input_len--;
+            _input_queue->len--;
         }
     }
 }

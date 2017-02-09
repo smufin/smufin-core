@@ -3,11 +3,11 @@
 
 #include <string>
 
-#include <concurrentqueue.h>
 #include <folly/ProducerConsumerQueue.h>
 #include <google/sparse_hash_map>
 
 #include "common.hpp"
+#include "input_iterator_fastq.hpp"
 #include "prune.hpp"
 #include "stage.hpp"
 
@@ -74,14 +74,10 @@ private:
     bool _enable_prune = false;
     const prune* _prune;
 
+    input_queue* _input_queue;
+
     // Signal end of loader threads.
     std::atomic<bool> _done{false};
-
-    // SPMC queue to be initialized at startup time with the list of input
-    // files to be processed. Idle producer threads will read from the queue
-    // until there are no input files left.
-    moodycamel::ConcurrentQueue<std::string> _input_queue;
-    std::atomic<int> _input_len{0};
 
     void load(int lid);
     void load_file(int lid, std::string file);

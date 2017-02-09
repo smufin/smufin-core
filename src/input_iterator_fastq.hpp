@@ -3,6 +3,8 @@
 
 #include "common.hpp"
 
+#include <concurrentqueue.h>
+
 #define MAX_SPLITS 10
 
 typedef struct {
@@ -11,6 +13,23 @@ typedef struct {
     int num_splits;
     int splits[MAX_SPLITS][2] = {{0}};
 } sm_split_read;
+
+class input_queue
+{
+public:
+    input_queue(const sm_config &conf);
+    bool try_dequeue(std::string &file);
+
+    std::atomic<int> len{0};
+
+private:
+    const sm_config &_conf;
+
+    // SPMC queue to be initialized at startup time with the list of input
+    // files to be processed. Idle producer threads will can try to read from
+    // the queue until there are no input files left.
+    moodycamel::ConcurrentQueue<std::string> _queue;
+};
 
 class input_iterator_fastq
 {

@@ -1,11 +1,31 @@
 #include "input_iterator_fastq.hpp"
 
+#include <fstream>
 #include <iostream>
 #include <string>
 
 using std::cout;
 using std::endl;
 using std::string;
+
+input_queue::input_queue(const sm_config &conf) : _conf(conf)
+{
+    std::ifstream ifs(_conf.input_file);
+    if (!ifs.good()) {
+        cout << "Invalid input file" << endl;
+        exit(1);
+    }
+
+    for (string line; std::getline(ifs, line);) {
+        _queue.enqueue(line);
+        len++;
+    }
+}
+
+bool input_queue::try_dequeue(string &file)
+{
+    return _queue.try_dequeue(file);
+}
 
 bool input_iterator_fastq::init(string file)
 {

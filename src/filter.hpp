@@ -18,8 +18,7 @@ public:
     void stats();
 
 private:
-    moodycamel::ConcurrentQueue<std::string> _input_queue;
-    std::atomic<int> _input_len{0};
+    input_queue* _input_queue;
 
     const count* _count;
 

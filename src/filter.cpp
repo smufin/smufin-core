@@ -17,16 +17,7 @@ using std::string;
 
 filter::filter(const sm_config &conf) : stage(conf)
 {
-    std::ifstream ifs(_conf.input_file);
-    if (!ifs.good()) {
-        cout << "Invalid input file" << endl;
-        exit(1);
-    }
-
-    for (string line; std::getline(ifs, line);) {
-        _input_queue.enqueue(line);
-        _input_len++;
-    }
+    _input_queue = new input_queue(conf);
 
     std::unordered_map<string, filter_format*(*)(const sm_config &)> formats;
     formats["plain"] = &filter_format::create<filter_format_plain>;
@@ -71,10 +62,10 @@ void filter::dump()
 void filter::load(int fid)
 {
     string file;
-    while (_input_len > 0) {
-        while (_input_queue.try_dequeue(file)) {
+    while (_input_queue->len > 0) {
+        while (_input_queue->try_dequeue(file)) {
             load_file(fid, file);
-            _input_len--;
+            _input_queue->len--;
         }
     }
 }
