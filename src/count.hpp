@@ -45,7 +45,7 @@ typedef struct {
 
 typedef folly::ProducerConsumerQueue<sm_bulk_msg> sm_queue;
 
-// Stage that reads input files, splits sequences into kmers, and builds a
+// Stage that reads input chunks, splits sequences into kmers, and builds a
 // table of normal and tumoral kmer frequencies. `count' provides an in-memory
 // implementation, and uses a cache that holds kmers that are seen only once.
 // Frequency tables are indexed by stem instead of kmers, and each entry
@@ -80,7 +80,7 @@ private:
     std::atomic<bool> _done{false};
 
     void load(int lid);
-    void load_file(int lid, std::string file);
+    void load_chunk(int lid, const sm_chunk &chunk);
     inline void load_sub(int lid, const char* sub, int len,
                          sm_read_kind kind, sm_bulk_msg* bulks);
 

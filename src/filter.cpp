@@ -8,7 +8,7 @@
 
 #include "filter_format_plain.hpp"
 #include "filter_format_rocks.hpp"
-#include "input_iterator_fastq.hpp"
+#include "input.hpp"
 #include "util.hpp"
 
 using std::cout;
@@ -61,16 +61,16 @@ void filter::dump()
 
 void filter::load(int fid)
 {
-    string file;
+    sm_chunk chunk;
     while (_input_queue->len > 0) {
-        while (_input_queue->try_dequeue(file)) {
-            load_file(fid, file);
+        while (_input_queue->try_dequeue(chunk)) {
+            load_chunk(fid, chunk);
             _input_queue->len--;
         }
     }
 }
 
-void filter::load_file(int fid, string file)
+void filter::load_chunk(int fid, const sm_chunk &chunk)
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
@@ -80,8 +80,7 @@ void filter::load_file(int fid, string file)
     sm_split_read read;
     sm_bulk_msg bulks[MAX_STORERS];
 
-    input_iterator_fastq it(_conf);
-    it.init(file);
+    input_iterator_fastq it(_conf, chunk);
     while (it.next(&read)) {
         num_reads++;
 

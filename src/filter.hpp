@@ -25,7 +25,7 @@ private:
     filter_format* _format;
 
     void load(int fid);
-    void load_file(int fid, std::string file);
+    void load_chunk(int fid, const sm_chunk &chunk);
 
     void filter_normal(int fid, kseq_t *seq, const char *sub, int len);
     void filter_cancer(int fid, kseq_t *seq, const char *sub, int len);

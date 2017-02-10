@@ -13,6 +13,7 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include "input.hpp"
 #include "util.hpp"
 
 using std::cout;
@@ -89,16 +90,16 @@ void count::run()
 
 void count::load(int lid)
 {
-    string file;
+    sm_chunk chunk;
     while (_input_queue->len > 0) {
-        while (_input_queue->try_dequeue(file)) {
-            load_file(lid, file);
+        while (_input_queue->try_dequeue(chunk)) {
+            load_chunk(lid, chunk);
             _input_queue->len--;
         }
     }
 }
 
-void count::load_file(int lid, string file)
+void count::load_chunk(int lid, const sm_chunk &chunk)
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
@@ -108,8 +109,7 @@ void count::load_file(int lid, string file)
     sm_split_read read;
     sm_bulk_msg bulks[MAX_STORERS];
 
-    input_iterator_fastq it(_conf);
-    it.init(file);
+    input_iterator_fastq it(_conf, chunk);
     while (it.next(&read)) {
         num_reads++;
 

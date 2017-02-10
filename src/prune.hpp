@@ -47,7 +47,7 @@ private:
     std::atomic<bool> _done{false};
 
     void load(int lid);
-    void load_file(int lid, std::string file);
+    void load_chunk(int lid, const sm_chunk &chunk);
     inline void load_sub(int lid, const char* sub, int len,
                          sm_bulk_key* bulk);
 
