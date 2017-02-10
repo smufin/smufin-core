@@ -116,7 +116,7 @@ void count::load_chunk(int lid, const sm_chunk &chunk)
         for (int i = 0; i < read.num_splits; i++) {
             int p = read.splits[i][0];
             int n = read.splits[i][1];
-            load_sub(lid, &read.seq->seq.s[p], n, read.kind, bulks);
+            load_sub(lid, &read.seq->seq.s[p], n, chunk.kind, bulks);
         }
 
         if (num_reads % 100000 == 0) {

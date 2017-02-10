@@ -23,7 +23,6 @@ bool input_iterator_fastq::next(sm_split_read *read)
             continue;
 
         read->seq = _seq;
-        read->kind = _chunk.kind;
         read->num_splits = 0;
 
         int p = 0;

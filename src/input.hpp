@@ -9,7 +9,6 @@
 
 typedef struct {
     kseq_t *seq;
-    sm_read_kind kind;
     int num_splits;
     int splits[MAX_SPLITS][2] = {{0}};
 } sm_split_read;

@@ -87,7 +87,7 @@ void filter::load_chunk(int fid, const sm_chunk &chunk)
         for (int i = 0; i < read.num_splits; i++) {
             int p = read.splits[i][0];
             int n = read.splits[i][1];
-            if (read.kind == CANCER_READ)
+            if (chunk.kind == CANCER_READ)
                 filter_cancer(fid, read.seq, &read.seq->seq.s[p], n);
             else
                 filter_normal(fid, read.seq, &read.seq->seq.s[p], n);
