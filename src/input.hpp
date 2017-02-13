@@ -38,4 +38,15 @@ protected:
     moodycamel::ConcurrentQueue<sm_chunk> _queue;
 };
 
+class input_queue_bam_chunks : public input_queue
+{
+public:
+    input_queue_bam_chunks(const sm_config &conf) : input_queue(conf) {};
+    void init();
+
+private:
+    bool chunk_bam(const std::string bam_file, const int num_chunks,
+                   std::vector<uint64_t> &offsets);
+};
+
 #endif

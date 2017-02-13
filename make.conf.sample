@@ -19,6 +19,10 @@ BF_LIB = /usr/lib
 ROCKS_INC = /usr/include/rocksdb
 ROCKS_LIB = /usr/lib
 
+# htslib: paths to headers/libraries.
+HTS_INC = /usr/include/htslib
+HTS_LIB = /usr/lib
+
 # Compiler & linker verbosity.
 VERBOSE ?= 0
 

@@ -15,6 +15,8 @@ BF_INC    ?= /usr/include/libbf
 BF_LIB    ?= /usr/lib
 ROCKS_INC ?= /usr/include/rocksdb
 ROCKS_LIB ?= /usr/lib
+HTS_INC   ?= /usr/include/htslib
+HTS_LIB   ?= /usr/lib
 
 BIN = sm
 SRC = $(wildcard src/*.cpp)
@@ -22,11 +24,11 @@ OBJ = $(SRC:.cpp=.o)
 DEP = $(SRC:.cpp=.d)
 
 INC = -Isrc -I$(GSH_INC) -I$(MCQ_INC) -I$(FOLLY_INC) \
-      -I$(BOOST_INC) -I$(BF_INC) -I$(ROCKS_INC)
-LIB = -lz -lpthread -lbf -lrocksdb
+      -I$(BOOST_INC) -I$(BF_INC) -I$(ROCKS_INC) -I$(HTS_INC)
+LIB = -lz -lpthread -lbf -lrocksdb -lhts
 
 CFLAGS += -std=c++11
-LFLAGS += -L$(BF_LIB) -L$(ROCKS_LIB)
+LFLAGS += -L$(BF_LIB) -L$(ROCKS_LIB) -L$(HTS_LIB)
 
 all: $(BIN)
 
