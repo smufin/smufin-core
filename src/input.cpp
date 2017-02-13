@@ -8,7 +8,7 @@ using std::cout;
 using std::endl;
 using std::string;
 
-input_queue::input_queue(const sm_config &conf) : _conf(conf)
+void input_queue::init()
 {
     std::ifstream ifs(_conf.input_file);
     if (!ifs.good()) {

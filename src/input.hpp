@@ -23,12 +23,13 @@ typedef struct {
 class input_queue
 {
 public:
-    input_queue(const sm_config &conf);
+    input_queue(const sm_config &conf) : _conf(conf) {};
+    void init();
     bool try_dequeue(sm_chunk &chunk);
 
     std::atomic<int> len{0};
 
-private:
+protected:
     const sm_config &_conf;
 
     // SPMC queue to be initialized at startup time with the list of input

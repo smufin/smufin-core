@@ -18,6 +18,7 @@ using std::string;
 filter::filter(const sm_config &conf) : stage(conf)
 {
     _input_queue = new input_queue(conf);
+    _input_queue->init();
 
     std::unordered_map<string, filter_format*(*)(const sm_config &)> formats;
     formats["plain"] = &filter_format::create<filter_format_plain>;

@@ -17,6 +17,7 @@ using std::string;
 prune::prune(const sm_config &conf) : stage(conf)
 {
     _input_queue = new input_queue(conf);
+    _input_queue->init();
 
     _all_size = _conf.all_size / _conf.num_partitions / _conf.num_storers;
     _allowed_size = _conf.allowed_size / _conf.num_partitions /
