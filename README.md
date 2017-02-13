@@ -23,6 +23,7 @@ support (>= 4.8), and the following libraries:
  - [folly::ProducerConsumerQueue][folly]: SPSC queue
  - [libbf][libbf]: Bloom filters
  - [RocksDB][rocksdb] (>= 4.9): Key-value store for flash storage
+ - [htslib][htslib]: Parse BAM files
 
 The paths for each library can be configured using a custom `make.conf` file,
 see `make.conf.sample` for an example. On Debian-based systems, packages for
@@ -32,6 +33,7 @@ the former two and last libraries are available as:
  libsparsehash-dev
  libboost1.55-dev
  librocksdb-dev
+ libhts-dev
  ```
 
 *smufin*'s makefile defaults to a minimal output. For a more verbose output,
@@ -120,5 +122,6 @@ Jordà Polo `<jorda.polo@bsc.es>`, 2015-2017.
 [rocksdb]: https://github.com/facebook/rocksdb "RocksDB"
 [concurrentq]: https://github.com/cameron314/concurrentqueue "ConcurrentQueue"
 [libbf]: https://github.com/mavam/libbf "libbf"
+[htslib]: https://github.com/samtools/htslib "htslib"
 [formats]: doc/formats.md
 [smufinconf]: smufin.conf
