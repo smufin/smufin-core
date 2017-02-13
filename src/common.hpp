@@ -124,6 +124,7 @@ KSEQ_INIT(gzFile, gzread);
 
 uint64_t strtob4(const char *str);
 int lq_count(const char *str, int len);
+void rev(char seq[], int len);
 void revcomp(char seq[], int len);
 
 #endif

@@ -27,13 +27,24 @@ int lq_count(const char *str, int len)
     return lq;
 }
 
-// In-place conversion of sequence to its reverse complement.
+// In-place conversion of a sequence to its reverse.
+void rev(char seq[], int len)
+{
+    int i, j;
+    for (i = 0, j = len - 1; i < j; i++, j--) {
+        const char c = seq[i];
+        seq[i] = seq[j];
+        seq[j] = c;
+    }
+}
+
+// In-place conversion of a sequence to its reverse complement.
 void revcomp(char seq[], int len)
 {
-    int c, i, j;
+    int i, j;
     for (i = 0, j = len - 1; i <= j; i++, j--) {
-        c = seq[i];
+        const char c = sm::comp[seq[i]];
         seq[i] = sm::comp[seq[j]];
-        seq[j] = sm::comp[c];
+        seq[j] = c;
     }
 }
