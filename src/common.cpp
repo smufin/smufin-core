@@ -31,7 +31,7 @@ int lq_count(const char *str, int len)
 void revcomp(char seq[], int len)
 {
     int c, i, j;
-    for (i = 0, j = len - 1; i < j; i++, j--) {
+    for (i = 0, j = len - 1; i <= j; i++, j--) {
         c = seq[i];
         seq[i] = sm::comp[seq[j]];
         seq[j] = sm::comp[c];
