@@ -10,7 +10,7 @@ using std::string;
 
 input_iterator_bam::input_iterator_bam(const sm_config &conf,
                                        const sm_chunk &chunk)
-    : _conf(conf), _chunk(chunk)
+    : input_iterator(conf, chunk)
 {
     _in = sam_open(chunk.file.c_str(), "r");
     _record = bam_init1();

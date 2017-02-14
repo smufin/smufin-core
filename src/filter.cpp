@@ -8,8 +8,7 @@
 
 #include "filter_format_plain.hpp"
 #include "filter_format_rocks.hpp"
-#include "input_iterator_bam.hpp"
-#include "input_iterator_fastq.hpp"
+#include "registry.hpp"
 #include "util.hpp"
 
 using std::cout;
@@ -78,12 +77,13 @@ void filter::load_chunk(int fid, const sm_chunk &chunk)
     std::chrono::duration<double> time;
     start = std::chrono::system_clock::now();
 
+    input_iterator *it;
     uint64_t num_reads = 0;
     sm_read read;
     sm_bulk_msg bulks[MAX_STORERS];
 
-    input_iterator_fastq it(_conf, chunk);
-    while (it.next(&read)) {
+    it = sm::input_iterators.at(_conf.input_format)(_conf, chunk);
+    while (it->next(&read)) {
         num_reads++;
 
         for (int i = 0; i < read.num_splits; i++) {

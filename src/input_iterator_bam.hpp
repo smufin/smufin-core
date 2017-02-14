@@ -6,17 +6,15 @@
 
 #include "common.hpp"
 #include "input.hpp"
+#include "input_iterator.hpp"
 
-class input_iterator_bam
+class input_iterator_bam : public input_iterator
 {
 public:
     input_iterator_bam(const sm_config &conf, const sm_chunk &chunk);
     bool next(sm_read *read);
 
 private:
-    const sm_config &_conf;
-    const sm_chunk &_chunk;
-
     samFile *_in;
     bam1_t *_record;
     char _id[256];

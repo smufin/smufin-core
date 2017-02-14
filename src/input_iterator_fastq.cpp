@@ -10,7 +10,7 @@ using std::string;
 
 input_iterator_fastq::input_iterator_fastq(const sm_config &conf,
                                            const sm_chunk &chunk)
-    : _conf(conf), _chunk(chunk)
+    : input_iterator(conf, chunk)
 {
     gzFile _in = gzopen(_chunk.file.c_str(), "rb");
     _seq = kseq_init(_in);
