@@ -78,7 +78,7 @@ void filter::load_chunk(int fid, const sm_chunk &chunk)
     start = std::chrono::system_clock::now();
 
     uint64_t num_reads = 0;
-    sm_split_read read;
+    sm_read read;
     sm_bulk_msg bulks[MAX_STORERS];
 
     input_iterator_fastq it(_conf, chunk);
@@ -89,9 +89,9 @@ void filter::load_chunk(int fid, const sm_chunk &chunk)
             int p = read.splits[i][0];
             int n = read.splits[i][1];
             if (chunk.kind == CANCER_READ)
-                filter_cancer(fid, read.seq, &read.seq->seq.s[p], n);
+                filter_cancer(fid, &read, &read.seq[p], n);
             else
-                filter_normal(fid, read.seq, &read.seq->seq.s[p], n);
+                filter_normal(fid, &read, &read.seq[p], n);
         }
 
         if (num_reads % 100000 == 0) {
@@ -111,7 +111,8 @@ void filter::load_chunk(int fid, const sm_chunk &chunk)
     }
 }
 
-void filter::filter_normal(int fid, kseq_t *seq, const char *sub, int len)
+void filter::filter_normal(int fid, const sm_read *read, const char *sub,
+                           int len)
 {
     if (len < _conf.k)
         return;
@@ -120,16 +121,17 @@ void filter::filter_normal(int fid, kseq_t *seq, const char *sub, int len)
     for (int i = 0; i <= len - _conf.k; i++) {
         strncpy(kmer, &sub[i], _conf.k);
         kmer[_conf.k] = '\0';
-        filter_all(fid, seq, i, false, kmer, NN);
+        filter_all(fid, read, i, false, kmer, NN);
 
         strncpy(kmer, &sub[i], _conf.k);
         kmer[_conf.k] = '\0';
         revcomp(kmer, _conf.k);
-        filter_all(fid, seq, i, true, kmer, NN);
+        filter_all(fid, read, i, true, kmer, NN);
     }
 }
 
-void filter::filter_cancer(int fid, kseq_t *seq, const char *sub, int len)
+void filter::filter_cancer(int fid, const sm_read *read, const char *sub,
+                           int len)
 {
     if (len < _conf.k)
         return;
@@ -138,14 +140,14 @@ void filter::filter_cancer(int fid, kseq_t *seq, const char *sub, int len)
     for (int i = 0; i <= len - _conf.k; i++) {
         strncpy(kmer, &sub[i], _conf.k);
         kmer[_conf.k] = '\0';
-        filter_branch(fid, seq, i, false, kmer, TM);
-        filter_all(fid, seq, i, false, kmer, TN);
+        filter_branch(fid, read, i, false, kmer, TM);
+        filter_all(fid, read, i, false, kmer, TN);
 
         strncpy(kmer, &sub[i], _conf.k);
         kmer[_conf.k] = '\0';
         revcomp(kmer, _conf.k);
-        filter_branch(fid, seq, i, true, kmer, TM);
-        filter_all(fid, seq, i, true, kmer, TN);
+        filter_branch(fid, read, i, true, kmer, TM);
+        filter_all(fid, read, i, true, kmer, TN);
     }
 }
 
@@ -172,7 +174,7 @@ int filter::get_value(int fid, char kmer[], sm_table::const_iterator *it)
     return 0;
 }
 
-void filter::filter_branch(int fid, kseq_t *seq, int pos, bool rev,
+void filter::filter_branch(int fid, const sm_read *read, int pos, bool rev,
                            char kmer[], sm_idx_set set)
 {
     sm_table::const_iterator it;
@@ -188,10 +190,10 @@ void filter::filter_branch(int fid, kseq_t *seq, int pos, bool rev,
         nsum += it->second.v[f][l][NORMAL_READ];
         tsum += it->second.v[f][l][CANCER_READ];
     }
-    filter_kmer(seq, pos, rev, kmer, nc, tc, nsum, tsum, set);
+    filter_kmer(read, pos, rev, kmer, nc, tc, nsum, tsum, set);
 }
 
-void filter::filter_all(int fid, kseq_t *seq, int pos, bool rev,
+void filter::filter_all(int fid, const sm_read *read, int pos, bool rev,
                         char kmer[], sm_idx_set set)
 {
     sm_table::const_iterator it;
@@ -209,12 +211,12 @@ void filter::filter_all(int fid, kseq_t *seq, int pos, bool rev,
             kmer[_conf.k - 1] = sm::alpha[l];
             uint32_t nc = it->second.v[f][l][NORMAL_READ];
             uint32_t tc = it->second.v[f][l][CANCER_READ];
-            filter_kmer(seq, pos, rev, kmer, nc, tc, nsum, tsum, set);
+            filter_kmer(read, pos, rev, kmer, nc, tc, nsum, tsum, set);
         }
     }
 }
 
-void filter::filter_kmer(kseq_t *seq, int pos, bool rev, char kmer[],
+void filter::filter_kmer(const sm_read *read, int pos, bool rev, char kmer[],
                          uint32_t nc, uint32_t tc, uint32_t nsum,
                          uint32_t tsum, sm_idx_set set)
 {
@@ -222,8 +224,8 @@ void filter::filter_kmer(kseq_t *seq, int pos, bool rev, char kmer[],
         if (rev) {
             // Recalculate reverse-complement position since the loops, and
             // thus the passed `pos', follow the forward sequence.
-            pos = seq->seq.l - _conf.k - pos;
+            pos = read->len - _conf.k - pos;
         }
-        _format->update(seq, pos, rev, kmer, set);
+        _format->update(read, pos, rev, kmer, set);
     }
 }

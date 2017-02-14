@@ -16,13 +16,16 @@ input_iterator_fastq::input_iterator_fastq(const sm_config &conf,
     _seq = kseq_init(_in);
 }
 
-bool input_iterator_fastq::next(sm_split_read *read)
+bool input_iterator_fastq::next(sm_read *read)
 {
     while (kseq_read(_seq) >= 0) {
         if (lq_count(_seq->qual.s, _seq->qual.l) > _seq->qual.l / 10)
             continue;
 
-        read->seq = _seq;
+        read->id = _seq->name.s;
+        read->seq = _seq->seq.s;
+        read->qual = _seq->qual.s;
+        read->len = _seq->seq.l;
         read->num_splits = 0;
 
         int p = 0;

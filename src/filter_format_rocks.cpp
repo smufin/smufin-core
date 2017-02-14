@@ -43,14 +43,14 @@ filter_format_rocks::filter_format_rocks(const sm_config &conf)
     assert(status.ok());
 }
 
-void filter_format_rocks::update(kseq_t *seq, int pos, bool rev, char kmer[],
-                                 sm_idx_set set)
+void filter_format_rocks::update(const sm_read *read, int pos, bool rev,
+                                 char kmer[], sm_idx_set set)
 {
-    string sid = seq->name.s;
+    string sid = read->id;
     rocksdb::WriteOptions w_options;
     w_options.disableWAL = true;
 
-    _seq[set]->Put(w_options, sid, seq->seq.s);
+    _seq[set]->Put(w_options, sid, read->seq);
 
     if (set == TM) {
         sm_pos_bitmap p;

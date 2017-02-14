@@ -8,10 +8,13 @@
 #define MAX_SPLITS 10
 
 typedef struct {
-    kseq_t *seq;
+    char *id;
+    char *seq;
+    char *qual;
+    int len;
     int num_splits;
     int splits[MAX_SPLITS][2] = {{0}};
-} sm_split_read;
+} sm_read;
 
 typedef struct {
     std::string file;

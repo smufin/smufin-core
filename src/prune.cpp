@@ -80,7 +80,7 @@ void prune::load_chunk(int lid, const sm_chunk &chunk)
     start = std::chrono::system_clock::now();
 
     uint64_t num_reads = 0;
-    sm_split_read read;
+    sm_read read;
     sm_bulk_key bulks[MAX_STORERS];
 
     input_iterator_fastq it(_conf, chunk);
@@ -90,7 +90,7 @@ void prune::load_chunk(int lid, const sm_chunk &chunk)
         for (int i = 0; i < read.num_splits; i++) {
             int p = read.splits[i][0];
             int n = read.splits[i][1];
-            load_sub(lid, &read.seq->seq.s[p], n, bulks);
+            load_sub(lid, &read.seq[p], n, bulks);
         }
 
         if (num_reads % 100000 == 0) {

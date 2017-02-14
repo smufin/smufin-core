@@ -25,7 +25,8 @@ class filter_format_rocks : public filter_format
 public:
     filter_format_rocks(const sm_config &conf);
 
-    void update(kseq_t *seq, int pos, bool rev, char kmer[], sm_idx_set set);
+    void update(const sm_read *read, int pos, bool rev, char kmer[],
+                sm_idx_set set);
     bool flush() {};
     void dump();
     void stats();

@@ -2,6 +2,7 @@
 #define __SM_FILTER_FORMAT_H__
 
 #include "common.hpp"
+#include "input.hpp"
 
 // Abstract class that represents an interface to generate filter indexes.
 // Filter indexes must include mappings of sequence IDs to sequences (SEQ),
@@ -16,7 +17,7 @@ public:
 
     // Main method to add a particular position/kmer of a sequence to the
     // filter indexes.
-    virtual void update(kseq_t *seq, int pos, bool rev, char kmer[],
+    virtual void update(const sm_read *read, int pos, bool rev, char kmer[],
                         sm_idx_set set) = 0;
     virtual bool flush() = 0;
     virtual void dump() = 0;

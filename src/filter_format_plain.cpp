@@ -10,24 +10,24 @@ using std::cout;
 using std::endl;
 using std::string;
 
-void filter_format_plain::update(kseq_t *seq, int pos, bool rev, char kmer[],
-                                 sm_idx_set set)
+void filter_format_plain::update(const sm_read *read, int pos, bool rev,
+                                 char kmer[], sm_idx_set set)
 {
     char buf[512] = {0};
-    sprintf(buf, "%s %s", seq->name.s, seq->seq.s);
+    sprintf(buf, "%s %s", read->id, read->seq);
 
     _mutex[set].lock();
-    auto result = _ids[set].insert(seq->name.s);
+    auto result = _ids[set].insert(read->id);
     if (result.second == true) {
         _seq[set].insert(buf);
     }
     if (set == TM) {
         if (!rev)
-            _i2p[seq->name.s].a[pos / 64] |= 1UL << (pos % 64);
+            _i2p[read->id].a[pos / 64] |= 1UL << (pos % 64);
         else
-            _i2p[seq->name.s].b[pos / 64] |= 1UL << (pos % 64);
+            _i2p[read->id].b[pos / 64] |= 1UL << (pos % 64);
     } else if (_k2i[set][kmer].size() <= _conf.max_filter_reads) {
-        _k2i[set][kmer].insert(seq->name.s);
+        _k2i[set][kmer].insert(read->id);
     }
     _mutex[set].unlock();
 }

@@ -217,7 +217,7 @@ void group::run()
 
             string sid = it->key().ToString();
             string read_str = it->value().ToString();
-            sm_read read;
+            sm_read_code read;
             encode_read(read_str, read);
             (*_seq[set])[sid] = read;
 
@@ -245,7 +245,7 @@ void group::run()
           _conf.num_groupers);
 }
 
-void group::encode_read(std::string& str, sm_read& read)
+void group::encode_read(std::string& str, sm_read_code& read)
 {
     read.len = str.size();
     for (int i = 0; i < read.len; i += 32) {
@@ -253,7 +253,7 @@ void group::encode_read(std::string& str, sm_read& read)
     }
 }
 
-void group::decode_read(sm_read& read, std::string& str)
+void group::decode_read(sm_read_code& read, std::string& str)
 {
     char decode[4] = {'A', 'C', 'G', 'T'};
     str = "";
@@ -411,7 +411,7 @@ void group::populate(int gid)
                 if (!first_read)
                     ofs << ",";
                 first_read = false;
-                sm_read read = sit->second;
+                sm_read_code read = sit->second;
                 seq = "";
                 decode_read(read, seq);
                 ofs << "[\"" << sid << "\",\"" << seq << "\"]";
