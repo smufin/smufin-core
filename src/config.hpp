@@ -1,6 +1,8 @@
 #ifndef __SM_CONFIG_H__
 #define __SM_CONFIG_H__
 
+#include "common.hpp"
+
 struct sm_config {
     int k;
     int pid;
