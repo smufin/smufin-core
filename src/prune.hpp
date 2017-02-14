@@ -8,7 +8,7 @@
 #include <folly/ProducerConsumerQueue.h>
 
 #include "common.hpp"
-#include "input_iterator_fastq.hpp"
+#include "input.hpp"
 #include "stage.hpp"
 
 #define BULK_KEY_LEN 512

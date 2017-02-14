@@ -8,7 +8,8 @@
 
 #include "filter_format_plain.hpp"
 #include "filter_format_rocks.hpp"
-#include "input.hpp"
+#include "input_iterator_bam.hpp"
+#include "input_iterator_fastq.hpp"
 #include "util.hpp"
 
 using std::cout;

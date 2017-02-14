@@ -7,7 +7,7 @@
 #include <google/sparse_hash_map>
 
 #include "common.hpp"
-#include "input_iterator_fastq.hpp"
+#include "input.hpp"
 #include "prune.hpp"
 #include "stage.hpp"
 

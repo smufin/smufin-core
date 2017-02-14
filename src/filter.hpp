@@ -6,6 +6,7 @@
 #include "common.hpp"
 #include "count.hpp"
 #include "filter_format.hpp"
+#include "input.hpp"
 #include "stage.hpp"
 
 class filter : public stage

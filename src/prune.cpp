@@ -7,7 +7,8 @@
 #include <sstream>
 #include <string>
 
-#include "input.hpp"
+#include "input_iterator_bam.hpp"
+#include "input_iterator_fastq.hpp"
 #include "util.hpp"
 
 using std::cout;
