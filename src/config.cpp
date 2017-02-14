@@ -5,7 +5,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 
-#include "input.hpp"
+#include "registry.hpp"
 
 using std::cout;
 using std::endl;

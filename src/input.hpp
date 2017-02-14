@@ -57,13 +57,6 @@ private:
                    std::vector<uint64_t> &offsets);
 };
 
-namespace sm
-{
-    const std::map<std::string, input_queue*(*)(const sm_config &conf)>
-        input_queues = {
-            {"fastq", &input_queue::create<input_queue>},
-            {"bam", &input_queue::create<input_queue_bam_chunks>}
-        };
-}
+typedef std::function<input_queue*(const sm_config &conf)> input_queue_s;
 
 #endif
