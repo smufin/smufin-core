@@ -30,6 +30,7 @@ void sm_config::load(const string &filename)
     num_mergers = tree.get<int>("core.num-mergers", 1);
     num_groupers = tree.get<int>("core.num-groupers", 1);
 
+    input_format = tree.get<string>("core.input-format", "fastq");
     input_file = tree.get<string>("core.input", "");
     output_path = tree.get<string>("core.output", "");
     data_path = tree.get<string>("core.data", "data");

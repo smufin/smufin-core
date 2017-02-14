@@ -11,6 +11,7 @@ struct sm_config {
     int num_mergers;
     int num_groupers;
 
+    std::string input_format;
     std::string input_file;
     std::string output_path;
     std::string data_path;

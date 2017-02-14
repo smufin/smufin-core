@@ -32,6 +32,11 @@ public:
 
     std::atomic<int> len{0};
 
+    template<typename T> static input_queue* create(const sm_config &conf)
+    {
+        return new T(conf);
+    };
+
 protected:
     const sm_config &_conf;
 
@@ -51,5 +56,14 @@ private:
     bool chunk_bam(const std::string bam_file, const int num_chunks,
                    std::vector<uint64_t> &offsets);
 };
+
+namespace sm
+{
+    const std::map<std::string, input_queue*(*)(const sm_config &conf)>
+        input_queues = {
+            {"fastq", &input_queue::create<input_queue>},
+            {"bam", &input_queue::create<input_queue_bam_chunks>}
+        };
+}
 
 #endif
