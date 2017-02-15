@@ -1,36 +1,34 @@
 #!/bin/bash
 
 sm="../sm"
-data="../data"
 
-file="$1"
+path="$1"
+base=$(dirname $path)
+file=$(basename $path)
 
 if [ "$file" = "" ]; then
-    echo "Usage: $0 file.test" >&2
+    echo "Usage: $0 path/to/file.test" >&2
     exit 1
 fi
 
-id=$(echo $file | cut -d"-" -f 1)
-bin=$(echo $file | sed -r 's/(-[^-]+){1}.test//g')
-prev=$(echo $file | sed -r 's/.test/.prev/g')
-conf=$bin.conf
-args=$bin.args
-options=$(grep $file *.args | head -n 1 | cut -d" " -f 3-)
+id=$(echo $file | sed -r 's/(-[^-]+){1}.test//g')
+prev=$(echo $path | sed -r 's/.test/.prev/g')
+parse=$base/parse
+conf=$base/$id.conf
+args=$id
+options=$(grep $file $base/*.args | head -n 1 | cut -d" " -f 3-)
 tmp=$(mktemp -d)
-
-find $PWD/$id*.fq.gz > $tmp/input-file
 
 # Prepare environment with previous executions
 if [ -f "$prev" ]; then
     while read line; do
-        $sm -c $conf -i $tmp/input-file -o $tmp ${line[0]} \
-            >> $tmp/prev
+        $sm -c $conf -o $tmp ${line[0]} >> $tmp/prev
     done < "$prev"
 fi
 
-$sm -c $conf -i $tmp/input-file -o $tmp $options > $tmp/stdout
+$sm -c $conf -o $tmp $options > $tmp/stdout
 
-diff=$(./$bin < $tmp/stdout | diff -u $file -)
+diff=$(./$parse < $tmp/stdout | diff -u $path -)
 status=$?
 
 rm -rf $tmp

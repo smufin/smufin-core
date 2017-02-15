@@ -1,3 +1,0 @@
-#!/bin/bash
-
-awk '/Execute: filter.stats/{f=1} /Time filter.stats/{f=0} f' -

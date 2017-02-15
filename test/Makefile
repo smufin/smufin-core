@@ -1,4 +1,4 @@
-TEST = $(sort $(wildcard *.test))
+TEST = $(sort $(wildcard */*.test))
 RUN = $(TEST:.test=.run)
 
 all: $(RUN)
