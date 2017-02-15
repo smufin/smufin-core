@@ -123,6 +123,7 @@ extern int map_l2[MAP_FILE_LEN];
 KSEQ_INIT(gzFile, gzread);
 
 uint64_t strtob4(const char *str);
+void b4tostr(uint64_t code, int len, char *str);
 int lq_count(const char *str, int len);
 void rev(char seq[], int len);
 void revcomp(char seq[], int len);

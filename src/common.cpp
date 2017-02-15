@@ -14,6 +14,16 @@ uint64_t strtob4(const char *str)
     return i;
 }
 
+// Coded base 4 sequence to string conversion.
+void b4tostr(uint64_t code, int len, char *str)
+{
+    for (int i = 0; i < len; i++) {
+        str[len - i - 1] = sm::alpha[code & 3];
+        code >>= 2;
+    }
+    str[len] = '\0';
+}
+
 // Low-quality phred score counter. Returns number of bases with a quality
 // score below 20.
 int lq_count(const char *str, int len)
