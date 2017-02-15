@@ -11,11 +11,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include "count.hpp"
-#include "filter.hpp"
-#include "group.hpp"
-#include "merge.hpp"
-#include "prune.hpp"
+#include "registry.hpp"
 #include "util.hpp"
 
 using std::cout;
@@ -93,18 +89,11 @@ int main(int argc, char *argv[])
         stages[name] = steps;
     }
 
-    std::unordered_map<string, stage*(*)(const sm_config &conf)> registry;
-    registry["prune"] = &stage::create<prune>;
-    registry["count"] = &stage::create<count>;
-    registry["filter"] = &stage::create<filter>;
-    registry["merge"] = &stage::create<merge>;
-    registry["group"] = &stage::create<group>;
-
     std::vector<std::pair<string, stage*>> pipeline;
     for (auto& name: order) {
-        if (registry.find(name) != registry.end()) {
+        if (sm::stages.find(name) != sm::stages.end()) {
             cout << "Initialize: " << name << endl;
-            stage* s = registry[name](conf);
+            stage* s = sm::stages.at(name)(conf);
             pipeline.push_back(std::pair<string, stage*>(name, s));
         } else {
             cout << "Skip unknown stage: " << name << endl;

@@ -6,8 +6,6 @@
 #include <thread>
 #include <unordered_map>
 
-#include "filter_format_plain.hpp"
-#include "filter_format_rocks.hpp"
 #include "registry.hpp"
 #include "util.hpp"
 
@@ -20,14 +18,10 @@ filter::filter(const sm_config &conf) : stage(conf)
     _input_queue = sm::input_queues.at(_conf.input_format)(conf);
     _input_queue->init();
 
-    std::unordered_map<string, filter_format*(*)(const sm_config &)> formats;
-    formats["plain"] = &filter_format::create<filter_format_plain>;
-    formats["rocks"] = &filter_format::create<filter_format_rocks>;
-
     string name = _conf.filter_format;
-    if (formats.find(name) != formats.end()) {
+    if (sm::filter_formats.find(name) != sm::filter_formats.end()) {
         cout << "Initialize: filter-" << name << endl;
-        _format = formats[name](_conf);
+        _format = sm::filter_formats.at(name)(_conf);
     } else {
         cout << "Unknown filter format: " << name << endl;
         exit(1);

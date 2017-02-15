@@ -32,4 +32,6 @@ protected:
     const sm_config &_conf;
 };
 
+typedef std::function<filter_format*(const sm_config &conf)> filter_format_s;
+
 #endif

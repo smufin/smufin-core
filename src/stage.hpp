@@ -24,4 +24,6 @@ protected:
     std::map<std::string, std::function<void(void)>> _executable;
 };
 
+typedef std::function<stage*(const sm_config &conf)> stage_s;
+
 #endif

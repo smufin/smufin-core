@@ -9,8 +9,7 @@
 
 #include "db.hpp"
 #include "filter_iterator.hpp"
-#include "filter_iterator_plain.hpp"
-#include "filter_iterator_rocks.hpp"
+#include "registry.hpp"
 
 using std::cout;
 using std::endl;
@@ -84,11 +83,8 @@ void merge::load_seq(rocksdb::DB* db, sm_idx_set set, int pid)
     std::chrono::duration<double> time;
     start = std::chrono::system_clock::now();
 
-    std::map<string, seq_iterator_f> it_map;
-    it_map["plain"] = &create_iterator<seq_plain_iterator>;
-    it_map["rocks"] = &create_iterator<seq_rocks_iterator>;
-
-    filter_iterator<seq_t>* it = it_map[_conf.filter_format](_conf, set, pid);
+    filter_iterator<seq_t>* it;
+    it = sm::seq_iterators.at(_conf.filter_format)(_conf, set, pid);
     if (!it->init())
         return;
 
@@ -120,11 +116,8 @@ void merge::load_k2i(rocksdb::DB* db, sm_idx_set set, int pid)
     std::chrono::duration<double> time;
     start = std::chrono::system_clock::now();
 
-    std::map<string, k2i_iterator_f> it_map;
-    it_map["plain"] = &create_iterator<k2i_plain_iterator>;
-    it_map["rocks"] = &create_iterator<k2i_rocks_iterator>;
-
-    filter_iterator<k2i_t>* it = it_map[_conf.filter_format](_conf, set, pid);
+    filter_iterator<k2i_t>* it;
+    it = sm::k2i_iterators.at(_conf.filter_format)(_conf, set, pid);
     if (!it->init())
         return;
 
@@ -149,11 +142,8 @@ void merge::load_i2p(rocksdb::DB* db, sm_idx_set set, int pid)
     std::chrono::duration<double> time;
     start = std::chrono::system_clock::now();
 
-    std::map<string, i2p_iterator_f> it_map;
-    it_map["plain"] = &create_iterator<i2p_plain_iterator>;
-    it_map["rocks"] = &create_iterator<i2p_rocks_iterator>;
-
-    filter_iterator<i2p_t>* it = it_map[_conf.filter_format](_conf, set, pid);
+    filter_iterator<i2p_t>* it;
+    it = sm::i2p_iterators.at(_conf.filter_format)(_conf, set, pid);
     if (!it->init())
         return;
 

@@ -14,13 +14,6 @@
 // merge::load_{seq,k2i,i2p}.
 typedef std::function<void(rocksdb::DB* db, sm_idx_set set, int pid)> load_f;
 
-typedef std::function<filter_iterator<seq_t>*(const sm_config &conf,
-        sm_idx_set set, int pid)> seq_iterator_f;
-typedef std::function<filter_iterator<k2i_t>*(const sm_config &conf,
-        sm_idx_set set, int pid)> k2i_iterator_f;
-typedef std::function<filter_iterator<i2p_t>*(const sm_config &conf,
-        sm_idx_set set, int pid)> i2p_iterator_f;
-
 // The merge stage combines partial filtering results from multiple partitions
 // into a single set of filter indexes.
 class merge : public stage
