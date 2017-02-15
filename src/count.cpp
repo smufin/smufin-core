@@ -32,6 +32,7 @@ count::count(const sm_config &conf) : stage(conf)
     _executable["dump"] = std::bind(&count::dump, this);
     _executable["restore"] = std::bind(&count::restore, this);
     _executable["stats"] = std::bind(&count::stats, this);
+    _executable["export"] = std::bind(&count::export_csv, this);
 }
 
 void count::chain(const stage* prev)
@@ -374,4 +375,39 @@ void count::stats()
     cout << "Number of stems seen once: " << total_once << endl;
     cout << "Number of kmers: " << total_kmers << endl;
     cout << "Sum of counters: " << total_sum << endl;
+}
+
+void count::export_csv()
+{
+    spawn("export", std::bind(&count::export_csv_table, this,
+          std::placeholders::_1), _conf.num_storers);
+}
+
+void count::export_csv_table(int sid)
+{
+    std::ofstream ofs;
+    std::ostringstream file;
+    file << _conf.output_path << "/table." << _conf.pid << "-" << sid << ".csv";
+    ofs.open(file.str());
+
+    char kmer[32 + 1];
+    for (const auto& stem: *_tables[sid]) {
+        for (int f = 0; f < 4; f++) {
+            for (int l = 0; l < 4; l++) {
+                uint16_t nc = stem.second.v[f][l][NORMAL_READ];
+                uint16_t tc = stem.second.v[f][l][CANCER_READ];
+                if ((nc > _conf.export_min && nc < _conf.export_max) ||
+                    (tc > _conf.export_min && tc < _conf.export_max)) {
+                    // Rebuild kmer based on coded stem and first/last indexes
+                    kmer[0] = sm::alpha[f];
+                    b4tostr(stem.first, _conf.k - 2, &kmer[1]);
+                    kmer[_conf.k - 1] = sm::alpha[l];
+                    kmer[_conf.k] = '\0';
+                    ofs << kmer << "," << nc << "," << tc << "\n";
+                }
+            }
+        }
+    }
+
+    ofs.close();
 }

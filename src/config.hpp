@@ -30,6 +30,9 @@ struct sm_config {
     uint64_t table_size;
     uint64_t cache_size;
 
+    int export_min;
+    int export_max;
+
     std::string filter_format;
     int max_nc;
     int min_tc;

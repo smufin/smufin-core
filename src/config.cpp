@@ -45,6 +45,8 @@ void sm_config::load(const string &filename)
     enable_cache = tree.get<bool>("count.enable-cache", true);
     table_size = tree.get<uint64_t>("count.table-size", 12800000000);
     cache_size = tree.get<uint64_t>("count.cache-size", 106240000000);
+    export_min = tree.get<int>("count.export-min", 29);
+    export_max = tree.get<int>("count.export-max", 31);
 
     filter_format = tree.get<string>("filter.format", "plain");
     max_nc = tree.get<int>("filter.max-normal-count", 1);

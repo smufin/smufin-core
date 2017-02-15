@@ -93,6 +93,9 @@ private:
     void restore();
     void restore_table(int sid);
 
+    void export_csv();
+    void export_csv_table(int sid);
+
     void stats();
 };
 
