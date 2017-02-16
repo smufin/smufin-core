@@ -1,30 +1,22 @@
-# File Formats
+# Data & File Formats
 
-## Input Files
+## Input
 
-Input files consist of a newline-seperated list of gzipped FASTQ files. There
-are two different kinds of FASTQ files: normal and tumoral. Normal files
-contain the string `_N_` in their name, while tumoral files contain `_T_`.
-E.g. sample input file:
+### Input File
+
+Input files consist of a newline-seperated list of gzipped FASTQ files, or
+indexed BAM files. There are two different kinds of input files: normal and
+tumoral. Normal files contain the string `_N_` in their name, while tumoral
+files contain `_T_`. E.g. sample input file with FASTQ samples:
 
  ```
  ./test/00_N_insertion.fq.gz
  ./test/00_T_insertion.fq.gz
  ```
 
-## I2P Files
+## Intermediate
 
-I2P stands for *ID to Positions*. I2P files contain, for each candidate read
-ID, positions within the read sequence that reference candidate kmers.
-Positions are encoded as four `uint64_t` bitmaps: two in direction A, and two
-in direction B (hence supporting reads of up to `128+k-1` bases). E.g.:
-
- ```
- chr20-13310454 2047 0 1 0
- chr20-18864072 0 0 33554176 0
- ```
-
-## K2I Files
+### K2I Index (`filter + merge`) -- `filter-k2i-{nn,tn}.txt`
 
 K2I stands for *Kmer to IDs*. K2I files contain, for each candidate kmer, a
 list of sequence IDs that contain that kmer. Every line in a K2I file
@@ -38,7 +30,22 @@ list of sequence IDs. E.g.:
  TGGGGGTGCAGGTCCAAGGAAAGTCTTAGT 1 chr20-18462176
  ```
 
-## Groups Files
+### I2P Index (`filter + merge`) -- `filter-i2p-tm.txt`
+
+I2P stands for *ID to Positions*. I2P files contain, for each candidate read
+ID, positions within the read sequence that reference candidate kmers.
+Positions are encoded as four `uint64_t` bitmaps: two in direction A, and two
+in direction B (hence supporting reads of up to `128+k-1` bases). E.g.:
+
+ ```
+ chr20-13310454 2047 0 1 0
+ chr20-18864072 0 0 33554176 0
+ ```
+
+
+## Output
+
+### Groups File (`group`)
 
 A JSON file containing a dict of groups indexed with the sequence ID of their
 leader as key. The schema of a JSON groups file is as follows:
