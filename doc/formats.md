@@ -16,7 +16,7 @@ files contain `_T_`. E.g. sample input file with FASTQ samples:
 
 ## Intermediate
 
-### K2I Index (`filter + merge`) -- `filter-k2i-{nn,tn}.txt`
+### K2I Index
 
 K2I stands for *Kmer to IDs*. K2I files contain, for each candidate kmer, a
 list of sequence IDs that contain that kmer. Every line in a K2I file
@@ -30,7 +30,7 @@ list of sequence IDs. E.g.:
  TGGGGGTGCAGGTCCAAGGAAAGTCTTAGT 1 chr20-18462176
  ```
 
-### I2P Index (`filter + merge`) -- `filter-i2p-tm.txt`
+### I2P Index
 
 I2P stands for *ID to Positions*. I2P files contain, for each candidate read
 ID, positions within the read sequence that reference candidate kmers.
