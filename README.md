@@ -82,6 +82,9 @@ override the configuration file.
    * `restore`: unserialize hashtables from disk.
    * `stats`: display frequency stats, including size of different tables, and
      histograms for normal and tumoral counts.
+   * `export`: serialize tables as plain CSV files containing kmers along with
+     normal and tumoral counters; rows can be limited to kmers that meet
+     certain criteria through configuration options `export-{min,max}`.
  * `filter`: select breakpoint candidates and build indexes.
    * `run`: build filter normal and tumoral (mutated and non-mutated) indexes
      containing candidate reads, along with their IDs and positions of

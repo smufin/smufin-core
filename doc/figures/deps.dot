@@ -18,6 +18,7 @@ digraph stage_deps {
         "count:dump" [label = dump];
         "count:stats" [label = stats];
         "count:restore" [label = restore];
+        "count:export" [label = export];
     }
 
     subgraph cluster_2 {
@@ -48,8 +49,10 @@ digraph stage_deps {
 
     "count:run" -> "count:dump"
     "count:run" -> "count:stats"
+    "count:run" -> "count:export"
     "count:dump" -> "count:restore"
     "count:restore" -> "count:stats"
+    "count:restore" -> "count:export"
     "count:run" -> "filter:run"
     "count:restore" -> "filter:run"
 
