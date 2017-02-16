@@ -5,8 +5,15 @@
 
 #include "common.hpp"
 
+// Maximum number of allowed splits in a read. This works for the current
+// range of read and kmer lengths, but needs to be increased for longer reads
+// or shorter kmers.
 #define MAX_SPLITS 10
 
+// Internal read representation used for iteration over input reads; in
+// addition to unique ID, sequence & qualities, and length of the sequence, it
+// can also include splits to identify sub-sequences separated by undefined
+// bases, which are handled as different in the smufin pipeline.
 typedef struct {
     char *id;
     char *seq;
@@ -16,6 +23,7 @@ typedef struct {
     int splits[MAX_SPLITS][2] = {{0}};
 } sm_read;
 
+// A chunk of the input to be processed at a time by a loader thread.
 typedef struct {
     std::string file;
     uint64_t begin;
@@ -23,6 +31,9 @@ typedef struct {
     sm_read_kind kind;
 } sm_chunk;
 
+// Simple input queue that splits each file to be processed as a single chunk.
+// Works for any kind of input format, but paralellization is constrained by
+// number of input files.
 class input_queue
 {
 public:
@@ -46,6 +57,9 @@ protected:
     moodycamel::ConcurrentQueue<sm_chunk> _queue;
 };
 
+// BAM-only input queue that splits every single file into «conf.num_loaders»
+// chunks. The generation of chunks depends on BAI indexes to find valid BAM
+// addresses, and may not be completely balanced for smaller BAM files.
 class input_queue_bam_chunks : public input_queue
 {
 public:

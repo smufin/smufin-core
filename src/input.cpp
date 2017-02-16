@@ -79,6 +79,10 @@ void input_queue_bam_chunks::init()
     ifs.close();
 }
 
+// Manually reads the BAI index of «bam_file», jumping to its linear index and
+// trying to find «num_chunks» addresses (offsets) at approximately the same
+// distance from one another. This ensures that all BGZF blocks are read,
+// including unmapped alignments.
 bool input_queue_bam_chunks::chunk_bam(const string bam_file,
                                        const int num_chunks,
                                        std::vector<uint64_t> &offsets)
