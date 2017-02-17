@@ -112,7 +112,7 @@ dependencies between *smufin* commands:
 
 ## Additional Documentation
 
- * [File Formats][formats]
+ * [Data and File Formats][formats]
 
 ## Maintainers
 
