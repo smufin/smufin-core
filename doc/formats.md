@@ -13,13 +13,18 @@
 
 ## Input
 
+Input is defined as an custom file that points to sequence files, and these
+can be read a number of times in different stages during the execution of the
+pipeline.
+
 ### Input File
 
-Input files consist of a newline-separated list files in one of the supported
-formats: gzipped FASTQ files or indexed BAM files. There are two different
-kinds of input files: normal and tumoral. Normal files contain the string
-`_N_` in their name, while tumoral files contain `_T_`. E.g. sample input file
-with FASTQ samples:
+Input files consist of a list of newline-separated paths to normal and tumoral
+sample files containing biological sequences. Normal files are identified with
+the string `_N_` in their filename, while tumoral files contain `_T_` instead.
+The format of the sequence files listed in the input file must be either
+gzipped FASTQ, or indexed BAM files. E.g. sample input file with FASTQ
+samples:
 
  ```
  ./test/00_N_insertion.fq.gz
@@ -28,6 +33,9 @@ with FASTQ samples:
 
 
 ## Intermediate
+
+Intermediate files are generated during the execution of the pipeline, and can
+be used for further analysis as well as checkpointing.
 
 ### Sparsehash Table
 
@@ -49,23 +57,24 @@ G: 2, T: 3`, while kinds are encoded as `N: 0, T: 1`, as follows:
  [00,01,02,03,04,...,27,28,29,30,31]
    |  |  |  |  |      |  |  |  |  |
    |  |  |  |  |      |  |  |  |  `-- [3][3][1]: T, T, Tumor
-   |  |  |  |  |      |  |  |  `----- [3][2][0]: T, G, Normal
-   |  |  |  |  |      |  |  `-------- [3][1][1]: T, C, Tumor
-   |  |  |  |  |      |  `----------- [3][0][0]: T, A, Normal
-   |  |  |  |  |      `-------------- [2][3][1]: G, T, Tumor
+   |  |  |  |  |      |  |  |  `----- [3][3][0]: T, T, Normal
+   |  |  |  |  |      |  |  `-------- [3][2][1]: T, G, Tumor
+   |  |  |  |  |      |  `----------- [3][2][0]: T, G, Normal
+   |  |  |  |  |      `-------------- [3][1][1]: T, C, Tumor
    |  |  |  |  |
-   |  |  |  |  `--------------------- [0][1][0]: C, A, Normal
-   |  |  |  `------------------------ [0][3][1]: A, T, Tumor
-   |  |  `--------------------------- [0][2][0]: A, G, Normal
-   |  `------------------------------ [0][1][1]: A, C, Tumor
+   |  |  |  |  `--------------------- [0][2][0]: A, G, Normal
+   |  |  |  `------------------------ [0][1][1]: A, C, Tumor
+   |  |  `--------------------------- [0][1][0]: A, C, Normal
+   |  `------------------------------ [0][0][1]: A, A, Tumor
    `--------------------------------- [0][0][0]: A, A, Normal
  ```
 
 In the following example, the kmer `ACAGGTCCAAGGAAAGTCTTAGTGTGGGGA` has a
-normal counter of 2, and a tumoral counter of 1:
+normal counter of 2, and a tumoral counter of 1, while the kmer
+`TCAGGTCCAAGGAAAGTCTTAGTGTGGGGC` has a tumoral counter of 7:
 
  ```
- CAGGTCCAAGGAAAGTCTTAGTGTGGGG [2,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+ CAGGTCCAAGGAAAGTCTTAGTGTGGGG [2,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0,0]
  ```
 
 ### CSV Table
@@ -73,9 +82,9 @@ normal counter of 2, and a tumoral counter of 1:
 *Stage*: `count/export`
 *Filename*: `table.<PID>-<LID>.csv`
 
-Stores tables as CSV files with three columns. The 1st column represents
-kmers, the 2nd column normal counters, and the 3rd column tumoral counters.
-E.g.:
+Representation of tables as CSV files with three columns. The 1st column
+represents kmers, the 2nd column normal counters, and the 3rd column tumoral
+counters. E.g.:
 
  ```
  GCAGGTCCAAGGAAAGTCTTAGTGTGGGGT,31,1
