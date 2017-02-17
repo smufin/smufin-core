@@ -1,10 +1,21 @@
 # Data & File Formats
 
+ * [Input](#input)
+ * [Intermediate](#intermediate)
+   * [Sparsehash Table](#sparsehash-table)
+   * [CSV Table](#csv-table)
+   * [SEQ Index](#seq-index)
+   * [K2I Index](#k2i-index)
+   * [I2P Index](#i2p-index)
+ * [Output](#output)
+   * [Groups](#groups)
+
+
 ## Input
 
 ### Input File
 
-Input files consist of a newline-seperated list files in one of the supported
+Input files consist of a newline-separated list files in one of the supported
 formats: gzipped FASTQ files or indexed BAM files. There are two different
 kinds of input files: normal and tumoral. Normal files contain the string
 `_N_` in their name, while tumoral files contain `_T_`. E.g. sample input file
@@ -15,12 +26,13 @@ with FASTQ samples:
  ./test/00_T_insertion.fq.gz
  ```
 
+
 ## Intermediate
 
 ### Sparsehash Table
 
 *Stage*: `count`
-*Filename*: `table.PID-LID.sht`
+*Filename*: `table.<PID>-<LID>.sht`
 
 Tables contain normal and tumoral kmer frequencies, and can be dumped/restored
 using the default [sparsehash][sparsehash] serialization.
@@ -58,8 +70,8 @@ normal counter of 2, and a tumoral counter of 1:
 
 ### CSV Table
 
-*Stages*: `count/export`
-*Filenames*: `table.PID-LID.csv`
+*Stage*: `count/export`
+*Filename*: `table.<PID>-<LID>.csv`
 
 Stores tables as CSV files with three columns. The 1st column represents
 kmers, the 2nd column normal counters, and the 3rd column tumoral counters.
@@ -70,10 +82,21 @@ E.g.:
  TGCAGGTCCAAGGAAAGTCTTAGTGTGGGG,3,29
  ```
 
+### SEQ Index
+
+*Stage*: `filter`, `merge`
+*Filename*: `filter-seq-{nn,tn,tm}.{txt.rdb}`
+
+SEQ files map sequence IDs to sequences. E.g.
+
+ ```
+ chr20.b-20231724/2 TCTCTTCTGTGCCCTGAATTCTCTCTCTCTCCCTCTCACACACACACACACACACACACACGCACG
+ ```
+
 ### K2I Index
 
-*Stages*: `filter`, `merge`
-*Filenames*: `filter-k2i-{nn,tn}.{txt.rdb}`
+*Stage*: `filter`, `merge`
+*Filename*: `filter-k2i-{nn,tn}.{txt.rdb}`
 
 K2I stands for *Kmer to IDs*. K2I files contain, for each candidate kmer, a
 list of sequence IDs that contain that kmer. Every line in a K2I file
@@ -89,8 +112,8 @@ list of sequence IDs. E.g.:
 
 ### I2P Index
 
-*Stages*: `filter`, `merge`
-*Filenames*: `filter-i2p-tm.{txt.rdb}`
+*Stage*: `filter`, `merge`
+*Filename*: `filter-i2p-tm.{txt.rdb}`
 
 I2P stands for *ID to Positions*. I2P files contain, for each candidate read
 ID, positions within the read sequence that reference candidate kmers.
@@ -105,10 +128,10 @@ in direction B (hence supporting reads of up to `128+k-1` bases). E.g.:
 
 ## Output
 
-### Groups File
+### Groups
 
-*Stages*: `group`
-*Filenames*: `group.PID-GID.json`
+*Stage*: `group`
+*Filename*: `group.<PID>-<GID>.json`
 
 A JSON file containing a dict of groups indexed with the sequence ID of their
 leader as key. The schema of a JSON groups file is as follows:
