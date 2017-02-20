@@ -113,6 +113,7 @@ dependencies between *smufin* commands:
 ## Additional Documentation
 
  * [Data and File Formats](doc/formats.md)
+ * [Performance Tuning and Limitations](doc/performance.md)
 
 ## Maintainers
 
