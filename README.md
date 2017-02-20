@@ -46,7 +46,7 @@ use the following:
 ## Run
 
 Running *smufin* requires a configuration file such as the sample
-[smufin.conf][smufinconf]. The following command line options can be used to
+[smufin.conf](smufin.conf). The following command line options can be used to
 override the configuration file.
 
  ```
@@ -75,16 +75,16 @@ override the configuration file.
    * `run`: counts frequency of normal and tumoral kmers in input sequence,
      ignoring kmers whose stem is only seen once; counters hold values up to
      2^16.
-   * `dump`: serialize hashtables that contain kmer frequencies to the
-     `core.output` directory; filenames have the following format:
-     `table.<PID>-<SID>.sht`, where `PID` stands for partition ID, and `SID`
-     for storer ID.
-   * `restore`: unserialize hashtables from disk.
+   * `dump`: serialize kmer frequency as [sparsehash
+     tables](doc/formats.md#sparsehash-table) indexed by stem, for
+     checkpointing and/or later analysis.
+   * `restore`: unserialize dumped frequency tables from disk.
    * `stats`: display frequency stats, including size of different tables, and
      histograms for normal and tumoral counts.
-   * `export`: serialize tables as plain CSV files containing kmers along with
-     normal and tumoral counters; rows can be limited to kmers that meet
-     certain criteria through configuration options `export-{min,max}`.
+   * `export`: serialize frequencies as plain [CSV
+     table](doc/formats.md#csv-table) files containing kmers along with normal
+     and tumoral counters; rows can be limited to kmers that meet certain
+     criteria through configuration options `export-{min,max}`.
  * `filter`: select breakpoint candidates and build indexes.
    * `run`: build filter normal and tumoral (mutated and non-mutated) indexes
      containing candidate reads, along with their IDs and positions of
@@ -112,7 +112,7 @@ dependencies between *smufin* commands:
 
 ## Additional Documentation
 
- * [Data and File Formats][formats]
+ * [Data and File Formats](doc/formats.md)
 
 ## Maintainers
 
@@ -126,5 +126,3 @@ Jordà Polo `<jorda.polo@bsc.es>`, 2015-2017.
 [concurrentq]: https://github.com/cameron314/concurrentqueue "ConcurrentQueue"
 [libbf]: https://github.com/mavam/libbf "libbf"
 [htslib]: https://github.com/samtools/htslib "htslib"
-[formats]: doc/formats.md
-[smufinconf]: smufin.conf
