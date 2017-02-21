@@ -5,7 +5,7 @@
 
 #include <bf.h>
 #include <concurrentqueue.h>
-#include <folly/ProducerConsumerQueue.h>
+#include <readerwriterqueue.h>
 
 #include "common.hpp"
 #include "input.hpp"
@@ -19,7 +19,7 @@ typedef struct {
     sm_key array[BULK_KEY_LEN];
 } sm_bulk_key;
 
-typedef folly::ProducerConsumerQueue<sm_bulk_key> sm_prune_queue;
+typedef moodycamel::ReaderWriterQueue<sm_bulk_key> sm_prune_queue;
 
 class prune : public stage
 {

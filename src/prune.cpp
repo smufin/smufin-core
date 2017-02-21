@@ -103,7 +103,7 @@ void prune::load_chunk(int lid, const sm_chunk &chunk)
     }
 
     for (int sid = 0; sid < _conf.num_storers; sid++) {
-        while (!_queues[sid][lid]->write(bulks[sid])) {
+        while (!_queues[sid][lid]->try_enqueue(bulks[sid])) {
             continue;
         }
         bulks[sid].num = 0;
@@ -135,7 +135,7 @@ inline void prune::load_sub(int lid, const char* sub, int len,
         bulks[sid].num++;
 
         if (bulks[sid].num == BULK_KEY_LEN) {
-            while (!_queues[sid][lid]->write(bulks[sid])) {
+            while (!_queues[sid][lid]->try_enqueue(bulks[sid])) {
                 continue;
             }
             bulks[sid].num = 0;
@@ -152,25 +152,25 @@ void prune::add(int sid)
     sm_bulk_key* pmsg;
     while (!_done) {
         for (int lid = 0; lid < _conf.num_loaders; lid++) {
-            pmsg = _queues[sid][lid]->frontPtr();
+            pmsg = _queues[sid][lid]->peek();
             while (pmsg) {
                 for (int i = 0; i < pmsg->num; i++) {
                     add_key(sid, pmsg->array[i]);
                 }
-                _queues[sid][lid]->popFront();
-                pmsg = _queues[sid][lid]->frontPtr();
+                _queues[sid][lid]->pop();
+                pmsg = _queues[sid][lid]->peek();
             }
         }
     }
 
     for (int lid = 0; lid < _conf.num_loaders; lid++) {
-        pmsg = _queues[sid][lid]->frontPtr();
+        pmsg = _queues[sid][lid]->peek();
         while (pmsg) {
             for (int i = 0; i < pmsg->num; i++) {
                 add_key(sid, pmsg->array[i]);
             }
-            _queues[sid][lid]->popFront();
-            pmsg = _queues[sid][lid]->frontPtr();
+            _queues[sid][lid]->pop();
+            pmsg = _queues[sid][lid]->peek();
         }
     }
 

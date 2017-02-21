@@ -9,7 +9,7 @@ CC = $(CC_$(VERBOSE))
 
 GSH_INC   ?= /usr/include/sparsehash
 MCQ_INC   ?= /usr/include/concurrentqueue
-FOLLY_INC ?= /usr/include/folly
+RWQ_INC   ?= /usr/include/readerwriterqueue
 BOOST_INC ?= /usr/include/boost
 BF_INC    ?= /usr/include/libbf
 BF_LIB    ?= /usr/lib
@@ -23,7 +23,7 @@ SRC = $(wildcard src/*.cpp)
 OBJ = $(SRC:.cpp=.o)
 DEP = $(SRC:.cpp=.d)
 
-INC = -Isrc -I$(GSH_INC) -I$(MCQ_INC) -I$(FOLLY_INC) \
+INC = -Isrc -I$(GSH_INC) -I$(MCQ_INC) -I$(RWQ_INC) \
       -I$(BOOST_INC) -I$(BF_INC) -I$(ROCKS_INC) -I$(HTS_INC)
 LIB = -lz -lpthread -lbf -lrocksdb -lhts
 

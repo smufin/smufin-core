@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include <folly/ProducerConsumerQueue.h>
+#include <readerwriterqueue.h>
 #include <google/sparse_hash_map>
 
 #include "common.hpp"
@@ -43,7 +43,7 @@ typedef struct {
     sm_msg array[BULK_MSG_LEN];
 } sm_bulk_msg;
 
-typedef folly::ProducerConsumerQueue<sm_bulk_msg> sm_queue;
+typedef moodycamel::ReaderWriterQueue<sm_bulk_msg> sm_queue;
 
 // Stage that reads input chunks, splits sequences into kmers, and builds a
 // table of normal and tumoral kmer frequencies. `count' provides an in-memory

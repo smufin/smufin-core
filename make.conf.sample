@@ -3,12 +3,11 @@
 
 # Path to headers:
 # - Google sparsehash
-# - moodycamel's ConcurrentQueue
-# - Folly's ConsumerProducerQueue
+# - moodycamel's ConcurrentQueue and ReaderWriterQueue
 # - Boost's algorithm
 GSH_INC   = /usr/include
 MCQ_INC   = /usr/include/concurrentqueue
-FOLLY_INC = /usr/include/folly
+RWQ_INC   = /usr/include/readerwriterqueue
 BOOST_INC = /usr/include/boost
 
 # libbf: paths to headers/libraries.

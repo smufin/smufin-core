@@ -131,7 +131,7 @@ void count::load_chunk(int lid, const sm_chunk &chunk)
     }
 
     for (int sid = 0; sid < _conf.num_storers; sid++) {
-        while (!_queues[sid][lid]->write(bulks[sid])) {
+        while (!_queues[sid][lid]->try_enqueue(bulks[sid])) {
             continue;
         }
         bulks[sid].num = 0;
@@ -172,7 +172,7 @@ inline void count::load_sub(int lid, const char* sub, int len,
         bulks[sid].num++;
 
         if (bulks[sid].num == BULK_MSG_LEN) {
-            while (!_queues[sid][lid]->write(bulks[sid])) {
+            while (!_queues[sid][lid]->try_enqueue(bulks[sid])) {
                 continue;
             }
             bulks[sid].num = 0;
@@ -190,28 +190,28 @@ void count::incr(int sid)
         _caches[sid]->resize(_cache_size);
     }
 
-    sm_bulk_msg* pmsg;
+    sm_bulk_msg *pmsg;
     while (!_done) {
         for (int lid = 0; lid < _conf.num_loaders; lid++) {
-            pmsg = _queues[sid][lid]->frontPtr();
+            pmsg = _queues[sid][lid]->peek();
             while (pmsg) {
                 for (int i = 0; i < pmsg->num; i++) {
                     incr_key(sid, pmsg->array[i].first, pmsg->array[i].second);
                 }
-                _queues[sid][lid]->popFront();
-                pmsg = _queues[sid][lid]->frontPtr();
+                _queues[sid][lid]->pop();
+                pmsg = _queues[sid][lid]->peek();
             }
         }
     }
 
     for (int lid = 0; lid < _conf.num_loaders; lid++) {
-        pmsg = _queues[sid][lid]->frontPtr();
+        pmsg = _queues[sid][lid]->peek();
         while (pmsg) {
             for (int i = 0; i < pmsg->num; i++) {
                 incr_key(sid, pmsg->array[i].first, pmsg->array[i].second);
             }
-            _queues[sid][lid]->popFront();
-            pmsg = _queues[sid][lid]->frontPtr();
+            _queues[sid][lid]->pop();
+            pmsg = _queues[sid][lid]->peek();
         }
     }
 

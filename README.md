@@ -19,8 +19,8 @@ support (>= 4.8), and the following libraries:
 
  - [sparsehash][sparsehash] (>= 2.0)
  - [boost][boost] (>= 1.55): Property trees and string algorithms
- - [moodycamel::ConcurrentQueue][concurrentq]: MPMC queue
- - [folly::ProducerConsumerQueue][folly]: SPSC queue
+ - moodycamel::{[ConcurrentQueue][concurrentq],[ReaderWriterQueue][rwq]}: MPMC
+   and SPSC queues
  - [libbf][libbf]: Bloom filters
  - [RocksDB][rocksdb] (>= 4.9): Key-value store for flash storage
  - [htslib][htslib]: Parse BAM files
@@ -122,8 +122,8 @@ Jordà Polo `<jorda.polo@bsc.es>`, 2015-2017.
 [smufin]: http://cg.bsc.es/smufin/ "SMUFIN"
 [boost]: http://www.boost.org/ "Boost"
 [sparsehash]: https://github.com/sparsehash/sparsehash "Sparse Hash"
-[folly]: https://github.com/facebook/folly "Folly"
 [rocksdb]: https://github.com/facebook/rocksdb "RocksDB"
 [concurrentq]: https://github.com/cameron314/concurrentqueue "ConcurrentQueue"
+[rwq]: https://github.com/cameron314/readerwriterqueue "ReaderWriterQueue"
 [libbf]: https://github.com/mavam/libbf "libbf"
 [htslib]: https://github.com/samtools/htslib "htslib"
