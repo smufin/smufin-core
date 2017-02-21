@@ -26,6 +26,6 @@ HTS_LIB = /usr/lib
 VERBOSE ?= 0
 
 # Compilation flags.
-CFLAGS = -O2
+CFLAGS = -O2 -DNDEBUG
 # CFLAGS = -O3 -march=core-avx2
 # CFLAGS = -O3 -mcpu=power8
