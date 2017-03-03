@@ -13,10 +13,8 @@ input_iterator_bam::input_iterator_bam(const sm_config &conf,
     : input_iterator(conf, chunk)
 {
     _in = sam_open(chunk.file.c_str(), "r");
+    _header = sam_hdr_read(_in);
     _record = bam_init1();
-
-    BGZF *fp = _in->fp.bgzf;
-    bam_hdr_t *header = bam_hdr_read(fp);
 
     uint64_t begin_address = chunk.begin >> 16;
     int begin_offset = chunk.begin & 0xFFFF;
@@ -24,16 +22,15 @@ input_iterator_bam::input_iterator_bam(const sm_config &conf,
     int end_offset = chunk.end & 0xFFFF;
 
     if (chunk.begin > 0) {
-        uint64_t seek = bgzf_seek(fp, chunk.begin, SEEK_SET);
+        uint64_t seek = bgzf_seek(_in->fp.bgzf, chunk.begin, SEEK_SET);
     }
 }
 
 bool input_iterator_bam::next(sm_read *read)
 {
     int len;
-    BGZF *fp = _in->fp.bgzf;
-
-    while((len = bam_read1(fp, _record)) >= 0 && bgzf_tell(fp) <= _chunk.end) {
+    while((len = sam_read1(_in, _header, _record)) >= 0 &&
+          bgzf_tell(_in->fp.bgzf) <= _chunk.end) {
         const int read_len = _record->core.l_qseq;
         const uint8_t *s = bam_get_seq(_record);
         const uint8_t *q = bam_get_qual(_record);

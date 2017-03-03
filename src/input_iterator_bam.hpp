@@ -16,6 +16,7 @@ public:
 
 private:
     samFile *_in;
+    bam_hdr_t *_header;
     bam1_t *_record;
     char _id[256];
     char _seq[256];
