@@ -35,6 +35,10 @@ bool input_iterator_bam::next(sm_read *read)
         const uint8_t *s = bam_get_seq(_record);
         const uint8_t *q = bam_get_qual(_record);
 
+        // Skip non-primary and supplementary alignments.
+        if (_record->core.flag & 256 || _record->core.flag & 2048)
+            continue;
+
         for (int i = 0; i < read_len; i++) {
             _seq[i] = seq_nt16_str[bam_seqi(s, i)];
             _qual[i] = 33 + q[i];
