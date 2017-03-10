@@ -32,7 +32,8 @@ void sm_config::load(const string &filename)
     num_groupers = tree.get<int>("core.num-groupers", 1);
 
     input_format = tree.get<string>("core.input-format", "fastq");
-    input_file = tree.get<string>("core.input", "");
+    input_normal = tree.get<string>("core.input-normal", "");
+    input_tumor = tree.get<string>("core.input-tumor", "");
     output_path = tree.get<string>("core.output", "");
     data_path = tree.get<string>("core.data", "data");
 

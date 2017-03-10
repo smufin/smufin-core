@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 {
     sm_config conf = sm_config();
 
-    static const char *opts = "c:p:l:s:f:m:g:i:o:x:h";
+    static const char *opts = "c:p:l:s:f:m:g:n:t:o:x:h";
     static const struct option opts_long[] = {
         { "config", required_argument, NULL, 'c' },
         { "pid", required_argument, NULL, 'P' },
@@ -35,7 +35,8 @@ int main(int argc, char *argv[])
         { "filters", required_argument, NULL, 'f' },
         { "mergers", required_argument, NULL, 'm' },
         { "groupers", required_argument, NULL, 'g' },
-        { "input", required_argument, NULL, 'i' },
+        { "input-normal", required_argument, NULL, 'n' },
+        { "input-tumor", required_argument, NULL, 't' },
         { "output", required_argument, NULL, 'o' },
         { "exec", required_argument, NULL, 'x' },
         { "help", no_argument, NULL, 'h' },
@@ -55,7 +56,8 @@ int main(int argc, char *argv[])
             case 'f': conf.num_filters = atoi(optarg); break;
             case 'm': conf.num_mergers = atoi(optarg); break;
             case 'g': conf.num_groupers = atoi(optarg); break;
-            case 'i': conf.input_file = string(optarg); break;
+            case 'n': conf.input_normal = string(optarg); break;
+            case 't': conf.input_tumor= string(optarg); break;
             case 'o': conf.output_path = string(optarg); break;
             case 'x': conf.exec = string(optarg); break;
             case '?': display_usage(); return 1;
@@ -123,7 +125,8 @@ void display_usage()
     cout << " -l, --loaders NUM_LOADERS" << endl;
     cout << " -s, --storers NUM_STORERS" << endl;
     cout << " -f, --filters NUM_FILTERS" << endl;
-    cout << " -i, --input INPUT_FILE" << endl;
+    cout << " -n, --input-normal INPUT_FILES" << endl;
+    cout << " -t, --input-tumor INPUT_FILES" << endl;
     cout << " -o, --output OUTPUT_PATH" << endl;
     cout << " -x, --exec COMMANDS" << endl;
     cout << " -h, --help" << endl;

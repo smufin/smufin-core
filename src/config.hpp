@@ -14,7 +14,8 @@ struct sm_config {
     int num_groupers;
 
     std::string input_format;
-    std::string input_file;
+    std::string input_normal;
+    std::string input_tumor;
     std::string output_path;
     std::string data_path;
 

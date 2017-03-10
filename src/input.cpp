@@ -9,34 +9,42 @@
 #include <htslib/sam.h>
 #include <htslib/bgzf.h>
 
+#include <boost/algorithm/string.hpp>
+
 using std::cout;
 using std::endl;
 using std::string;
 
 void input_queue::init()
 {
-    std::ifstream ifs(_conf.input_file);
-    if (!ifs.good()) {
-        cout << "Invalid input file" << endl;
-        exit(1);
+    std::vector<string> normal;
+    std::vector<string> tumor;
+
+    boost::split(normal, _conf.input_normal, boost::is_any_of(" "));
+    boost::split(tumor, _conf.input_tumor, boost::is_any_of(" "));
+
+    // Interleave normal and tumoral files.
+    std::vector<std::pair<string, sm_read_kind>> files;
+    int min = std::min(normal.size(), tumor.size());
+    for (int i = 0; i < min; i++) {
+        files.push_back({normal[i], NORMAL_READ});
+        files.push_back({tumor[i], CANCER_READ});
     }
 
-    for (string file; std::getline(ifs, file);) {
+    for (int i = min; i < normal.size(); i++)
+        files.push_back({normal[i], NORMAL_READ});
+    for (int i = min; i < tumor.size(); i++)
+        files.push_back({tumor[i], CANCER_READ});
+
+    for (auto& f: files) {
         sm_chunk chunk;
-        chunk.file = file;
+        chunk.file = f.first;
         chunk.begin = -1;
         chunk.end = -1;
-        chunk.kind = NORMAL_READ;
-        std::size_t found = file.find("_T_");
-        if (found != std::string::npos) {
-            chunk.kind = CANCER_READ;
-        }
-
+        chunk.kind = f.second;
         _queue.enqueue(chunk);
         len++;
     }
-
-    ifs.close();
 }
 
 bool input_queue::try_dequeue(sm_chunk &chunk)
@@ -46,37 +54,35 @@ bool input_queue::try_dequeue(sm_chunk &chunk)
 
 void input_queue_bam_chunks::init()
 {
-    std::ifstream ifs(_conf.input_file);
-    if (!ifs.good()) {
-        cout << "Invalid input file" << endl;
-        exit(1);
-    }
+    std::vector<string> normal;
+    std::vector<string> tumor;
 
-    for (string file; std::getline(ifs, file);) {
-        sm_read_kind kind = NORMAL_READ;
-        std::size_t found = file.find("_T_");
-        if (found != std::string::npos) {
-            kind = CANCER_READ;
-        }
+    boost::split(normal, _conf.input_normal, boost::is_any_of(" "));
+    boost::split(tumor, _conf.input_tumor, boost::is_any_of(" "));
 
+    std::vector<std::pair<string, sm_read_kind>> files;
+    for (int i = 0; i < normal.size(); i++)
+        files.push_back({normal[i], NORMAL_READ});
+    for (int i = 0; i < tumor.size(); i++)
+        files.push_back({tumor[i], CANCER_READ});
+
+    for (auto& f: files) {
         std::vector<uint64_t> offsets(_conf.num_loaders);
-        if (!chunk_bam(file, _conf.num_loaders, offsets)) {
-            cout << "Failed to chunk BAM file " << file << endl;
+        if (!chunk_bam(f.first, _conf.num_loaders, offsets)) {
+            cout << "Failed to chunk BAM file " << f.first << endl;
             exit(1);
         }
 
         for (int i = 0; i < offsets.size(); i++) {
             sm_chunk chunk;
-            chunk.file = file;
+            chunk.file = f.first;
             chunk.begin = offsets[i];
             chunk.end = offsets[i + 1];
-            chunk.kind = kind;
+            chunk.kind = f.second;
             _queue.enqueue(chunk);
             len++;
         }
     }
-
-    ifs.close();
 }
 
 // Manually reads the BAI index of «bam_file», jumping to its linear index and
