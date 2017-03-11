@@ -53,7 +53,8 @@ override the configuration file.
   -f, --filters NUM_FILTER_THREADS
   -m, --mergers NUM_MERGE_THREADS
   -g, --groupers NUM_GROUP_THREADS
-  -i, --input INPUT_FILE
+  --input-normal INPUT_FILES
+  --input-tumor INPUT_FILES
   -o, --output OUTPUT_PATH
   -x, --exec COMMANDS
   -h, --help
