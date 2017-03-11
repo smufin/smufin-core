@@ -71,6 +71,9 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    conf.list_normal = expand_path(conf.input_normal);
+    conf.list_tumor = expand_path(conf.input_tumor);
+
     cout << "Partition: " << conf.pid << " [" << conf.num_partitions
          << "]" << endl;
 

@@ -17,31 +17,25 @@ using std::string;
 
 void input_queue::init()
 {
-    std::vector<string> normal;
-    std::vector<string> tumor;
-
-    boost::split(normal, _conf.input_normal, boost::is_any_of(" "));
-    boost::split(tumor, _conf.input_tumor, boost::is_any_of(" "));
-
     // Interleave normal and tumoral files.
     std::vector<std::pair<string, sm_read_kind>> files;
-    int min = std::min(normal.size(), tumor.size());
+    int min = std::min(_conf.list_normal.size(), _conf.list_tumor.size());
     for (int i = 0; i < min; i++) {
-        files.push_back({normal[i], NORMAL_READ});
-        files.push_back({tumor[i], CANCER_READ});
+        files.push_back({_conf.list_normal[i], NORMAL_READ});
+        files.push_back({_conf.list_tumor[i], CANCER_READ});
     }
 
-    for (int i = min; i < normal.size(); i++)
-        files.push_back({normal[i], NORMAL_READ});
-    for (int i = min; i < tumor.size(); i++)
-        files.push_back({tumor[i], CANCER_READ});
+    for (int i = min; i < _conf.list_normal.size(); i++)
+        files.push_back({_conf.list_normal[i], NORMAL_READ});
+    for (int i = min; i < _conf.list_tumor.size(); i++)
+        files.push_back({_conf.list_tumor[i], CANCER_READ});
 
-    for (auto& f: files) {
+    for (auto& file: files) {
         sm_chunk chunk;
-        chunk.file = f.first;
+        chunk.file = file.first;
         chunk.begin = -1;
         chunk.end = -1;
-        chunk.kind = f.second;
+        chunk.kind = file.second;
         _queue.enqueue(chunk);
         len++;
     }
@@ -54,31 +48,25 @@ bool input_queue::try_dequeue(sm_chunk &chunk)
 
 void input_queue_bam_chunks::init()
 {
-    std::vector<string> normal;
-    std::vector<string> tumor;
-
-    boost::split(normal, _conf.input_normal, boost::is_any_of(" "));
-    boost::split(tumor, _conf.input_tumor, boost::is_any_of(" "));
-
     std::vector<std::pair<string, sm_read_kind>> files;
-    for (int i = 0; i < normal.size(); i++)
-        files.push_back({normal[i], NORMAL_READ});
-    for (int i = 0; i < tumor.size(); i++)
-        files.push_back({tumor[i], CANCER_READ});
+    for (auto& file: _conf.list_normal)
+        files.push_back({file, NORMAL_READ});
+    for (auto& file: _conf.list_tumor)
+        files.push_back({file, CANCER_READ});
 
-    for (auto& f: files) {
+    for (auto& file: files) {
         std::vector<uint64_t> offsets(_conf.num_loaders);
-        if (!chunk_bam(f.first, _conf.num_loaders, offsets)) {
-            cout << "Failed to chunk BAM file " << f.first << endl;
+        if (!chunk_bam(file.first, _conf.num_loaders, offsets)) {
+            cout << "Failed to chunk BAM file " << file.first << endl;
             exit(1);
         }
 
         for (int i = 0; i < offsets.size(); i++) {
             sm_chunk chunk;
-            chunk.file = f.first;
+            chunk.file = file.first;
             chunk.begin = offsets[i];
             chunk.end = offsets[i + 1];
-            chunk.kind = f.second;
+            chunk.kind = file.second;
             _queue.enqueue(chunk);
             len++;
         }

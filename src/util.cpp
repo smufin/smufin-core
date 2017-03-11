@@ -1,5 +1,7 @@
 #include "util.hpp"
 
+#include <wordexp.h>
+
 #include <sstream>
 
 #include <boost/algorithm/string.hpp>
@@ -48,4 +50,16 @@ void init_mapping(const sm_config &conf, int n1, int n2, int l1[], int l2[])
 float estimate_sparse(uint64_t n, size_t k, size_t v)
 {
     return (n * (k + v + 1)) / 1024 / 1024 / 1024;
+}
+
+// Perform expansion of the given path, returning a vector with all matches.
+std::vector<string> expand_path(string path)
+{
+    std::vector<string> expanded;
+    wordexp_t we;
+    wordexp(path.c_str(), &we, WRDE_NOCMD);
+    for (int i = 0; i < we.we_wordc; i++)
+        expanded.push_back(string(we.we_wordv[i]));
+    wordfree(&we);
+    return expanded;
 }

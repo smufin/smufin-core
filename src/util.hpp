@@ -36,4 +36,6 @@ void init_mapping(const sm_config &conf, int n1, int n2, int l1[], int l2[]);
 
 float estimate_sparse(uint64_t n, size_t k, size_t v);
 
+std::vector<std::string> expand_path(std::string path);
+
 #endif

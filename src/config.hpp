@@ -1,6 +1,8 @@
 #ifndef __SM_CONFIG_H__
 #define __SM_CONFIG_H__
 
+#include <vector>
+
 #include "common.hpp"
 
 struct sm_config {
@@ -16,6 +18,9 @@ struct sm_config {
     std::string input_format;
     std::string input_normal;
     std::string input_tumor;
+    std::vector<std::string> list_normal;
+    std::vector<std::string> list_tumor;
+
     std::string output_path;
     std::string data_path;
 
