@@ -60,6 +60,10 @@ override the configuration file.
   -h, --help
  ```
 
+Input file arguments given to `--input-{normal,tumor}` are supposed to be
+either a single file, or a quoted wildcard expandable string, e.g.
+`"file-*.fq.gz"` or `"file-[12].fq.gz"`.
+
 ### Commands
 
  * `prune`

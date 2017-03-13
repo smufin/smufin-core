@@ -1,6 +1,5 @@
 # Data & File Formats
 
- * [Input](#input)
  * [Intermediate](#intermediate)
    * [Sparsehash Table](#sparsehash-table)
    * [CSV Table](#csv-table)
@@ -9,27 +8,6 @@
    * [I2P Index](#i2p-index)
  * [Output](#output)
    * [Groups](#groups)
-
-
-## Input
-
-Input is defined as an custom file that points to sequence files, and these
-can be read a number of times in different stages during the execution of the
-pipeline.
-
-### Input File
-
-Input files consist of a list of newline-separated paths to normal and tumoral
-sample files containing biological sequences. Normal files are identified with
-the string `_N_` in their filename, while tumoral files contain `_T_` instead.
-The format of the sequence files listed in the input file must be either
-gzipped FASTQ, or indexed BAM files. E.g. sample input file with FASTQ
-samples:
-
- ```
- ./test/00_N_insertion.fq.gz
- ./test/00_T_insertion.fq.gz
- ```
 
 
 ## Intermediate
