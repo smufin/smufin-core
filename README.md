@@ -66,6 +66,11 @@ either a single file, or a quoted wildcard expandable string, e.g.
 
 ### Commands
 
+The argument passed to the `--exec` flag must be a list of stage commands,
+separated by semicolon. Commands are prepended by a stage name followed by
+colon, and chained in a comma-separated list. E.g.
+`count:run;filter:run,stats`. The available stage commands are:
+
  * `prune`
    * `run`: generates a bloom filter of stems that have been observed in the
      input more than once; optional stage that can be run first to save memory
