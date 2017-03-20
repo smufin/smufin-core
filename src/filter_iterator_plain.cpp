@@ -28,6 +28,7 @@ bool seq_plain_iterator::next()
     string id;
     string seq;
     if (_in >> id >> seq) {
+        delete _elem;
         _elem = new seq_t(id, seq);
         return true;
     }
@@ -45,6 +46,7 @@ bool k2i_plain_iterator::next()
             _in >> sid;
             s << sid << " ";
         }
+        delete _elem;
         _elem = new k2i_t(kmer, s.str());
         return true;
     }
@@ -56,6 +58,7 @@ bool i2p_plain_iterator::next()
     string id;
     sm_pos_bitmap p;
     if (_in >> id >> p.a[0] >> p.a[1] >> p.b[0] >> p.b[1]) {
+        delete _elem;
         _elem = new i2p_t(id, p);
         return true;
     }
