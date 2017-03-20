@@ -105,9 +105,9 @@ void encode_pos(const sm_pos_bitmap &p, std::string &s)
 
 sm_pos_bitmap decode_pos(char const *s)
 {
-   sm_pos_bitmap p;
-   std::istringstream(s)
-       >> std::hex >> p.a[0] >> std::hex >> p.a[1]
-       >> std::hex >> p.b[0] >> std::hex >> p.b[1];
-   return p;
+    sm_pos_bitmap p;
+    std::istringstream(s)
+        >> std::hex >> p.a[0] >> std::hex >> p.a[1]
+        >> std::hex >> p.b[0] >> std::hex >> p.b[1];
+    return p;
 }

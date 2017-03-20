@@ -34,9 +34,9 @@ public:
         sm_pos_bitmap existing;
         sm_pos_bitmap oper;
         sm_pos_bitmap result;
-        oper = decode_pos(value.data());
+        oper = decode_pos(value.ToString().c_str());
         if (existing_value) {
-            existing = decode_pos(existing_value->data());
+            existing = decode_pos(existing_value->ToString().c_str());
         }
         result.a[0] = existing.a[0] | oper.a[0];
         result.a[1] = existing.a[1] | oper.a[1];
@@ -61,9 +61,9 @@ public:
     {
         std::string existing;
         std::string oper;
-        oper = std::string(value.data());
+        oper = std::string(value.ToString().c_str());
         if (existing_value) {
-            existing = std::string(existing_value->data());
+            existing = std::string(existing_value->ToString().c_str());
         }
         std::stringstream s;
         s << existing << oper;
