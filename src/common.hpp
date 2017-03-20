@@ -41,8 +41,8 @@ enum sm_read_kind : uint8_t {
 // Map positions of candidate kmers in a sequence, in both directions: A and
 // B. There are two 64-bit elements in each array/direction, allowing
 // sequences of up to 128+k-1 bases. The first element in the array maps
-// positions 0..63, while the second element maps 64..127.  Note that a[1] and
-// b[1] are always zero for seequences that don't require indexing more than
+// positions 0..63, while the second element maps 64..127. Note that a[1] and
+// b[1] are always zero for sequences that don't require indexing more than
 // 64 bases. E.g. The following sequence of 30 bases has two candidate
 // 12-mers starting at positions 0 and 2 in direction A, and one candidate
 // starting at position 3 in direction B:
