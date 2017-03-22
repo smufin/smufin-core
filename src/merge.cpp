@@ -90,11 +90,14 @@ void merge::load_seq(rocksdb::DB* db, sm_idx_set set, int pid)
 
     uint64_t n = 0;
     rocksdb::WriteBatch batch;
+    rocksdb::WriteOptions w_options;
+    w_options.disableWAL = true;
+
     while (it->next()) {
         const seq_t *i = it->get();
         batch.Put(i->first, i->second);
         if (n % 10000 == 0) {
-            db->Write(rocksdb::WriteOptions(), &batch);
+            db->Write(w_options, &batch);
             batch.Clear();
         }
         if (n % 100000 == 0) {
@@ -106,7 +109,7 @@ void merge::load_seq(rocksdb::DB* db, sm_idx_set set, int pid)
         n++;
     }
 
-    db->Write(rocksdb::WriteOptions(), &batch);
+    db->Write(w_options, &batch);
 }
 
 // Load K2I index data for a given set and partition `pid' to the database.
@@ -122,9 +125,12 @@ void merge::load_k2i(rocksdb::DB* db, sm_idx_set set, int pid)
         return;
 
     uint64_t n = 0;
+    rocksdb::WriteOptions w_options;
+    w_options.disableWAL = true;
+
     while (it->next()) {
         const k2i_t *i = it->get();
-        db->Merge(rocksdb::WriteOptions(), i->first, i->second);
+        db->Merge(w_options, i->first, i->second);
         if (n % 100000 == 0) {
             end = std::chrono::system_clock::now();
             time = end - start;
@@ -148,11 +154,14 @@ void merge::load_i2p(rocksdb::DB* db, sm_idx_set set, int pid)
         return;
 
     uint64_t n = 0;
+    rocksdb::WriteOptions w_options;
+    w_options.disableWAL = true;
+
     while (it->next()) {
         const i2p_t *i = it->get();
         string serialized;
         encode_pos(i->second, serialized);
-        db->Merge(rocksdb::WriteOptions(), i->first, serialized);
+        db->Merge(w_options, i->first, serialized);
         if (n % 100000 == 0) {
             end = std::chrono::system_clock::now();
             time = end - start;
