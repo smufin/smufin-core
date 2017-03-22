@@ -20,6 +20,7 @@ bool plain_iterator<T>::init()
         cout << "Failed to open: " << file.str() << endl;
         return false;
     }
+    this->_elem = nullptr;
     return true;
 }
 

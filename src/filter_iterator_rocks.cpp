@@ -28,12 +28,14 @@ bool rocks_iterator<T>::init()
 
     _it = db->NewIterator(rocksdb::ReadOptions());
     _it->SeekToFirst();
+    this->_elem = nullptr;
     return true;
 }
 
 bool seq_rocks_iterator::next()
 {
     if (_it->Valid()) {
+        delete _elem;
         _elem = new seq_t(_it->key().ToString(), _it->value().ToString());
         _it->Next();
         return true;
@@ -44,6 +46,7 @@ bool seq_rocks_iterator::next()
 bool k2i_rocks_iterator::next()
 {
     if (_it->Valid()) {
+        delete _elem;
         _elem = new k2i_t(_it->key().ToString(), _it->value().ToString());
         _it->Next();
         return true;
@@ -54,6 +57,7 @@ bool k2i_rocks_iterator::next()
 bool i2p_rocks_iterator::next()
 {
     if (_it->Valid()) {
+        delete _elem;
         sm_pos_bitmap p = decode_pos(_it->value().data());
         _elem = new i2p_t(_it->key().ToString(), p);
         _it->Next();
