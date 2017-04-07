@@ -22,7 +22,7 @@ void open_merge(rocksdb::DB** db, const sm_config &conf, sm_idx_type type,
                 sm_idx_set set, bool ro = false);
 
 void encode_pos(const sm_pos_bitmap &p, std::string &s);
-sm_pos_bitmap decode_pos(char const *s);
+sm_pos_bitmap decode_pos(const std::string &s);
 
 class PositionsMapOperator : public AssociativeMergeOperator
 {
@@ -34,9 +34,9 @@ public:
         sm_pos_bitmap existing;
         sm_pos_bitmap oper;
         sm_pos_bitmap result;
-        oper = decode_pos(value.ToString().c_str());
+        oper = decode_pos(value.ToString());
         if (existing_value) {
-            existing = decode_pos(existing_value->ToString().c_str());
+            existing = decode_pos(existing_value->ToString());
         }
         result.a[0] = existing.a[0] | oper.a[0];
         result.a[1] = existing.a[1] | oper.a[1];

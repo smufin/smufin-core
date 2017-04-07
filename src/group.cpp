@@ -73,7 +73,7 @@ void group::run()
         num_all++;
 
         sid = it->key().ToString();
-        p = decode_pos(it->value().data());
+        p = decode_pos(it->value().ToString());
 
         std::vector<int> a_pos;
         std::vector<int> b_pos;

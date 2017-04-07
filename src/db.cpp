@@ -103,7 +103,7 @@ void encode_pos(const sm_pos_bitmap &p, std::string &s)
     s = e.str();
 }
 
-sm_pos_bitmap decode_pos(char const *s)
+sm_pos_bitmap decode_pos(const std::string &s)
 {
     sm_pos_bitmap p;
     std::istringstream(s)

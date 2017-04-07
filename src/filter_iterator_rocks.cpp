@@ -58,7 +58,7 @@ bool i2p_rocks_iterator::next()
 {
     if (_it->Valid()) {
         delete _elem;
-        sm_pos_bitmap p = decode_pos(_it->value().data());
+        sm_pos_bitmap p = decode_pos(_it->value().ToString());
         _elem = new i2p_t(_it->key().ToString(), p);
         _it->Next();
         return true;
