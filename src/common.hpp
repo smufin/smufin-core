@@ -17,7 +17,10 @@
 #define MAP_LEN 5
 #define MAP_FILE_LEN 1024 // (BASE_LEN ^ MAP_LEN)
 
+#ifndef MAX_READ_LEN
 #define MAX_READ_LEN 100
+#endif
+
 #define POS_LEN CEIL(MAX_READ_LEN, 64)
 
 #define MAX_STORERS 128

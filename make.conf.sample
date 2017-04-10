@@ -1,6 +1,10 @@
 # Sample make.conf file to be configured depending on the environment in which
 # SMUFIN is executed.
 
+# Maximum length of reads in the input files. Used to adapt data structures
+# and buffer sizes depending on expected read length.
+MAX_READ_LEN = 100
+
 # Path to headers:
 # - Google sparsehash
 # - moodycamel's ConcurrentQueue and ReaderWriterQueue
