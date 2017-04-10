@@ -11,13 +11,12 @@
 #include "common.hpp"
 #include "stage.hpp"
 
-#define RMAX 100
 #define KMIN 0
-#define KMAX 100
+#define KMAX MAX_READ_LEN
 
 #define MAX_GROUPERS 128
 
-#define ENCODED_READ_LEN 4 // ceil(max_read_len, 64/2)
+#define ENCODED_READ_LEN CEIL(MAX_READ_LEN, 32)
 
 typedef std::array<std::vector<int>, 2> p_value;
 typedef std::array<std::vector<std::string>, 2> k_value;

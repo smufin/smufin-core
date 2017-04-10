@@ -58,7 +58,11 @@ bool i2p_plain_iterator::next()
 {
     string id;
     sm_pos_bitmap p;
-    if (_in >> id >> p.a[0] >> p.a[1] >> p.b[0] >> p.b[1]) {
+    if (_in >> id) {
+        for (int i = 0; i < POS_LEN; i++)
+            _in >> p.a[i];
+        for (int i = 0; i < POS_LEN; i++)
+            _in >> p.b[i];
         delete _elem;
         _elem = new i2p_t(id, p);
         return true;

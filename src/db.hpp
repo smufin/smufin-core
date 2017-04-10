@@ -38,10 +38,10 @@ public:
         if (existing_value) {
             existing = decode_pos(existing_value->ToString());
         }
-        result.a[0] = existing.a[0] | oper.a[0];
-        result.a[1] = existing.a[1] | oper.a[1];
-        result.b[0] = existing.b[0] | oper.b[0];
-        result.b[1] = existing.b[1] | oper.b[1];
+        for (int i = 0; i < POS_LEN; i++) {
+            result.a[i] = existing.a[i] | oper.a[i];
+            result.b[i] = existing.b[i] | oper.b[i];
+        }
         encode_pos(result, *new_value);
         return true;
     }

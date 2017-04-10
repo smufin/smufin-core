@@ -123,7 +123,7 @@ void group::run()
         }
 
         if (b_len >= KMIN && b_len <= KMAX && match_window(b_pos)) {
-            char buf[RMAX + 1];
+            char buf[MAX_READ_LEN + 1];
             copy(read.begin(), read.end(), buf);
             buf[read_length] = '\0';
             revcomp(buf, read_length);
@@ -278,7 +278,7 @@ void group::decode_read(sm_read_code& read, std::string& str)
 
 void group::get_positions(uint64_t bitmap[2], std::vector<int> *pos)
 {
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < POS_LEN; i++) {
         unsigned long tmp = bitmap[i];
         int offset = i * 64;
         while (tmp > 0) {

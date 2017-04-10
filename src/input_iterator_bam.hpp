@@ -8,6 +8,11 @@
 #include "input.hpp"
 #include "input_iterator.hpp"
 
+// Reserve a big enough multiple of 64 to hold each one of the fields of the
+// read. _seq and _qual need to be at least MAX_READ_LEN + 1; _id's length is
+// always unknown, but it's usually significantly shorter.
+#define BAM_BUF_LEN (((MAX_READ_LEN / 64) + 1) * 64)
+
 class input_iterator_bam : public input_iterator
 {
 public:
@@ -18,9 +23,9 @@ private:
     samFile *_in;
     bam_hdr_t *_header;
     bam1_t *_record;
-    char _id[256];
-    char _seq[256];
-    char _qual[256];
+    char _id[BAM_BUF_LEN];
+    char _seq[BAM_BUF_LEN];
+    char _qual[BAM_BUF_LEN];
 };
 
 #endif

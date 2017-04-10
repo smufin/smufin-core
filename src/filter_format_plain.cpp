@@ -119,9 +119,12 @@ void filter_format_plain::write_i2p(sm_idx_set set)
     ofs.open(file.str());
     for (auto const &kv: _i2p) {
         const sm_pos_bitmap *p = &kv.second;
-        ofs << kv.first << " ";
-        ofs << p->a[0] << " " << p->a[1] << " ";
-        ofs << p->b[0] << " " << p->b[1] << "\n";
+        ofs << kv.first;
+        for (int i = 0; i < POS_LEN; i++)
+            ofs << " " << p->a[i];
+        for (int i = 0; i < POS_LEN; i++)
+            ofs << " " << p->b[i];
+        ofs << "\n";
     }
     ofs.close();
 }

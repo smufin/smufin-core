@@ -98,16 +98,20 @@ void open_merge(rocksdb::DB** db, const sm_config &conf, sm_idx_type type,
 void encode_pos(const sm_pos_bitmap &p, std::string &s)
 {
     std::stringstream e;
-    e << std::hex << p.a[0] << " " << std::hex << p.a[1] << " "
-      << std::hex << p.b[0] << " " << std::hex << p.b[1];
+    for (int i = 0; i < POS_LEN; i++)
+        e << std::hex << p.a[i] << " ";
+    for (int i = 0; i < POS_LEN; i++)
+        e << std::hex << p.b[i] << " ";
     s = e.str();
 }
 
 sm_pos_bitmap decode_pos(const std::string &s)
 {
     sm_pos_bitmap p;
-    std::istringstream(s)
-        >> std::hex >> p.a[0] >> std::hex >> p.a[1]
-        >> std::hex >> p.b[0] >> std::hex >> p.b[1];
+    std::istringstream in(s);
+    for (int i = 0; i < POS_LEN; i++)
+        in >> std::hex >> p.a[i];
+    for (int i = 0; i < POS_LEN; i++)
+        in >> std::hex >> p.b[i];
     return p;
 }

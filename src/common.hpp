@@ -11,9 +11,14 @@
 #include "hash.hpp"
 #include "kseq.h"
 
+#define CEIL(x,y) (((x) + (y) - 1) / (y))
+
 #define BASE_LEN 4
 #define MAP_LEN 5
 #define MAP_FILE_LEN 1024 // (BASE_LEN ^ MAP_LEN)
+
+#define MAX_READ_LEN 100
+#define POS_LEN CEIL(MAX_READ_LEN, 64)
 
 #define MAX_STORERS 128
 #define MAX_LOADERS 128
@@ -39,26 +44,23 @@ enum sm_read_kind : uint8_t {
 };
 
 // Map positions of candidate kmers in a sequence, in both directions: A and
-// B. There are two 64-bit elements in each array/direction, allowing
-// sequences of up to 128+k-1 bases. The first element in the array maps
-// positions 0..63, while the second element maps 64..127. Note that a[1] and
-// b[1] are always zero for sequences that don't require indexing more than
-// 64 bases. E.g. The following sequence of 30 bases has two candidate
-// 12-mers starting at positions 0 and 2 in direction A, and one candidate
-// starting at position 3 in direction B:
+// B. There are POS_LEN 64-bit elements in each array/direction, allowing
+// sequences of up to MAX_READ_LEN+k-1 bases. The first element in the array
+// maps positions 0..63, while the second element maps 64..127, etc. E.g. The
+// following sequence of 30 bases has two candidate 12-mers starting at
+// positions 0 and 2 in direction A, and one candidate starting at position 3
+// in direction B:
 //   A: GGGGTGCAGGTCCAAGGAAAGTCTTAGTGT
 //      GGGGTGCAGGTC (0)
 //        GGTGCAGGTCCA (2)
-//   B: AGGGTGCAGGTCCAAGGAAAGTCTTAGTGT
-//         GTGCAGGTCCAA (3)
+//   B: ACACTAAGACTTTCCTTGGACCTGCACCCC
+//         CTAAGACTTTCC (3)
 // Which results in the following bitmap:
 //   a[0]: 0000000000000000000000000000000000000000000000000000000000000101 = 5
-//   a[1]: 0000000000000000000000000000000000000000000000000000000000000000 = 0
 //   b[0]: 0000000000000000000000000000000000000000000000000000000000001000 = 8
-//   b[1]: 0000000000000000000000000000000000000000000000000000000000000000 = 0
 typedef struct sm_pos_bitmap {
-    uint64_t a[2] = {0};
-    uint64_t b[2] = {0};
+    uint64_t a[POS_LEN] = {0};
+    uint64_t b[POS_LEN] = {0};
 } sm_pos_bitmap;
 
 #define NUM_TYPES 3
