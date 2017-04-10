@@ -50,7 +50,26 @@ void set_options_filter(rocksdb::Options &options)
 void set_options_merge(rocksdb::Options &options)
 {
     options.create_if_missing = true;
-    options.IncreaseParallelism(4);
+    options.statistics = nullptr;
+
+    options.env->SetBackgroundThreads(2, Env::Priority::HIGH);
+    options.env->SetBackgroundThreads(4, Env::Priority::LOW);
+
+    options.max_background_flushes = 2;
+    options.max_write_buffer_number = 4;
+    options.write_buffer_size = 64UL * 1024 * 1024;
+
+    options.max_background_compactions = 4;
+    options.level0_file_num_compaction_trigger = 4;
+    options.level0_slowdown_writes_trigger = 10;
+    options.level0_stop_writes_trigger = 20;
+    options.target_file_size_base = 128UL * 1024 * 1024;
+
+    options.disableDataSync = true;
+    options.WAL_ttl_seconds = 0;
+    options.WAL_size_limit_MB = 0;
+    options.compression = rocksdb::kLZ4Compression;
+    options.max_open_files = -1;
 }
 
 void open_filter(rocksdb::DB** db, const sm_config &conf, sm_idx_type type,
