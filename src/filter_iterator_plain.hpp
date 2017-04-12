@@ -10,9 +10,9 @@ template <typename T>
 class plain_iterator : public filter_iterator<T>
 {
 public:
-    plain_iterator(const sm_config &conf, sm_idx_set set, int pid, int fid,
+    plain_iterator(const sm_config &conf, sm_idx_set set, int pid, int iid,
                    sm_idx_type type)
-        : filter_iterator<T>(conf, set, pid, fid), _type(type) {};
+        : filter_iterator<T>(conf, set, pid, iid), _type(type) {};
 
     bool init();
 
@@ -24,24 +24,24 @@ protected:
 class seq_plain_iterator : public plain_iterator<seq_t>
 {
 public:
-    seq_plain_iterator(const sm_config &conf, sm_idx_set set, int pid, int fid)
-        : plain_iterator<seq_t>(conf, set, pid, fid, SEQ) {};
+    seq_plain_iterator(const sm_config &conf, sm_idx_set set, int pid, int iid)
+        : plain_iterator<seq_t>(conf, set, pid, iid, SEQ) {};
     bool next();
 };
 
 class k2i_plain_iterator : public plain_iterator<k2i_t>
 {
 public:
-    k2i_plain_iterator(const sm_config &conf, sm_idx_set set, int pid, int fid)
-        : plain_iterator<k2i_t>(conf, set, pid, fid, K2I) {};
+    k2i_plain_iterator(const sm_config &conf, sm_idx_set set, int pid, int iid)
+        : plain_iterator<k2i_t>(conf, set, pid, iid, K2I) {};
     bool next();
 };
 
 class i2p_plain_iterator : public plain_iterator<i2p_t>
 {
 public:
-    i2p_plain_iterator(const sm_config &conf, sm_idx_set set, int pid, int fid)
-        : plain_iterator<i2p_t>(conf, set, pid, fid, I2P) {};
+    i2p_plain_iterator(const sm_config &conf, sm_idx_set set, int pid, int iid)
+        : plain_iterator<i2p_t>(conf, set, pid, iid, I2P) {};
     bool next();
 };
 

@@ -16,7 +16,7 @@ bool rocks_iterator<T>::init()
     std::ostringstream path;
     path << this->_conf.output_path << "/filter-" << sm::types[this->_type]
          << "-" << sm::sets[this->_set] << "." << this->_pid << "-"
-         << this->_fid << ".rdb";
+         << this->_iid << ".rdb";
     cout << "Prepare iterator: " << path.str() << endl;
 
     rocksdb::DB* db;

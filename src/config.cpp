@@ -50,6 +50,7 @@ void sm_config::load(const string &filename)
     export_max = tree.get<int>("count.export-max", 31);
 
     filter_format = tree.get<string>("filter.format", "plain");
+    num_indexes = tree.get<int>("filter.num-indexes", 1);
     max_nc = tree.get<int>("filter.max-normal-count", 1);
     min_tc = tree.get<int>("filter.min-tumor-count", 4);
     max_filter_reads = tree.get<int>("filter.max-reads", 2000);

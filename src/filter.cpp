@@ -40,6 +40,8 @@ void filter::chain(const stage* prev)
 
 void filter::run()
 {
+    cout << "Filter: " << _conf.num_filters << " threads x "
+         << _conf.num_indexes << " indexes" << endl;
     spawn("filter", std::bind(&filter::load, this, std::placeholders::_1),
           _conf.num_filters);
 }

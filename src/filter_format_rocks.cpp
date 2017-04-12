@@ -19,12 +19,12 @@ filter_format_rocks::filter_format_rocks(const sm_config &conf)
     rocksdb::Options opts;
     set_options_filter(opts);
 
-    for (int fid = 0; fid < _conf.num_filters; fid++) {
+    for (int iid = 0; iid < _conf.num_indexes; iid++) {
         for (auto set: {NN, TN, TM}) {
             std::ostringstream path;
             path << _conf.output_path << "/filter-seq" << "-" << sm::sets[set]
-                 << "." << _conf.pid << "-" << fid << ".rdb";
-            status = rocksdb::DB::Open(opts, path.str(), &_seq[set][fid]);
+                 << "." << _conf.pid << "-" << iid << ".rdb";
+            status = rocksdb::DB::Open(opts, path.str(), &_seq[set][iid]);
             assert(status.ok());
         }
 
@@ -32,16 +32,16 @@ filter_format_rocks::filter_format_rocks(const sm_config &conf)
             set_options_type(opts, K2I);
             std::ostringstream path;
             path << _conf.output_path << "/filter-k2i" << "-" << sm::sets[set]
-                 << "." << _conf.pid << "-" << fid << ".rdb";
-            status = rocksdb::DB::Open(opts, path.str(), &_k2i[set][fid]);
+                 << "." << _conf.pid << "-" << iid << ".rdb";
+            status = rocksdb::DB::Open(opts, path.str(), &_k2i[set][iid]);
             assert(status.ok());
         }
 
         set_options_type(opts, I2P);
         std::ostringstream path;
         path << _conf.output_path << "/filter-i2p-tm." << _conf.pid << "-"
-             << fid << ".rdb";
-        status = rocksdb::DB::Open(opts, path.str(), &_i2p[fid]);
+             << iid << ".rdb";
+        status = rocksdb::DB::Open(opts, path.str(), &_i2p[iid]);
         assert(status.ok());
     }
 }
@@ -52,8 +52,9 @@ void filter_format_rocks::update(int fid, const sm_read *read, int pos,
     string sid = read->id;
     rocksdb::WriteOptions w_options;
     w_options.disableWAL = true;
+    int iid = fid % _conf.num_indexes;
 
-    _seq[set][fid]->Put(w_options, sid, read->seq);
+    _seq[set][iid]->Put(w_options, sid, read->seq);
 
     if (set == TM) {
         sm_pos_bitmap p;
@@ -65,24 +66,24 @@ void filter_format_rocks::update(int fid, const sm_read *read, int pos,
             p.b[pos / 64] |= 1UL << (pos % 64);
 
         encode_pos(p, serialized);
-        _i2p[fid]->Merge(w_options, sid, serialized);
+        _i2p[iid]->Merge(w_options, sid, serialized);
     } else {
         // TODO: Honour _conf.max_filter_reads
         std::stringstream ss;
         ss << sid << " ";
-        _k2i[set][fid]->Merge(w_options, kmer, ss.str());
+        _k2i[set][iid]->Merge(w_options, kmer, ss.str());
     }
 }
 
 void filter_format_rocks::dump()
 {
     std::vector<rocksdb::DB*> list;
-    for (int fid = 0; fid < _conf.num_filters; fid++) {
+    for (int iid = 0; iid < _conf.num_indexes; iid++) {
         for (auto set: {NN, TN, TM})
-            list.push_back(_seq[set][fid]);
+            list.push_back(_seq[set][iid]);
         for (auto set: {NN, TN})
-            list.push_back(_k2i[set][fid]);
-        list.push_back(_i2p[fid]);
+            list.push_back(_k2i[set][iid]);
+        list.push_back(_i2p[iid]);
     }
     spawn<rocksdb::DB*>("compact", std::bind(&filter_format_rocks::compact,
                         this, std::placeholders::_1), list);
@@ -107,20 +108,20 @@ void filter_format_rocks::stats()
 
     seq_nn = seq_tn = seq_tm = k2i_nn = k2i_tn = i2p_tm = 0;
 
-    for (int fid = 0; fid < _conf.num_filters; fid++) {
-        it = _seq[NN][fid]->NewIterator(rocksdb::ReadOptions());
+    for (int iid = 0; iid < _conf.num_indexes; iid++) {
+        it = _seq[NN][iid]->NewIterator(rocksdb::ReadOptions());
         for (it->SeekToFirst(); it->Valid(); it->Next()) seq_nn++;
-        it = _seq[TN][fid]->NewIterator(rocksdb::ReadOptions());
+        it = _seq[TN][iid]->NewIterator(rocksdb::ReadOptions());
         for (it->SeekToFirst(); it->Valid(); it->Next()) seq_tn++;
-        it = _seq[TM][fid]->NewIterator(rocksdb::ReadOptions());
+        it = _seq[TM][iid]->NewIterator(rocksdb::ReadOptions());
         for (it->SeekToFirst(); it->Valid(); it->Next()) seq_tm++;
 
-        it = _k2i[NN][fid]->NewIterator(rocksdb::ReadOptions());
+        it = _k2i[NN][iid]->NewIterator(rocksdb::ReadOptions());
         for (it->SeekToFirst(); it->Valid(); it->Next()) k2i_nn++;
-        it = _k2i[TN][fid]->NewIterator(rocksdb::ReadOptions());
+        it = _k2i[TN][iid]->NewIterator(rocksdb::ReadOptions());
         for (it->SeekToFirst(); it->Valid(); it->Next()) k2i_tn++;
 
-        it = _i2p[fid]->NewIterator(rocksdb::ReadOptions());
+        it = _i2p[iid]->NewIterator(rocksdb::ReadOptions());
         for (it->SeekToFirst(); it->Valid(); it->Next()) i2p_tm++;
     }
 

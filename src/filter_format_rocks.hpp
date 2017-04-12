@@ -8,7 +8,7 @@
 #include "common.hpp"
 #include "filter_format.hpp"
 
-#define MAX_FILTERS 48
+#define MAX_INDEXES 48
 
 // Implementation of a filter_format that creates filtering indexes using
 // RocksDB-backed database.
@@ -34,9 +34,9 @@ public:
     void stats();
 
 private:
-    rocksdb::DB* _seq[NUM_SETS][MAX_FILTERS];
-    rocksdb::DB* _k2i[2][MAX_FILTERS];
-    rocksdb::DB* _i2p[MAX_FILTERS];
+    rocksdb::DB* _seq[NUM_SETS][MAX_INDEXES];
+    rocksdb::DB* _k2i[2][MAX_INDEXES];
+    rocksdb::DB* _i2p[MAX_INDEXES];
 
     void compact(rocksdb::DB* db);
 };

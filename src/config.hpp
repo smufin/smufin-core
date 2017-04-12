@@ -40,6 +40,7 @@ struct sm_config {
     int export_max;
 
     std::string filter_format;
+    int num_indexes;
     int max_nc;
     int min_tc;
 
