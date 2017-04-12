@@ -1,0 +1,2 @@
+00-merge-rocks-multi-2p2m.test -- -p 2 -m 2
+00-merge-rocks-multi-2p4m.test -- -p 2 -m 4
