@@ -44,20 +44,22 @@ void merge::run()
 void merge::load(sm_idx_type type, sm_idx_set set)
 {
     for (int i = 0; i < _conf.num_partitions; i++) {
-        _partition_queue.enqueue(i);
+        for (int j = 0; j < _conf.num_filters; j++) {
+            _filter_queue.enqueue(std::pair<int, int>(i, j));
+        }
     }
 
     std::map<sm_idx_type, load_f> load_map;
-    load_map[SEQ] = std::bind(&merge::load_seq, this, _1, _2, _3);
-    load_map[K2I] = std::bind(&merge::load_k2i, this, _1, _2, _3);
-    load_map[I2P] = std::bind(&merge::load_i2p, this, _1, _2, _3);
+    load_map[SEQ] = std::bind(&merge::load_seq, this, _1, _2, _3, _4);
+    load_map[K2I] = std::bind(&merge::load_k2i, this, _1, _2, _3, _4);
+    load_map[I2P] = std::bind(&merge::load_i2p, this, _1, _2, _3, _4);
 
     rocksdb::DB* db;
     open_merge(&db, _conf, type, set);
 
     std::vector<std::thread> threads;
     for (int i = 0; i < _conf.num_mergers; i++)
-        threads.push_back(std::thread(std::bind(&merge::load_partitions, this,
+        threads.push_back(std::thread(std::bind(&merge::load_filters, this,
                           load_map[type], db, set)));
     cout << "Spawned " << threads.size() << " merger threads" << endl;
     for (auto& thread: threads)
@@ -68,23 +70,23 @@ void merge::load(sm_idx_type type, sm_idx_set set)
 
 // Load all partitions of a certain type using `load_part' and the given set
 // to a RocksDB database.
-void merge::load_partitions(load_f load_part, rocksdb::DB* db, sm_idx_set set)
+void merge::load_filters(load_f load_filter, rocksdb::DB* db, sm_idx_set set)
 {
-    int pid;
-    while (_partition_queue.try_dequeue(pid)) {
-        load_part(db, set, pid);
+    std::pair<int, int> id;
+    while (_filter_queue.try_dequeue(id)) {
+        load_filter(db, set, id.first, id.second);
     }
 }
 
 // Load SEQ index data for a given set and partition `pid' to the database.
-void merge::load_seq(rocksdb::DB* db, sm_idx_set set, int pid)
+void merge::load_seq(rocksdb::DB* db, sm_idx_set set, int pid, int fid)
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
     start = std::chrono::system_clock::now();
 
     filter_iterator<seq_t>* it;
-    it = sm::seq_iterators.at(_conf.filter_format)(_conf, set, pid);
+    it = sm::seq_iterators.at(_conf.filter_format)(_conf, set, pid, fid);
     if (!it->init())
         return;
 
@@ -103,7 +105,7 @@ void merge::load_seq(rocksdb::DB* db, sm_idx_set set, int pid)
         if (n % 100000 == 0) {
             end = std::chrono::system_clock::now();
             time = end - start;
-            cout << "M: " << pid << " " << time.count() << endl;
+            cout << "M: " << pid << " " << fid << " " << time.count() << endl;
             start = std::chrono::system_clock::now();
         }
         n++;
@@ -113,14 +115,14 @@ void merge::load_seq(rocksdb::DB* db, sm_idx_set set, int pid)
 }
 
 // Load K2I index data for a given set and partition `pid' to the database.
-void merge::load_k2i(rocksdb::DB* db, sm_idx_set set, int pid)
+void merge::load_k2i(rocksdb::DB* db, sm_idx_set set, int pid, int fid)
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
     start = std::chrono::system_clock::now();
 
     filter_iterator<k2i_t>* it;
-    it = sm::k2i_iterators.at(_conf.filter_format)(_conf, set, pid);
+    it = sm::k2i_iterators.at(_conf.filter_format)(_conf, set, pid, fid);
     if (!it->init())
         return;
 
@@ -134,7 +136,7 @@ void merge::load_k2i(rocksdb::DB* db, sm_idx_set set, int pid)
         if (n % 100000 == 0) {
             end = std::chrono::system_clock::now();
             time = end - start;
-            cout << "M: " << pid << " " << time.count() << endl;
+            cout << "M: " << pid << " " << fid << " " << time.count() << endl;
             start = std::chrono::system_clock::now();
         }
         n++;
@@ -142,14 +144,14 @@ void merge::load_k2i(rocksdb::DB* db, sm_idx_set set, int pid)
 }
 
 // Load I2P index data for a given set and partition `pid' to the database.
-void merge::load_i2p(rocksdb::DB* db, sm_idx_set set, int pid)
+void merge::load_i2p(rocksdb::DB* db, sm_idx_set set, int pid, int fid)
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
     start = std::chrono::system_clock::now();
 
     filter_iterator<i2p_t>* it;
-    it = sm::i2p_iterators.at(_conf.filter_format)(_conf, set, pid);
+    it = sm::i2p_iterators.at(_conf.filter_format)(_conf, set, pid, fid);
     if (!it->init())
         return;
 
@@ -165,7 +167,7 @@ void merge::load_i2p(rocksdb::DB* db, sm_idx_set set, int pid)
         if (n % 100000 == 0) {
             end = std::chrono::system_clock::now();
             time = end - start;
-            cout << "M: " << pid << " " << time.count() << endl;
+            cout << "M: " << pid << " " << fid << " " << time.count() << endl;
             start = std::chrono::system_clock::now();
         }
         n++;

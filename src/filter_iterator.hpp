@@ -13,8 +13,8 @@ template<typename T>
 class filter_iterator
 {
 public:
-    filter_iterator(const sm_config &conf, sm_idx_set set, int pid)
-        : _conf(conf), _set(set), _pid(pid) {};
+    filter_iterator(const sm_config &conf, sm_idx_set set, int pid, int fid)
+        : _conf(conf), _set(set), _pid(pid), _fid(fid) {};
 
     virtual bool init() = 0;
     virtual bool next() = 0;
@@ -24,20 +24,22 @@ protected:
     const sm_config &_conf;
     const sm_idx_set _set;
     const int _pid;
+    const int _fid;
     const T* _elem;
 };
 
 template<typename T>
-T* create_filter_iterator(const sm_config &conf, sm_idx_set set, int pid)
+T* create_filter_iterator(const sm_config &conf, sm_idx_set set, int pid,
+                          int fid)
 {
-    return new T(conf, set, pid);
+    return new T(conf, set, pid, fid);
 };
 
 typedef std::function<filter_iterator<seq_t>*(const sm_config &conf,
-        sm_idx_set set, int pid)> seq_iterator_s;
+        sm_idx_set set, int pid, int fid)> seq_iterator_s;
 typedef std::function<filter_iterator<k2i_t>*(const sm_config &conf,
-        sm_idx_set set, int pid)> k2i_iterator_s;
+        sm_idx_set set, int pid, int fid)> k2i_iterator_s;
 typedef std::function<filter_iterator<i2p_t>*(const sm_config &conf,
-        sm_idx_set set, int pid)> i2p_iterator_s;
+        sm_idx_set set, int pid, int fid)> i2p_iterator_s;
 
 #endif

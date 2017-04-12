@@ -15,16 +15,20 @@ bool rocks_iterator<T>::init()
 {
     std::ostringstream path;
     path << this->_conf.output_path << "/filter-" << sm::types[this->_type]
-         << "-" << sm::sets[this->_set] << "." << this->_pid << ".rdb";
+         << "-" << sm::sets[this->_set] << "." << this->_pid << "-"
+         << this->_fid << ".rdb";
     cout << "Prepare iterator: " << path.str() << endl;
 
     rocksdb::DB* db;
     rocksdb::Options options;
     rocksdb::Status status;
 
+    set_options_type(options, this->_type);
     status = rocksdb::DB::OpenForReadOnly(options, path.str(), &db);
-    if (!status.ok())
+    if (!status.ok()) {
+        cout << "Failed to open: " << path.str() << endl;
         return false;
+    }
 
     _it = db->NewIterator(rocksdb::ReadOptions());
     _it->SeekToFirst();

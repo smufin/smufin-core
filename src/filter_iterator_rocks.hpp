@@ -10,9 +10,9 @@ template <typename T>
 class rocks_iterator : public filter_iterator<T>
 {
 public:
-    rocks_iterator(const sm_config &conf, sm_idx_set set, int pid,
+    rocks_iterator(const sm_config &conf, sm_idx_set set, int pid, int fid,
                    sm_idx_type type)
-        : filter_iterator<T>(conf, set, pid), _type(type) {};
+        : filter_iterator<T>(conf, set, pid, fid), _type(type) {};
 
     bool init();
 
@@ -24,24 +24,24 @@ protected:
 class seq_rocks_iterator : public rocks_iterator<seq_t>
 {
 public:
-    seq_rocks_iterator(const sm_config &conf, sm_idx_set set, int pid)
-        : rocks_iterator<seq_t>(conf, set, pid, SEQ) {};
+    seq_rocks_iterator(const sm_config &conf, sm_idx_set set, int pid, int fid)
+        : rocks_iterator<seq_t>(conf, set, pid, fid, SEQ) {};
     bool next();
 };
 
 class k2i_rocks_iterator : public rocks_iterator<k2i_t>
 {
 public:
-    k2i_rocks_iterator(const sm_config &conf, sm_idx_set set, int pid)
-        : rocks_iterator<k2i_t>(conf, set, pid, K2I) {};
+    k2i_rocks_iterator(const sm_config &conf, sm_idx_set set, int pid, int fid)
+        : rocks_iterator<k2i_t>(conf, set, pid, fid, K2I) {};
     bool next();
 };
 
 class i2p_rocks_iterator : public rocks_iterator<i2p_t>
 {
 public:
-    i2p_rocks_iterator(const sm_config &conf, sm_idx_set set, int pid)
-        : rocks_iterator<i2p_t>(conf, set, pid, I2P) {};
+    i2p_rocks_iterator(const sm_config &conf, sm_idx_set set, int pid, int fid)
+        : rocks_iterator<i2p_t>(conf, set, pid, fid, I2P) {};
     bool next();
 };
 
