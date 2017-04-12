@@ -18,6 +18,7 @@ group::group(const sm_config &conf) : stage(conf)
 {
     init_mapping(conf, _conf.num_partitions, _conf.num_groupers,
                  _group_map_l1, _group_map_l2);
+    _leads_size = _conf.leads_size / _conf.num_partitions / _conf.num_groupers;
     _executable["run"] = std::bind(&group::run, this);
     _executable["stats"] = std::bind(&group::stats, this);
 }
@@ -29,10 +30,10 @@ void group::run()
     start = std::chrono::system_clock::now();
 
     for (int i = 0; i < _conf.num_groupers; i++) {
-        _l2p[i] = new l2p_table(100000);
-        _l2k[i] = new l2k_table(100000);
-        _l2i[i] = new l2i_table(100000);
-        _l2r[i] = new l2r_table(100000);
+        _l2p[i] = new l2p_table(_leads_size);
+        _l2k[i] = new l2k_table(_leads_size);
+        _l2i[i] = new l2i_table(_leads_size);
+        _l2r[i] = new l2r_table(_leads_size);
     }
 
     for (int i = 0; i < 2; i++) {

@@ -43,6 +43,7 @@ struct sm_config {
     int num_indexes;
     int max_nc;
     int min_tc;
+    uint64_t leads_size;
 
     // Maximum number of reads per kmer while filtering; kmers with more than
     // max_filter_reads associated reads are ignored.

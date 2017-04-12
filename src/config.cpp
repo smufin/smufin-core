@@ -58,6 +58,7 @@ void sm_config::load(const string &filename)
     window_min = tree.get<int>("group.window-min", 7);
     window_len = tree.get<int>("group.window-len", 10);
     max_group_reads = tree.get<int>("group.max-reads", 500);
+    leads_size = tree.get<uint64_t>("group.leads-size", 12800000);
 
     if (sm::input_queues.find(input_format) == sm::input_queues.end()) {
         cout << "Invalid input format " << input_format << endl;

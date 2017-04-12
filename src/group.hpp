@@ -76,6 +76,8 @@ public:
     void stats();
 
 private:
+    uint64_t _leads_size = 0;
+
     l2p_table* _l2p[MAX_GROUPERS];
     l2k_table* _l2k[MAX_GROUPERS];
     l2i_table* _l2i[MAX_GROUPERS];
