@@ -26,7 +26,7 @@ class filter_format_plain : public filter_format
 public:
     filter_format_plain(const sm_config &conf) : filter_format(conf) {};
 
-    void update(const sm_read *read, int pos, bool rev, char kmer[],
+    void update(int fid, const sm_read *read, int pos, bool rev, char kmer[],
                 sm_idx_set set);
     bool flush();
     void dump();

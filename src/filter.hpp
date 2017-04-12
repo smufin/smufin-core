@@ -37,7 +37,7 @@ private:
                            char kmer[], sm_idx_set set);
     inline void filter_branch(int fid, const sm_read *read, int pos, bool rev,
                               char kmer[], sm_idx_set set);
-    inline void filter_kmer(const sm_read *read, int pos, bool rev,
+    inline void filter_kmer(int fid, const sm_read *read, int pos, bool rev,
                             char kmer[], uint32_t nc, uint32_t tc,
                             uint32_t nsum, uint32_t tsum, sm_idx_set set);
 };

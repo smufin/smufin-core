@@ -185,7 +185,7 @@ void filter::filter_branch(int fid, const sm_read *read, int pos, bool rev,
         nsum += it->second.v[f][l][NORMAL_READ];
         tsum += it->second.v[f][l][CANCER_READ];
     }
-    filter_kmer(read, pos, rev, kmer, nc, tc, nsum, tsum, set);
+    filter_kmer(fid, read, pos, rev, kmer, nc, tc, nsum, tsum, set);
 }
 
 void filter::filter_all(int fid, const sm_read *read, int pos, bool rev,
@@ -206,13 +206,13 @@ void filter::filter_all(int fid, const sm_read *read, int pos, bool rev,
             kmer[_conf.k - 1] = sm::alpha[l];
             uint32_t nc = it->second.v[f][l][NORMAL_READ];
             uint32_t tc = it->second.v[f][l][CANCER_READ];
-            filter_kmer(read, pos, rev, kmer, nc, tc, nsum, tsum, set);
+            filter_kmer(fid, read, pos, rev, kmer, nc, tc, nsum, tsum, set);
         }
     }
 }
 
-void filter::filter_kmer(const sm_read *read, int pos, bool rev, char kmer[],
-                         uint32_t nc, uint32_t tc, uint32_t nsum,
+void filter::filter_kmer(int fid, const sm_read *read, int pos, bool rev,
+                         char kmer[], uint32_t nc, uint32_t tc, uint32_t nsum,
                          uint32_t tsum, sm_idx_set set)
 {
     if (tc >= _conf.min_tc && nc <= _conf.max_nc) {
@@ -221,6 +221,6 @@ void filter::filter_kmer(const sm_read *read, int pos, bool rev, char kmer[],
             // thus the passed `pos', follow the forward sequence.
             pos = read->len - _conf.k - pos;
         }
-        _format->update(read, pos, rev, kmer, set);
+        _format->update(fid, read, pos, rev, kmer, set);
     }
 }

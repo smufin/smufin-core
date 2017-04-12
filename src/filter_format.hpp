@@ -17,8 +17,8 @@ public:
 
     // Main method to add a particular position/kmer of a sequence to the
     // filter indexes.
-    virtual void update(const sm_read *read, int pos, bool rev, char kmer[],
-                        sm_idx_set set) = 0;
+    virtual void update(int fid, const sm_read *read, int pos, bool rev,
+                        char kmer[], sm_idx_set set) = 0;
     virtual bool flush() = 0;
     virtual void dump() = 0;
     virtual void stats() = 0;

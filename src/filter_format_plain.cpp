@@ -10,8 +10,8 @@ using std::cout;
 using std::endl;
 using std::string;
 
-void filter_format_plain::update(const sm_read *read, int pos, bool rev,
-                                 char kmer[], sm_idx_set set)
+void filter_format_plain::update(int fid, const sm_read *read, int pos,
+                                 bool rev, char kmer[], sm_idx_set set)
 {
     char buf[512] = {0};
     sprintf(buf, "%s %s", read->id, read->seq);
