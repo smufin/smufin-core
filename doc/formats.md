@@ -72,7 +72,7 @@ counters. E.g.:
 ### SEQ Index
 
 *Stage*: `filter`, `merge`
-*Filename*: `filter-seq-{nn,tn,tm}.{txt.rdb}`
+*Filename*: `index-seq-{nn,tn,tm}.{txt.rdb}`
 
 SEQ files map sequence IDs to sequences. E.g.
 
@@ -83,7 +83,7 @@ SEQ files map sequence IDs to sequences. E.g.
 ### K2I Index
 
 *Stage*: `filter`, `merge`
-*Filename*: `filter-k2i-{nn,tn}.{txt.rdb}`
+*Filename*: `index-k2i-{nn,tn}.{txt.rdb}`
 
 K2I stands for *Kmer to IDs*. K2I files contain, for each candidate kmer, a
 list of sequence IDs that contain that kmer. Every line in a K2I file
@@ -100,12 +100,13 @@ list of sequence IDs. E.g.:
 ### I2P Index
 
 *Stage*: `filter`, `merge`
-*Filename*: `filter-i2p-tm.{txt.rdb}`
+*Filename*: `index-i2p-tm.{txt.rdb}`
 
 I2P stands for *ID to Positions*. I2P files contain, for each candidate read
 ID, positions within the read sequence that reference candidate kmers.
-Positions are encoded as four `uint64_t` bitmaps: two in direction A, and two
-in direction B (hence supporting reads of up to `128+k-1` bases). E.g.:
+For the default configuration with `MAX_READ_LEN` set to 100, positions are
+encoded as four `uint64_t` bitmaps: two in direction A, and two in direction B
+(hence supporting reads of up to `128+k-1` bases). E.g.:
 
  ```
  chr20-13310454 2047 0 1 0

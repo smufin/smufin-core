@@ -26,9 +26,6 @@ short kmers and inputs with an unusually high number of unknown bases.
 
 Algorithmically speaking *smufin* doesn't take read length into consideration
 and it should be able to handle reads of any length. However, certain data
-structures assume maximum read lengths of approximately 128 bases and may need
-to be changed for longer reads: 1) position bitmaps, defined as
-`sm_pos_bitmap`, support sequences of up to `128+k-1` bases; 2) in the group
-stage, reads may be encoded as `sm_read_code`, which by default supports up to
-128 bases; and 3) the maximum number of splits, `MAX_SPLITS`, may also need to
-be increased.
+structures are optimized to improve performance under different scenarios.
+The `MAX_READ_LEN` environment variable, which defaults to 100, should be used
+at compile time to define the maximum expected read length in the input.
