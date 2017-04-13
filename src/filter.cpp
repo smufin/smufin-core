@@ -18,10 +18,10 @@ filter::filter(const sm_config &conf) : stage(conf)
     _input_queue = sm::input_queues.at(_conf.input_format)(conf);
     _input_queue->init();
 
-    string name = _conf.filter_format;
-    if (sm::filter_formats.find(name) != sm::filter_formats.end()) {
+    string name = _conf.index_format;
+    if (sm::index_formats.find(name) != sm::index_formats.end()) {
         cout << "Initialize: filter-" << name << endl;
-        _format = sm::filter_formats.at(name)(_conf);
+        _format = sm::index_formats.at(name)(_conf);
     } else {
         cout << "Unknown filter format: " << name << endl;
         exit(1);

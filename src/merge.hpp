@@ -7,7 +7,7 @@
 #include "common.hpp"
 #include "stage.hpp"
 
-#include "filter_iterator.hpp"
+#include "index_iterator.hpp"
 
 // Signature for functions that loads index data of a particular type and set
 // and a specific partition (pid) into a RocksDB database (db). E.g.

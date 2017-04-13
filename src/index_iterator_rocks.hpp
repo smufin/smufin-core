@@ -1,18 +1,18 @@
-#ifndef __SM_FILTER_ITERATOR_ROCKS_H__
-#define __SM_FILTER_ITERATOR_ROCKS_H__
+#ifndef __SM_INDEX_ITERATOR_ROCKS_H__
+#define __SM_INDEX_ITERATOR_ROCKS_H__
 
 #include <rocksdb/db.h>
 
 #include "common.hpp"
-#include "filter_iterator.hpp"
+#include "index_iterator.hpp"
 
 template <typename T>
-class rocks_iterator : public filter_iterator<T>
+class rocks_iterator : public index_iterator<T>
 {
 public:
     rocks_iterator(const sm_config &conf, sm_idx_set set, int pid, int iid,
                    sm_idx_type type)
-        : filter_iterator<T>(conf, set, pid, iid), _type(type) {};
+        : index_iterator<T>(conf, set, pid, iid), _type(type) {};
 
     bool init();
 

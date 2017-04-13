@@ -49,7 +49,7 @@ void sm_config::load(const string &filename)
     export_min = tree.get<int>("count.export-min", 29);
     export_max = tree.get<int>("count.export-max", 31);
 
-    filter_format = tree.get<string>("filter.format", "plain");
+    index_format = tree.get<string>("filter.index-format", "plain");
     num_indexes = tree.get<int>("filter.num-indexes", 1);
     max_nc = tree.get<int>("filter.max-normal-count", 1);
     min_tc = tree.get<int>("filter.min-tumor-count", 4);
@@ -65,8 +65,8 @@ void sm_config::load(const string &filename)
         exit(1);
     }
 
-    if (sm::formats.find(filter_format) == sm::formats.end()) {
-        cout << "Invalid filter format " << filter_format << endl;
+    if (sm::formats.find(index_format) == sm::formats.end()) {
+        cout << "Invalid filter format " << index_format << endl;
         exit(1);
     }
 }

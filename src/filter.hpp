@@ -5,7 +5,7 @@
 
 #include "common.hpp"
 #include "count.hpp"
-#include "filter_format.hpp"
+#include "index_format.hpp"
 #include "input.hpp"
 #include "stage.hpp"
 
@@ -23,7 +23,7 @@ private:
 
     const count* _count;
 
-    filter_format* _format;
+    index_format* _format;
 
     void load(int fid);
     void load_chunk(int fid, const sm_chunk &chunk);

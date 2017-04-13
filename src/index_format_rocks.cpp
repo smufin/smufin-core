@@ -1,4 +1,4 @@
-#include "filter_format_rocks.hpp"
+#include "index_format_rocks.hpp"
 
 #include <chrono>
 #include <fstream>
@@ -12,8 +12,8 @@ using std::cout;
 using std::endl;
 using std::string;
 
-filter_format_rocks::filter_format_rocks(const sm_config &conf)
-    : filter_format(conf)
+index_format_rocks::index_format_rocks(const sm_config &conf)
+    : index_format(conf)
 {
     rocksdb::Status status;
     rocksdb::Options opts;
@@ -22,7 +22,7 @@ filter_format_rocks::filter_format_rocks(const sm_config &conf)
     for (int iid = 0; iid < _conf.num_indexes; iid++) {
         for (auto set: {NN, TN, TM}) {
             std::ostringstream path;
-            path << _conf.output_path << "/filter-seq" << "-" << sm::sets[set]
+            path << _conf.output_path << "/index-seq" << "-" << sm::sets[set]
                  << "." << _conf.pid << "-" << iid << ".rdb";
             status = rocksdb::DB::Open(opts, path.str(), &_seq[set][iid]);
             assert(status.ok());
@@ -31,7 +31,7 @@ filter_format_rocks::filter_format_rocks(const sm_config &conf)
         for (auto set: {NN, TN}) {
             set_options_type(opts, K2I);
             std::ostringstream path;
-            path << _conf.output_path << "/filter-k2i" << "-" << sm::sets[set]
+            path << _conf.output_path << "/index-k2i" << "-" << sm::sets[set]
                  << "." << _conf.pid << "-" << iid << ".rdb";
             status = rocksdb::DB::Open(opts, path.str(), &_k2i[set][iid]);
             assert(status.ok());
@@ -39,14 +39,14 @@ filter_format_rocks::filter_format_rocks(const sm_config &conf)
 
         set_options_type(opts, I2P);
         std::ostringstream path;
-        path << _conf.output_path << "/filter-i2p-tm." << _conf.pid << "-"
+        path << _conf.output_path << "/index-i2p-tm." << _conf.pid << "-"
              << iid << ".rdb";
         status = rocksdb::DB::Open(opts, path.str(), &_i2p[iid]);
         assert(status.ok());
     }
 }
 
-void filter_format_rocks::update(int fid, const sm_read *read, int pos,
+void index_format_rocks::update(int fid, const sm_read *read, int pos,
                                  bool rev, char kmer[], sm_idx_set set)
 {
     string sid = read->id;
@@ -75,7 +75,7 @@ void filter_format_rocks::update(int fid, const sm_read *read, int pos,
     }
 }
 
-void filter_format_rocks::dump()
+void index_format_rocks::dump()
 {
     std::vector<rocksdb::DB*> list;
     for (int iid = 0; iid < _conf.num_indexes; iid++) {
@@ -85,17 +85,17 @@ void filter_format_rocks::dump()
             list.push_back(_k2i[set][iid]);
         list.push_back(_i2p[iid]);
     }
-    spawn<rocksdb::DB*>("compact", std::bind(&filter_format_rocks::compact,
+    spawn<rocksdb::DB*>("compact", std::bind(&index_format_rocks::compact,
                         this, std::placeholders::_1), list);
 }
 
-void filter_format_rocks::compact(rocksdb::DB* db)
+void index_format_rocks::compact(rocksdb::DB* db)
 {
     rocksdb::CompactRangeOptions c_options = rocksdb::CompactRangeOptions();
     db->CompactRange(c_options, nullptr, nullptr);
 }
 
-void filter_format_rocks::stats()
+void index_format_rocks::stats()
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;

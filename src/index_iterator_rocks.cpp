@@ -1,4 +1,4 @@
-#include "filter_iterator_rocks.hpp"
+#include "index_iterator_rocks.hpp"
 
 #include <iostream>
 #include <string>
@@ -14,7 +14,7 @@ template <typename T>
 bool rocks_iterator<T>::init()
 {
     std::ostringstream path;
-    path << this->_conf.output_path << "/filter-" << sm::types[this->_type]
+    path << this->_conf.output_path << "/index-" << sm::types[this->_type]
          << "-" << sm::sets[this->_set] << "." << this->_pid << "-"
          << this->_iid << ".rdb";
     cout << "Prepare iterator: " << path.str() << endl;

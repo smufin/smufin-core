@@ -15,12 +15,12 @@
 #include "input_iterator_bam.hpp"
 #include "input_iterator_fastq.hpp"
 
-#include "filter_format.hpp"
-#include "filter_format_plain.hpp"
-#include "filter_format_rocks.hpp"
-#include "filter_iterator.hpp"
-#include "filter_iterator_plain.hpp"
-#include "filter_iterator_rocks.hpp"
+#include "index_format.hpp"
+#include "index_format_plain.hpp"
+#include "index_format_rocks.hpp"
+#include "index_iterator.hpp"
+#include "index_iterator_plain.hpp"
+#include "index_iterator_rocks.hpp"
 
 namespace sm
 {
@@ -42,24 +42,24 @@ namespace sm
         {"bam", &input_iterator::create<input_iterator_bam>}
     };
 
-    const std::map<std::string, filter_format_s> filter_formats = {
-        {"plain", &filter_format::create<filter_format_plain>},
-        {"rocks", &filter_format::create<filter_format_rocks>}
+    const std::map<std::string, index_format_s> index_formats = {
+        {"plain", &index_format::create<index_format_plain>},
+        {"rocks", &index_format::create<index_format_rocks>}
     };
 
     const std::map<std::string, seq_iterator_s> seq_iterators = {
-        {"plain", &create_filter_iterator<seq_plain_iterator>},
-        {"rocks", &create_filter_iterator<seq_rocks_iterator>}
+        {"plain", &create_index_iterator<seq_plain_iterator>},
+        {"rocks", &create_index_iterator<seq_rocks_iterator>}
     };
 
     const std::map<std::string, k2i_iterator_s> k2i_iterators = {
-        {"plain", &create_filter_iterator<k2i_plain_iterator>},
-        {"rocks", &create_filter_iterator<k2i_rocks_iterator>}
+        {"plain", &create_index_iterator<k2i_plain_iterator>},
+        {"rocks", &create_index_iterator<k2i_rocks_iterator>}
     };
 
     const std::map<std::string, i2p_iterator_s> i2p_iterators = {
-        {"plain", &create_filter_iterator<i2p_plain_iterator>},
-        {"rocks", &create_filter_iterator<i2p_rocks_iterator>}
+        {"plain", &create_index_iterator<i2p_plain_iterator>},
+        {"rocks", &create_index_iterator<i2p_rocks_iterator>}
     };
 }
 

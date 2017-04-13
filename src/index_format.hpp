@@ -1,5 +1,5 @@
-#ifndef __SM_FILTER_FORMAT_H__
-#define __SM_FILTER_FORMAT_H__
+#ifndef __SM_INDEX_FORMAT_H__
+#define __SM_INDEX_FORMAT_H__
 
 #include "common.hpp"
 #include "input.hpp"
@@ -10,10 +10,10 @@
 // kmers (I2P). Indexes also need to categorize sequences based on the
 // following sets: normal sample (NN), non-mutated tumoral sample (TN), and
 // mutated tumoral sample (TM).
-class filter_format
+class index_format
 {
 public:
-    filter_format(const sm_config &conf) : _conf(conf) {};
+    index_format(const sm_config &conf) : _conf(conf) {};
 
     // Main method to add a particular position/kmer of a sequence to the
     // filter indexes.
@@ -23,7 +23,7 @@ public:
     virtual void dump() = 0;
     virtual void stats() = 0;
 
-    template<typename T> static filter_format* create(const sm_config &conf)
+    template<typename T> static index_format* create(const sm_config &conf)
     {
         return new T(conf);
     };
@@ -32,6 +32,6 @@ protected:
     const sm_config &_conf;
 };
 
-typedef std::function<filter_format*(const sm_config &conf)> filter_format_s;
+typedef std::function<index_format*(const sm_config &conf)> index_format_s;
 
 #endif
