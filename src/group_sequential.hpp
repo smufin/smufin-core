@@ -1,5 +1,5 @@
-#ifndef __SM_GROUP_H__
-#define __SM_GROUP_H__
+#ifndef __SM_GROUP_SEQUENTIAL_H__
+#define __SM_GROUP_SEQUENTIAL_H__
 
 #include <thread>
 #include <unordered_map>
@@ -68,10 +68,10 @@ typedef std::array<std::unordered_map<std::string, int>, 2> kmer_count;
 // each thread simply turns a subset of the data into groups and writes
 // results to «group.PID-GID.json», where PID is the partition ID, and GID is
 // the group thread ID.
-class group : public stage
+class group_sequential : public stage
 {
 public:
-    group(const sm_config &conf);
+    group_sequential(const sm_config &conf);
     void run();
     void stats();
 

@@ -1,4 +1,4 @@
-#include "group.hpp"
+#include "group_sequential.hpp"
 
 #include <chrono>
 #include <fstream>
@@ -14,16 +14,16 @@ using std::cout;
 using std::endl;
 using std::string;
 
-group::group(const sm_config &conf) : stage(conf)
+group_sequential::group_sequential(const sm_config &conf) : stage(conf)
 {
     init_mapping(conf, _conf.num_partitions, _conf.num_groupers,
                  _group_map_l1, _group_map_l2);
     _leads_size = _conf.leads_size / _conf.num_partitions / _conf.num_groupers;
-    _executable["run"] = std::bind(&group::run, this);
-    _executable["stats"] = std::bind(&group::stats, this);
+    _executable["run"] = std::bind(&group_sequential::run, this);
+    _executable["stats"] = std::bind(&group_sequential::stats, this);
 }
 
-void group::run()
+void group_sequential::run()
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
@@ -242,11 +242,11 @@ void group::run()
 
     // 4. Populate candidate groups.
 
-    spawn("populate", std::bind(&group::populate, this, std::placeholders::_1),
-          _conf.num_groupers);
+    spawn("populate", std::bind(&group_sequential::populate, this,
+          std::placeholders::_1), _conf.num_groupers);
 }
 
-void group::encode_read(std::string& str, sm_read_code& read)
+void group_sequential::encode_read(std::string& str, sm_read_code& read)
 {
     read.len = str.size();
     for (int i = 0; i < read.len; i += 32) {
@@ -254,7 +254,7 @@ void group::encode_read(std::string& str, sm_read_code& read)
     }
 }
 
-void group::decode_read(sm_read_code& read, std::string& str)
+void group_sequential::decode_read(sm_read_code& read, std::string& str)
 {
     char decode[4] = {'A', 'C', 'G', 'T'};
     str = "";
@@ -277,7 +277,7 @@ void group::decode_read(sm_read_code& read, std::string& str)
     }
 }
 
-void group::get_positions(uint64_t bitmap[2], std::vector<int> *pos)
+void group_sequential::get_positions(uint64_t bitmap[2], std::vector<int> *pos)
 {
     for (int i = 0; i < POS_LEN; i++) {
         unsigned long tmp = bitmap[i];
@@ -290,7 +290,7 @@ void group::get_positions(uint64_t bitmap[2], std::vector<int> *pos)
     }
 }
 
-bool group::match_window(std::vector<int> pos)
+bool group_sequential::match_window(std::vector<int> pos)
 {
     if (pos.size() < _conf.window_min) {
         return false;
@@ -306,8 +306,9 @@ bool group::match_window(std::vector<int> pos)
     return false;
 }
 
-void group::select_candidate(int gid, string& sid, string& seq, string& dseq,
-                             std::vector<int>& pos, int dir)
+void group_sequential::select_candidate(int gid, string& sid, string& seq,
+                                        string& dseq, std::vector<int>& pos,
+                                        int dir)
 {
     std::vector<string> kmers;
     for (int p: pos) {
@@ -324,7 +325,7 @@ void group::select_candidate(int gid, string& sid, string& seq, string& dseq,
     (*_l2k[gid])[sid][dir] = kmers;
 }
 
-void group::populate(int gid)
+void group_sequential::populate(int gid)
 {
     const char comp_code[] = "ab";
     const char kind_code[] = "nt";
@@ -436,9 +437,10 @@ void group::populate(int gid)
     _num_groups[gid] = num_groups;
 }
 
-void group::populate_index(int gid, const string& lid,
-                           const std::vector<string>& kmers, int kind,
-                           kmer_count& keep, kmer_count& drop)
+void group_sequential::populate_index(int gid, const string& lid,
+                                      const std::vector<string>& kmers,
+                                      int kind, kmer_count& keep,
+                                      kmer_count& drop)
 {
     for (string kmer: kmers) {
         k2i_table::const_iterator it = _k2i[kind]->find(kmer);
@@ -465,7 +467,7 @@ void group::populate_index(int gid, const string& lid,
     }
 }
 
-void group::stats()
+void group_sequential::stats()
 {
     uint64_t total = 0;
 
