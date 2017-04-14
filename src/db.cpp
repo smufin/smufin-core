@@ -76,7 +76,7 @@ void open_filter(rocksdb::DB** db, const sm_config &conf, sm_idx_type type,
                  sm_idx_set set, int pid, bool ro)
 {
     std::ostringstream rdb;
-    rdb << conf.output_path << "/filter-" << sm::types[type] << "-"
+    rdb << conf.output_path << "/index-" << sm::types[type] << "-"
         << sm::sets[set] << "." << pid << ".rdb";
 
     rocksdb::Status s;
@@ -97,7 +97,7 @@ void open_merge(rocksdb::DB** db, const sm_config &conf, sm_idx_type type,
                 sm_idx_set set, bool ro)
 {
     std::ostringstream rdb;
-    rdb << conf.output_path << "/filter-" << sm::types[type] << "-"
+    rdb << conf.output_path << "/index-" << sm::types[type] << "-"
         << sm::sets[set] << ".rdb";
 
     rocksdb::Status s;
