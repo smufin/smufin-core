@@ -1,11 +1,10 @@
-#include "group_sequential.hpp"
+#include "group.hpp"
 
 #include <chrono>
 #include <fstream>
 #include <iostream>
 
 #include <boost/algorithm/string.hpp>
-#include <rocksdb/db.h>
 
 #include "db.hpp"
 #include "util.hpp"
@@ -14,16 +13,16 @@ using std::cout;
 using std::endl;
 using std::string;
 
-group_sequential::group_sequential(const sm_config &conf) : stage(conf)
+group::group(const sm_config &conf) : stage(conf)
 {
     init_mapping(conf, _conf.num_partitions, _conf.num_groupers,
                  _group_map_l1, _group_map_l2);
     _leads_size = _conf.leads_size / _conf.num_partitions / _conf.num_groupers;
-    _executable["run"] = std::bind(&group_sequential::run, this);
-    _executable["stats"] = std::bind(&group_sequential::stats, this);
+    _executable["run"] = std::bind(&group::run, this);
+    _executable["stats"] = std::bind(&group::stats, this);
 }
 
-void group_sequential::run()
+void group::run()
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
@@ -36,17 +35,6 @@ void group_sequential::run()
         _l2r[i] = new l2r_table(_leads_size);
     }
 
-    for (int i = 0; i < 2; i++) {
-        _seq[i] = new seq_table();
-        _k2i[i] = new k2i_table();
-    }
-
-    _seq[NN]->resize(420000000);
-    _seq[TN]->resize(500000000);
-    _k2i[NN]->resize(30000000);
-    _k2i[TN]->resize(60000000);
-
-    string dir;
     rocksdb::Status status;
 
     rocksdb::DB* i2p_tm;
@@ -77,7 +65,7 @@ void group_sequential::run()
         num_all++;
 
         sid = it->key().ToString();
-        p = decode_pos(it->value().ToString());
+        p = decode_pos(it->value().data());
 
         std::vector<int> a_pos;
         std::vector<int> b_pos;
@@ -155,158 +143,44 @@ void group_sequential::run()
              << _l2k[i]->size() << endl;
     }
 
-    // 2. Iterate K2I retrieving all k-mers seen in candidate positions.
+    // 2. Populate candidate groups.
 
-    std::vector<sm_idx_set> sets = {NN, TN};
-    for (auto& set: sets) {
-        start = std::chrono::system_clock::now();
-        rocksdb::DB* k2i_db;
-        open_merge(&k2i_db, _conf, K2I, set, true);
-
-        int num_seen = 0;
-        int num_kmer = 0;
-        istart = std::chrono::system_clock::now();
-        it = k2i_db->NewIterator(rocksdb::ReadOptions());
-        for (it->SeekToFirst(); it->Valid(); it->Next()) {
-            num_kmer++;
-
-            string kmer = it->key().ToString();
-            string list = it->value().ToString();
-            k2i_table::const_iterator kit = _k2i[set]->find(kmer);
-            if (kit != _k2i[set]->end()) {
-                (*_k2i[set])[kmer] = list;
-                num_seen++;
-            }
-
-            if (num_kmer % 1000000 == 0) {
-                iend = std::chrono::system_clock::now();
-                itime = iend - istart;
-                cout << "K: " << sm::sets[set] << " " << num_kmer << " "
-                     << num_seen << " " << itime.count() << endl;
-                istart = std::chrono::system_clock::now();
-            }
-        }
-
-        cout << "Number of kmers (" << sm::sets[set] << "): "
-             << _k2i[set]->size() << endl;
-        cout << "Number of kmers seen (" << sm::sets[set] << "): "
-             << num_seen << endl;
-        cout << "Number of IDs seen (" << sm::sets[set] << "): "
-             << _seq[set]->size() << endl;
-
-
-        delete it;
-        delete k2i_db;
-
-        end = std::chrono::system_clock::now();
-        time = end - start;
-        cout << "Kmer iteration time (" << sm::sets[set] << "): "
-             << time.count() << endl;
-    }
-
-    // 3. Iterate & collect reads.
-
-    for (auto& set: sets) {
-        start = std::chrono::system_clock::now();
-
-        rocksdb::DB* seq_db;
-        open_merge(&seq_db, _conf, SEQ, set, true);
-
-        int num_seen = 0;
-        int num_read = 0;
-        istart = std::chrono::system_clock::now();
-        it = seq_db->NewIterator(rocksdb::ReadOptions());
-        for (it->SeekToFirst(); it->Valid(); it->Next()) {
-            num_read++;
-
-            string sid = it->key().ToString();
-            string read_str = it->value().ToString();
-            sm_read_code read;
-            encode_read(read_str, read);
-            (*_seq[set])[sid] = read;
-
-            if (num_read % 10000000 == 0) {
-                iend = std::chrono::system_clock::now();
-                itime = iend - istart;
-                cout << "R: " << sm::sets[set] << " " << num_read << " "
-                     << num_seen << " " << itime.count() << endl;
-                istart = std::chrono::system_clock::now();
-            }
-        }
-
-        delete it;
-        delete seq_db;
-
-        end = std::chrono::system_clock::now();
-        time = end - start;
-        cout << "Read iteration time (" << sm::sets[set] << "): "
-             << time.count() << endl;
-    }
-
-    // 4. Populate candidate groups.
-
-    spawn("populate", std::bind(&group_sequential::populate, this,
-          std::placeholders::_1), _conf.num_groupers);
+    spawn("populate", std::bind(&group::populate, this, std::placeholders::_1),
+          _conf.num_groupers);
 }
 
-void group_sequential::encode_read(std::string& str, sm_read_code& read)
-{
-    read.len = str.size();
-    for (int i = 0; i < read.len; i += 32) {
-        read.seq[i/32] = strtob4(str.substr(i, 32).c_str());
-    }
-}
-
-void group_sequential::decode_read(sm_read_code& read, std::string& str)
-{
-    char decode[4] = {'A', 'C', 'G', 'T'};
-    str = "";
-
-    int len_bits = read.len * 2;
-    int pos = len_bits / 64;
-    int shift = 64 - (len_bits % 64);
-    read.seq[pos] = read.seq[pos] << shift;
-
-    int l = 0;
-    int b = 0;
-    while (l < read.len) {
-        int pos = b / 64;
-        int shift = 62 - (b % 64);
-        int i = ((read.seq[pos] >> shift) & 3);
-        char c = decode[i];
-        str += c;
-        l++;
-        b += 2;
-    }
-}
-
-void group_sequential::select_candidate(int gid, string& sid, string& seq,
-                                        string& dseq, std::vector<int>& pos,
-                                        int dir)
+void group::select_candidate(int gid, string& sid, string& seq, string& dseq,
+                             std::vector<int>& pos, int dir)
 {
     std::vector<string> kmers;
     for (int p: pos) {
+        if (p > 50)
+            break;
         string kmer = dseq.substr(p, _conf.k);
         kmers.push_back(kmer);
-        k2i_table::const_iterator it = _k2i[0]->find(kmer);
-        if (it == _k2i[0]->end()) {
-            (*_k2i[0])[kmer] = string();
-            (*_k2i[1])[kmer] = string();
-        }
     }
     (*_l2r[gid])[sid] = seq;
     (*_l2p[gid])[sid][dir] = pos;
     (*_l2k[gid])[sid][dir] = kmers;
 }
 
-void group_sequential::populate(int gid)
+void group::populate(int gid)
 {
     const char comp_code[] = "ab";
     const char kind_code[] = "nt";
 
+    rocksdb::DB* _seq[2];
+    rocksdb::DB* _k2i[2];
+    open_group(&_k2i[NN], _conf, K2I, NN);
+    open_group(&_k2i[TN], _conf, K2I, TN);
+    open_group(&_seq[NN], _conf, SEQ, NN);
+    open_group(&_seq[TN], _conf, SEQ, TN);
+
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
     start = std::chrono::system_clock::now();
+
+    rocksdb::Status status;
 
     std::ofstream ofs;
     string file = _conf.output_path + "/group." + std::to_string(_conf.pid) +
@@ -330,10 +204,10 @@ void group_sequential::populate(int gid)
             }
         }
 
-        populate_index(gid, lid, kmers[0], NN, keep, drop);
-        populate_index(gid, lid, kmers[0], TN, keep, drop);
-        populate_index(gid, lid, kmers[1], NN, keep, drop);
-        populate_index(gid, lid, kmers[1], TN, keep, drop);
+        populate_index(gid, lid, kmers[0], NN, keep, drop, _k2i[NN]);
+        populate_index(gid, lid, kmers[0], TN, keep, drop, _k2i[TN]);
+        populate_index(gid, lid, kmers[1], NN, keep, drop, _k2i[NN]);
+        populate_index(gid, lid, kmers[1], TN, keep, drop, _k2i[TN]);
 
         l2r_table::const_iterator lit = _l2r[gid]->find(lid);
         if (lit == _l2r[gid]->end())
@@ -381,16 +255,14 @@ void group_sequential::populate(int gid)
             bool first_read = true;
             ofs << "\"reads-" << kind_code[i] << "\":[";
             for (string sid: (*_l2i[gid])[lid][i]) {
-                seq_table::const_iterator sit = _seq[i]->find(sid);
-                if (sit == _seq[i]->end())
+                string read;
+                status = _seq[i]->Get(rocksdb::ReadOptions(), lid, &read);
+                if (!status.ok())
                     continue;
                 if (!first_read)
                     ofs << ",";
                 first_read = false;
-                sm_read_code read = sit->second;
-                seq = "";
-                decode_read(read, seq);
-                ofs << "[\"" << sid << "\",\"" << seq << "\"]";
+                ofs << "[\"" << sid << "\",\"" << read << "\"]";
             }
             ofs << ( i == 1 ? "]" : "]," );
         }
@@ -411,18 +283,18 @@ void group_sequential::populate(int gid)
     _num_groups[gid] = num_groups;
 }
 
-void group_sequential::populate_index(int gid, const string& lid,
-                                      const std::vector<string>& kmers,
-                                      int kind, kmer_count& keep,
-                                      kmer_count& drop)
+void group::populate_index(int gid, const string& lid,
+                           const std::vector<string>& kmers, int kind,
+                           kmer_count& keep, kmer_count& drop, rocksdb::DB* db)
 {
     for (string kmer: kmers) {
-        k2i_table::const_iterator it = _k2i[kind]->find(kmer);
-        if (it == _k2i[kind]->end()) {
+        string list;
+        rocksdb::Status status;
+        status = db->Get(rocksdb::ReadOptions(), kmer, &list);
+        if (!status.ok()) {
             continue;
         }
 
-        string list = it->second;
         boost::trim_if(list, boost::is_any_of(" "));
         if (list.size() == 0) {
             continue;
@@ -441,7 +313,7 @@ void group_sequential::populate_index(int gid, const string& lid,
     }
 }
 
-void group_sequential::stats()
+void group::stats()
 {
     uint64_t total = 0;
 
@@ -451,4 +323,33 @@ void group_sequential::stats()
     }
 
     cout << "Number of groups: " << total << endl;
+}
+
+void get_positions(const uint64_t bitmap[2], std::vector<int> *pos)
+{
+    for (int i = 0; i < 2; i++) {
+        unsigned long tmp = bitmap[i];
+        int offset = i * 64;
+        while (tmp > 0) {
+            int p = __builtin_ffsl(tmp) - 1;
+            tmp &= (tmp - 1);
+            pos->push_back(p + offset);
+        }
+    }
+}
+
+bool match_window(const std::vector<int> pos, int window_min, int window_len)
+{
+    if (pos.size() < window_min) {
+        return false;
+    }
+
+    for (int i = 0; i <= pos.size() - window_min; i++) {
+        std::vector<int> sub(pos.begin() + i, pos.begin() + i + window_min);
+        if (sub.back() - sub.front() < window_len) {
+            return true;
+        }
+    }
+
+    return false;
 }

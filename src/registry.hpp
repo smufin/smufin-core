@@ -8,6 +8,7 @@
 #include "count.hpp"
 #include "filter.hpp"
 #include "merge.hpp"
+#include "group.hpp"
 #include "group_sequential.hpp"
 
 #include "input.hpp"
@@ -29,7 +30,8 @@ namespace sm
         {"count", &stage::create<count>},
         {"filter", &stage::create<filter>},
         {"merge", &stage::create<merge>},
-        {"group", &stage::create<group_sequential>}
+        {"group", &stage::create<group>},
+        {"group_sequential", &stage::create<group_sequential>}
     };
 
     const std::map<std::string, input_queue_s> input_queues = {

@@ -9,27 +9,8 @@
 #include <google/sparse_hash_map>
 
 #include "common.hpp"
+#include "group.hpp"
 #include "stage.hpp"
-
-#define KMIN 0
-#define KMAX MAX_READ_LEN
-
-#define MAX_GROUPERS 128
-
-#define ENCODED_READ_LEN CEIL(MAX_READ_LEN, 32)
-
-typedef std::array<std::vector<int>, 2> p_value;
-typedef std::array<std::vector<std::string>, 2> k_value;
-typedef std::array<std::unordered_set<std::string>, 2> i_value;
-
-// l2p: Lead ID to positions, direction A [0] and B [1]
-// l2k: Lead ID to kmers, direction A [0] and B [1]
-// l2i: Lead ID to sequence IDs, normal N [0] and tumoral T [1]
-// l2r: Lead ID to lead sequence
-typedef google::sparse_hash_map<std::string, p_value> l2p_table;
-typedef google::sparse_hash_map<std::string, k_value> l2k_table;
-typedef google::sparse_hash_map<std::string, i_value> l2i_table;
-typedef google::sparse_hash_map<std::string, std::string> l2r_table;
 
 typedef struct sm_read_code {
     uint16_t len = 0;
@@ -38,8 +19,6 @@ typedef struct sm_read_code {
 
 typedef google::sparse_hash_map<std::string, sm_read_code> seq_table;
 typedef google::sparse_hash_map<std::string, std::string> k2i_table;
-
-typedef std::array<std::unordered_map<std::string, int>, 2> kmer_count;
 
 // Group stage initially designed to be able to run on MN3. There is a focus
 // on not exceeded a certain amount of memory, and all reads from the merged
@@ -94,9 +73,7 @@ private:
 
     void encode_read(std::string& str, sm_read_code& read);
     void decode_read(sm_read_code& read, std::string& str);
-    void get_positions(uint64_t bitmap[2], std::vector<int> *pos);
 
-    bool match_window(std::vector<int> pos);
     void select_candidate(int gid, std::string& sid, std::string& seq,
                           std::string& dseq, std::vector<int>& pos, int dir);
 

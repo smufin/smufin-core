@@ -15,11 +15,14 @@ using namespace rocksdb;
 void set_options_type(rocksdb::Options &options, sm_idx_type type);
 void set_options_filter(rocksdb::Options &options);
 void set_options_merge(rocksdb::Options &options);
+void set_options_group(rocksdb::Options &options);
 
 void open_filter(rocksdb::DB** db, const sm_config &conf, sm_idx_type type,
                  sm_idx_set set, int pid, bool ro = false);
 void open_merge(rocksdb::DB** db, const sm_config &conf, sm_idx_type type,
                 sm_idx_set set, bool ro = false);
+void open_group(rocksdb::DB** db, const sm_config &conf, sm_idx_type type,
+                sm_idx_set set);
 
 void encode_pos(const sm_pos_bitmap &p, std::string &s);
 sm_pos_bitmap decode_pos(const std::string &s);

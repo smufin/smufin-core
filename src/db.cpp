@@ -3,6 +3,10 @@
 #include <sstream>
 #include <string>
 
+#include <rocksdb/cache.h>
+#include <rocksdb/filter_policy.h>
+#include <rocksdb/table.h>
+
 #include "common.hpp"
 
 void set_options_type(rocksdb::Options &options, sm_idx_type type)
@@ -72,6 +76,24 @@ void set_options_merge(rocksdb::Options &options)
     options.max_open_files = -1;
 }
 
+void set_options_group(rocksdb::Options &options)
+{
+    options.create_if_missing = true;
+    options.statistics = nullptr;
+
+    options.disableDataSync = true;
+    options.disable_auto_compactions = true;
+
+    rocksdb::BlockBasedTableOptions t_options;
+    t_options.block_cache = rocksdb::NewLRUCache(512UL * 1024 * 1024);
+    t_options.filter_policy.reset(rocksdb::NewBloomFilterPolicy(8));
+    options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(t_options));
+
+    options.WAL_ttl_seconds = 0;
+    options.WAL_size_limit_MB = 0;
+    options.max_open_files = -1;
+}
+
 void open_filter(rocksdb::DB** db, const sm_config &conf, sm_idx_type type,
                  sm_idx_set set, int pid, bool ro)
 {
@@ -111,6 +133,22 @@ void open_merge(rocksdb::DB** db, const sm_config &conf, sm_idx_type type,
         s = rocksdb::DB::Open(options, rdb.str(), db);
     }
 
+    assert(s.ok());
+}
+
+void open_group(rocksdb::DB** db, const sm_config &conf, sm_idx_type type,
+                sm_idx_set set)
+{
+    std::ostringstream rdb;
+    rdb << conf.output_path << "/index-" << sm::types[type] << "-"
+        << sm::sets[set] << ".rdb";
+
+    rocksdb::Status s;
+    rocksdb::Options options;
+    set_options_type(options, type);
+
+    set_options_group(options);
+    s = rocksdb::DB::OpenForReadOnly(options, rdb.str(), db);
     assert(s.ok());
 }
 
