@@ -67,7 +67,7 @@ private:
                         kmer_count& keep, kmer_count& drop, rocksdb::DB* db);
 };
 
-void get_positions(const uint64_t bitmap[2], std::vector<int> *pos);
+void get_positions(const uint64_t bitmap[POS_LEN], std::vector<int> *pos);
 bool match_window(const std::vector<int> pos, int window_min, int window_len);
 
 #endif

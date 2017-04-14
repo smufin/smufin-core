@@ -325,7 +325,7 @@ void group::stats()
     cout << "Number of groups: " << total << endl;
 }
 
-void get_positions(const uint64_t bitmap[2], std::vector<int> *pos)
+void get_positions(const uint64_t bitmap[POS_LEN], std::vector<int> *pos)
 {
     for (int i = 0; i < 2; i++) {
         unsigned long tmp = bitmap[i];
