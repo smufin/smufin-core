@@ -12,17 +12,33 @@
 
 using namespace rocksdb;
 
-void set_options_type(rocksdb::Options &options, sm_idx_type type);
-void set_options_filter(rocksdb::Options &options);
-void set_options_merge(rocksdb::Options &options);
-void set_options_group(rocksdb::Options &options);
+typedef struct rdb_handle {
+    rocksdb::DB* db;
+    std::vector<rocksdb::ColumnFamilyHandle*> cfs;
+} rdb_handle;
 
-void open_filter(rocksdb::DB** db, const sm_config &conf, sm_idx_type type,
-                 sm_idx_set set, int pid, bool ro = false);
-void open_merge(rocksdb::DB** db, const sm_config &conf, sm_idx_type type,
-                sm_idx_set set, bool ro = false);
-void open_group(rocksdb::DB** db, const sm_config &conf, sm_idx_type type,
-                sm_idx_set set);
+void set_options_type(rocksdb::ColumnFamilyOptions &options, sm_idx_type type);
+
+void open_index(const sm_config &conf, sm_idx_type type,
+                const std::string &path, const std::string &conf_file,
+                rdb_handle &rdb);
+void open_index_ro(const sm_config &conf, sm_idx_type type,
+                   const std::string &path, rdb_handle &rdb);
+
+void open_index_part_load(const sm_config &conf, sm_idx_type type,
+                          sm_idx_set set, int pid, int iid,
+                          rdb_handle &rdb);
+void open_index_part_iter(const sm_config &conf, sm_idx_type type,
+                          sm_idx_set set, int pid, int iid,
+                          rdb_handle &rdb);
+
+void open_index_full_load(const sm_config &conf, sm_idx_type type,
+                          sm_idx_set set, rdb_handle &rdb);
+void open_index_full_iter(const sm_config &conf, sm_idx_type type,
+                          sm_idx_set set, rdb_handle &rdb);
+
+void open_index_full_read(const sm_config &conf, sm_idx_type type,
+                          sm_idx_set set, rdb_handle &rdb);
 
 void encode_pos(const sm_pos_bitmap &p, std::string &s);
 sm_pos_bitmap decode_pos(const std::string &s);

@@ -3,9 +3,8 @@
 
 #include <string>
 
-#include <rocksdb/db.h>
-
 #include "common.hpp"
+#include "db.hpp"
 #include "index_format.hpp"
 
 #define MAX_INDEXES 48
@@ -34,9 +33,9 @@ public:
     void stats();
 
 private:
-    rocksdb::DB* _seq[NUM_SETS][MAX_INDEXES];
-    rocksdb::DB* _k2i[2][MAX_INDEXES];
-    rocksdb::DB* _i2p[MAX_INDEXES];
+    rdb_handle _seq[NUM_SETS][MAX_INDEXES];
+    rdb_handle _k2i[2][MAX_INDEXES];
+    rdb_handle _i2p[MAX_INDEXES];
 
     void compact(rocksdb::DB* db);
 };

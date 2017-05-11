@@ -19,18 +19,11 @@ bool rocks_iterator<T>::init()
          << this->_iid << ".rdb";
     cout << "Prepare iterator: " << path.str() << endl;
 
-    rocksdb::DB* db;
-    rocksdb::Options options;
-    rocksdb::Status status;
+    rdb_handle rdb;
+    open_index_part_iter(this->_conf, this->_type, this->_set, this->_pid,
+                         this->_iid, rdb);
 
-    set_options_type(options, this->_type);
-    status = rocksdb::DB::OpenForReadOnly(options, path.str(), &db);
-    if (!status.ok()) {
-        cout << "Failed to open: " << path.str() << endl;
-        return false;
-    }
-
-    _it = db->NewIterator(rocksdb::ReadOptions());
+    _it = rdb.db->NewIterator(rocksdb::ReadOptions());
     _it->SeekToFirst();
     this->_elem = nullptr;
     return true;

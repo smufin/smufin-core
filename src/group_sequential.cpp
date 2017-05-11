@@ -49,10 +49,10 @@ void group_sequential::run()
     string dir;
     rocksdb::Status status;
 
-    rocksdb::DB* i2p_tm;
-    rocksdb::DB* seq_tm;
-    open_merge(&i2p_tm, _conf, I2P, TM, true);
-    open_merge(&seq_tm, _conf, SEQ, TM, true);
+    rdb_handle i2p_tm;
+    rdb_handle seq_tm;
+    open_index_full_iter(_conf, I2P, TM, i2p_tm);
+    open_index_full_iter(_conf, SEQ, TM, seq_tm);
 
     int min = _conf.window_min;
     int len = _conf.window_len;
@@ -72,7 +72,7 @@ void group_sequential::run()
 
     // 1. Iterate through candidates.
 
-    rocksdb::Iterator* it = i2p_tm->NewIterator(rocksdb::ReadOptions());
+    rocksdb::Iterator* it = i2p_tm.db->NewIterator(rocksdb::ReadOptions());
     for (it->SeekToFirst(); it->Valid(); it->Next()) {
         num_all++;
 
@@ -84,7 +84,7 @@ void group_sequential::run()
 
         string read;
         rocksdb::Status status;
-        status = seq_tm->Get(rocksdb::ReadOptions(), sid, &read);
+        status = seq_tm.db->Get(rocksdb::ReadOptions(), sid, &read);
         if (!status.ok())
             continue;
 
@@ -138,8 +138,8 @@ void group_sequential::run()
     }
 
     delete it;
-    delete i2p_tm;
-    delete seq_tm;
+    delete i2p_tm.cfs[0], seq_tm.cfs[0];
+    delete i2p_tm.db, seq_tm.db;
 
     end = std::chrono::system_clock::now();
     time = end - start;
@@ -160,13 +160,13 @@ void group_sequential::run()
     std::vector<sm_idx_set> sets = {NN, TN};
     for (auto& set: sets) {
         start = std::chrono::system_clock::now();
-        rocksdb::DB* k2i_db;
-        open_merge(&k2i_db, _conf, K2I, set, true);
+        rdb_handle k2i;
+        open_index_full_iter(_conf, K2I, set, k2i);
 
         int num_seen = 0;
         int num_kmer = 0;
         istart = std::chrono::system_clock::now();
-        it = k2i_db->NewIterator(rocksdb::ReadOptions());
+        it = k2i.db->NewIterator(rocksdb::ReadOptions());
         for (it->SeekToFirst(); it->Valid(); it->Next()) {
             num_kmer++;
 
@@ -196,7 +196,8 @@ void group_sequential::run()
 
 
         delete it;
-        delete k2i_db;
+        delete k2i.cfs[0];
+        delete k2i.db;
 
         end = std::chrono::system_clock::now();
         time = end - start;
@@ -209,13 +210,13 @@ void group_sequential::run()
     for (auto& set: sets) {
         start = std::chrono::system_clock::now();
 
-        rocksdb::DB* seq_db;
-        open_merge(&seq_db, _conf, SEQ, set, true);
+        rdb_handle seq;
+        open_index_full_iter(_conf, SEQ, set, seq);
 
         int num_seen = 0;
         int num_read = 0;
         istart = std::chrono::system_clock::now();
-        it = seq_db->NewIterator(rocksdb::ReadOptions());
+        it = seq.db->NewIterator(rocksdb::ReadOptions());
         for (it->SeekToFirst(); it->Valid(); it->Next()) {
             num_read++;
 
@@ -235,7 +236,8 @@ void group_sequential::run()
         }
 
         delete it;
-        delete seq_db;
+        delete seq.cfs[0];
+        delete seq.db;
 
         end = std::chrono::system_clock::now();
         time = end - start;

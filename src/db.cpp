@@ -1,15 +1,21 @@
 #include "db.hpp"
 
+#include <iostream>
 #include <sstream>
 #include <string>
 
 #include <rocksdb/cache.h>
 #include <rocksdb/filter_policy.h>
 #include <rocksdb/table.h>
+#include <rocksdb/utilities/options_util.h>
 
 #include "common.hpp"
 
-void set_options_type(rocksdb::Options &options, sm_idx_type type)
+using std::cout;
+using std::endl;
+using std::string;
+
+void set_options_type(rocksdb::ColumnFamilyOptions &options, sm_idx_type type)
 {
     if (type == K2I) {
         options.merge_operator.reset(new IDListOperator());
@@ -20,136 +26,141 @@ void set_options_type(rocksdb::Options &options, sm_idx_type type)
     }
 }
 
-void set_options_filter(rocksdb::Options &options)
+void open_index_part_load(const sm_config &conf, sm_idx_type type,
+                          sm_idx_set set, int pid, int iid,
+                          rdb_handle &rdb)
 {
-    options.create_if_missing = true;
-
-    options.disableDataSync = true;
-    options.disable_auto_compactions = true;
-
-    options.env->SetBackgroundThreads(4, Env::Priority::HIGH);
-    options.env->SetBackgroundThreads(2, Env::Priority::LOW);
-
-    options.num_levels = 2;
-    options.level0_file_num_compaction_trigger = -1;
-    options.level0_slowdown_writes_trigger = -1;
-    options.level0_stop_writes_trigger = -1;
-    options.soft_pending_compaction_bytes_limit = 0;
-    options.hard_pending_compaction_bytes_limit = 0;
-    options.write_buffer_size = 64UL * 1024 * 1024;
-    options.max_write_buffer_number = 8;
-    options.min_write_buffer_number_to_merge = 1;
-    options.max_background_flushes = 4;
-    options.max_background_compactions = 2;
-    options.base_background_compactions = 2;
-    options.target_file_size_base = 1024UL * 1024 * 1024;
-
-    options.WAL_ttl_seconds = 0;
-    options.WAL_size_limit_MB = 0;
-
-    options.compression = rocksdb::kLZ4Compression;
-    options.max_open_files = -1;
+    std::ostringstream conf_file, path;
+    conf_file << conf.data_path << "/rocks/filter.conf";
+    path << conf.output_path << "/index-" << sm::types[type] << "-"
+         << sm::sets[set] << "." << pid << "-" << iid << ".rdb";
+    open_index(conf, type, path.str(), conf_file.str(), rdb);
 }
 
-void set_options_merge(rocksdb::Options &options)
+void open_index_part_iter(const sm_config &conf, sm_idx_type type,
+                          sm_idx_set set, int pid, int iid,
+                          rdb_handle &rdb)
 {
-    options.create_if_missing = true;
-    options.statistics = nullptr;
-
-    options.env->SetBackgroundThreads(2, Env::Priority::HIGH);
-    options.env->SetBackgroundThreads(4, Env::Priority::LOW);
-
-    options.max_background_flushes = 2;
-    options.max_write_buffer_number = 4;
-    options.write_buffer_size = 64UL * 1024 * 1024;
-
-    options.max_background_compactions = 4;
-    options.level0_file_num_compaction_trigger = 4;
-    options.level0_slowdown_writes_trigger = 10;
-    options.level0_stop_writes_trigger = 20;
-    options.target_file_size_base = 128UL * 1024 * 1024;
-
-    options.disableDataSync = true;
-    options.WAL_ttl_seconds = 0;
-    options.WAL_size_limit_MB = 0;
-    options.compression = rocksdb::kLZ4Compression;
-    options.max_open_files = -1;
+    std::ostringstream path;
+    path << conf.output_path << "/index-" << sm::types[type] << "-"
+         << sm::sets[set] << "." << pid << "-" << iid << ".rdb";
+    open_index_ro(conf, type, path.str(), rdb);
 }
 
-void set_options_group(rocksdb::Options &options)
+void open_index_full_load(const sm_config &conf, sm_idx_type type,
+                          sm_idx_set set, rdb_handle &rdb)
 {
-    options.create_if_missing = true;
-    options.statistics = nullptr;
+    std::ostringstream conf_file, path;
+    conf_file << conf.data_path << "/rocks/merge.conf";
+    path << conf.output_path << "/index-" << sm::types[type] << "-"
+         << sm::sets[set] << ".rdb";
+    open_index(conf, type, path.str(), conf_file.str(), rdb);
+}
 
-    options.disableDataSync = true;
-    options.disable_auto_compactions = true;
+void open_index_full_iter(const sm_config &conf, sm_idx_type type,
+                          sm_idx_set set, rdb_handle &rdb)
+{
+    std::ostringstream path;
+    path << conf.output_path << "/index-" << sm::types[type] << "-"
+         << sm::sets[set] << ".rdb";
+    open_index_ro(conf, type, path.str(), rdb);
+}
+
+// Create and open RocksDB index, pointed by `path', with read-write access.
+// Loads RocksDB options using the configuration file pointed by `conf_file'.
+void open_index(const sm_config &conf, sm_idx_type type,
+                const std::string &path, const std::string &conf_file,
+                rdb_handle &rdb)
+{
+    rocksdb::Status s;
+    rocksdb::DBOptions db_options;
+    std::vector<rocksdb::ColumnFamilyDescriptor> cf_descs;
+
+    rocksdb::Env* env = rocksdb::Env::Default();
+    env->SetBackgroundThreads(2, Env::Priority::HIGH);
+    env->SetBackgroundThreads(4, Env::Priority::LOW);
+
+    s = rocksdb::LoadOptionsFromFile(conf_file, env, &db_options, &cf_descs);
+    if (!s.ok()) {
+        cout << "Failed to load RocksDB options: " << conf_file << endl;
+        exit(1);
+    }
+
+    set_options_type(cf_descs[0].options, type);
+    db_options.error_if_exists = true;
+
+    s = rocksdb::DB::Open(db_options, path, cf_descs, &rdb.cfs, &rdb.db);
+    if (!s.ok()) {
+        cout << "Failed to open RocksDB database: " << path << endl;
+        exit(1);
+    }
+}
+
+// Open an existing RocksDB index, pointed by `path', with read-only access.
+void open_index_ro(const sm_config &conf, sm_idx_type type,
+                   const std::string &path, rdb_handle &rdb)
+{
+    rocksdb::Status s;
+    rocksdb::DBOptions db_options;
+    std::vector<rocksdb::ColumnFamilyDescriptor> cf_descs;
+    rocksdb::Env* env = rocksdb::Env::Default();
+
+    s = rocksdb::LoadLatestOptions(path, env, &db_options, &cf_descs);
+    if (!s.ok()) {
+        cout << "Failed to latest RocksDB options: " << path << endl;
+        exit(1);
+    }
+
+    set_options_type(cf_descs[0].options, type);
+    db_options.create_if_missing = false;
+
+    s = rocksdb::DB::OpenForReadOnly(db_options, path, cf_descs, &rdb.cfs,
+                                     &rdb.db);
+    if (!s.ok()) {
+        cout << "Failed to open RocksDB database: " << path << endl;
+        exit(1);
+    }
+}
+
+// Open fully merged index, optimizing for random reading. Unlike
+// open_index_full_iter, open_index_full_read can make use of bigger caches
+// and bloom filters to speed up non-sequential retrieval.
+void open_index_full_read(const sm_config &conf, sm_idx_type type,
+                          sm_idx_set set, rdb_handle &rdb)
+{
+    std::ostringstream conf_file, path;
+    conf_file << conf.data_path << "/rocks/group.conf";
+    path << conf.output_path << "/index-" << sm::types[type] << "-"
+         << sm::sets[set] << ".rdb";
+
+    rocksdb::Status s;
+    rocksdb::DBOptions db_options;
+    std::vector<rocksdb::ColumnFamilyDescriptor> cf_descs;
+    rocksdb::Env* env = rocksdb::Env::Default();
+
+    s = rocksdb::LoadOptionsFromFile(conf_file.str(), env, &db_options,
+                                     &cf_descs);
+    if (!s.ok()) {
+        cout << "Failed to load RocksDB options: " << conf_file.str() << endl;
+        exit(1);
+    }
+
+    set_options_type(cf_descs[0].options, type);
+    db_options.create_if_missing = false;
+    cf_descs[0].options.disable_auto_compactions = true;
 
     rocksdb::BlockBasedTableOptions t_options;
     t_options.block_cache = rocksdb::NewLRUCache(512UL * 1024 * 1024);
     t_options.filter_policy.reset(rocksdb::NewBloomFilterPolicy(8));
-    options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(t_options));
+    auto t_factory = rocksdb::NewBlockBasedTableFactory(t_options);
+    cf_descs[0].options.table_factory.reset(t_factory);
 
-    options.WAL_ttl_seconds = 0;
-    options.WAL_size_limit_MB = 0;
-    options.max_open_files = -1;
-}
-
-void open_filter(rocksdb::DB** db, const sm_config &conf, sm_idx_type type,
-                 sm_idx_set set, int pid, bool ro)
-{
-    std::ostringstream rdb;
-    rdb << conf.output_path << "/index-" << sm::types[type] << "-"
-        << sm::sets[set] << "." << pid << ".rdb";
-
-    rocksdb::Status s;
-    rocksdb::Options options;
-    set_options_type(options, type);
-
-    if (ro) {
-        s = rocksdb::DB::OpenForReadOnly(options, rdb.str(), db);
-    } else {
-        set_options_filter(options);
-        s = rocksdb::DB::Open(options, rdb.str(), db);
+    s = rocksdb::DB::OpenForReadOnly(db_options, path.str(), cf_descs,
+                                     &rdb.cfs, &rdb.db);
+    if (!s.ok()) {
+        cout << "Failed to open RocksDB database: " << path.str() << endl;
+        exit(1);
     }
-
-    assert(s.ok());
-}
-
-void open_merge(rocksdb::DB** db, const sm_config &conf, sm_idx_type type,
-                sm_idx_set set, bool ro)
-{
-    std::ostringstream rdb;
-    rdb << conf.output_path << "/index-" << sm::types[type] << "-"
-        << sm::sets[set] << ".rdb";
-
-    rocksdb::Status s;
-    rocksdb::Options options;
-    set_options_type(options, type);
-
-    if (ro) {
-        s = rocksdb::DB::OpenForReadOnly(options, rdb.str(), db);
-    } else {
-        set_options_merge(options);
-        s = rocksdb::DB::Open(options, rdb.str(), db);
-    }
-
-    assert(s.ok());
-}
-
-void open_group(rocksdb::DB** db, const sm_config &conf, sm_idx_type type,
-                sm_idx_set set)
-{
-    std::ostringstream rdb;
-    rdb << conf.output_path << "/index-" << sm::types[type] << "-"
-        << sm::sets[set] << ".rdb";
-
-    rocksdb::Status s;
-    rocksdb::Options options;
-    set_options_type(options, type);
-
-    set_options_group(options);
-    s = rocksdb::DB::OpenForReadOnly(options, rdb.str(), db);
-    assert(s.ok());
 }
 
 void encode_pos(const sm_pos_bitmap &p, std::string &s)

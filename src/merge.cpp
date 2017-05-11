@@ -7,7 +7,6 @@
 #include <iostream>
 #include <thread>
 
-#include "db.hpp"
 #include "index_iterator.hpp"
 #include "registry.hpp"
 
@@ -54,32 +53,33 @@ void merge::load(sm_idx_type type, sm_idx_set set)
     load_map[K2I] = std::bind(&merge::load_k2i, this, _1, _2, _3, _4);
     load_map[I2P] = std::bind(&merge::load_i2p, this, _1, _2, _3, _4);
 
-    rocksdb::DB* db;
-    open_merge(&db, _conf, type, set);
+    rdb_handle rdb;
+    open_index_full_load(_conf, type, set, rdb);
 
     std::vector<std::thread> threads;
     for (int i = 0; i < _conf.num_mergers; i++)
         threads.push_back(std::thread(std::bind(&merge::load_indexes, this,
-                          load_map[type], db, set)));
+                          load_map[type], rdb, set)));
     cout << "Spawned " << threads.size() << " merger threads" << endl;
     for (auto& thread: threads)
         thread.join();
 
-    delete db;
+    delete rdb.cfs[0];
+    delete rdb.db;
 }
 
 // Load all partitions of a certain type using `load_part' and the given set
 // to a RocksDB database.
-void merge::load_indexes(load_f load_index, rocksdb::DB* db, sm_idx_set set)
+void merge::load_indexes(load_f load_index, rdb_handle &rdb, sm_idx_set set)
 {
     std::pair<int, int> id;
     while (_index_queue.try_dequeue(id)) {
-        load_index(db, set, id.first, id.second);
+        load_index(rdb, set, id.first, id.second);
     }
 }
 
 // Load SEQ index data for a given set and partition `pid' to the database.
-void merge::load_seq(rocksdb::DB* db, sm_idx_set set, int pid, int iid)
+void merge::load_seq(rdb_handle &rdb, sm_idx_set set, int pid, int iid)
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
@@ -97,9 +97,9 @@ void merge::load_seq(rocksdb::DB* db, sm_idx_set set, int pid, int iid)
 
     while (it->next()) {
         const seq_t *i = it->get();
-        batch.Put(i->first, i->second);
+        batch.Put(rdb.cfs[0], i->first, i->second);
         if (n % 10000 == 0) {
-            db->Write(w_options, &batch);
+            rdb.db->Write(w_options, &batch);
             batch.Clear();
         }
         if (n % 100000 == 0) {
@@ -111,11 +111,11 @@ void merge::load_seq(rocksdb::DB* db, sm_idx_set set, int pid, int iid)
         n++;
     }
 
-    db->Write(w_options, &batch);
+    rdb.db->Write(w_options, &batch);
 }
 
 // Load K2I index data for a given set and partition `pid' to the database.
-void merge::load_k2i(rocksdb::DB* db, sm_idx_set set, int pid, int iid)
+void merge::load_k2i(rdb_handle &rdb, sm_idx_set set, int pid, int iid)
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
@@ -132,7 +132,7 @@ void merge::load_k2i(rocksdb::DB* db, sm_idx_set set, int pid, int iid)
 
     while (it->next()) {
         const k2i_t *i = it->get();
-        db->Merge(w_options, i->first, i->second);
+        rdb.db->Merge(w_options, rdb.cfs[0], i->first, i->second);
         if (n % 100000 == 0) {
             end = std::chrono::system_clock::now();
             time = end - start;
@@ -144,7 +144,7 @@ void merge::load_k2i(rocksdb::DB* db, sm_idx_set set, int pid, int iid)
 }
 
 // Load I2P index data for a given set and partition `pid' to the database.
-void merge::load_i2p(rocksdb::DB* db, sm_idx_set set, int pid, int iid)
+void merge::load_i2p(rdb_handle &rdb, sm_idx_set set, int pid, int iid)
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
@@ -163,7 +163,7 @@ void merge::load_i2p(rocksdb::DB* db, sm_idx_set set, int pid, int iid)
         const i2p_t *i = it->get();
         string serialized;
         encode_pos(i->second, serialized);
-        db->Merge(w_options, i->first, serialized);
+        rdb.db->Merge(w_options, rdb.cfs[0], i->first, serialized);
         if (n % 100000 == 0) {
             end = std::chrono::system_clock::now();
             time = end - start;
@@ -176,38 +176,39 @@ void merge::load_i2p(rocksdb::DB* db, sm_idx_set set, int pid, int iid)
 
 void merge::stats()
 {
-    rocksdb::DB* i2p;
-    rocksdb::DB* seq[NUM_SETS];
-    rocksdb::DB* k2i[NUM_SETS];
+    rdb_handle seq[NUM_SETS];
+    rdb_handle k2i[2];
+    rdb_handle i2p;
 
-    open_merge(&seq[NN], _conf, SEQ, NN, true);
-    open_merge(&seq[TN], _conf, SEQ, TN, true);
-    open_merge(&seq[TM], _conf, SEQ, TM, true);
-    open_merge(&k2i[NN], _conf, K2I, NN, true);
-    open_merge(&k2i[TN], _conf, K2I, TN, true);
-    open_merge(&i2p, _conf, I2P, TM, true);
+    open_index_full_iter(_conf, SEQ, NN, seq[NN]);
+    open_index_full_iter(_conf, SEQ, TN, seq[TN]);
+    open_index_full_iter(_conf, SEQ, TM, seq[TM]);
+    open_index_full_iter(_conf, K2I, NN, k2i[NN]);
+    open_index_full_iter(_conf, K2I, TN, k2i[TN]);
+    open_index_full_iter(_conf, I2P, TM, i2p);
 
+    rocksdb::ReadOptions r_opt;
     uint64_t nn, tn, tm;
     rocksdb::Iterator* it;
 
     nn = tn = tm = 0;
-    it = seq[NN]->NewIterator(rocksdb::ReadOptions());
+    it = seq[NN].db->NewIterator(r_opt, seq[NN].cfs[0]);
     for (it->SeekToFirst(); it->Valid(); it->Next()) nn++;
-    it = seq[TN]->NewIterator(rocksdb::ReadOptions());
+    it = seq[TN].db->NewIterator(r_opt, seq[TN].cfs[0]);
     for (it->SeekToFirst(); it->Valid(); it->Next()) tn++;
-    it = seq[TM]->NewIterator(rocksdb::ReadOptions());
+    it = seq[TM].db->NewIterator(r_opt, seq[TM].cfs[0]);
     for (it->SeekToFirst(); it->Valid(); it->Next()) tm++;
     cout << "Size SEQ: " << nn << " " << tn << " " << tm << endl;
 
     nn = tn = 0;
-    it = k2i[NN]->NewIterator(rocksdb::ReadOptions());
+    it = k2i[NN].db->NewIterator(r_opt, k2i[NN].cfs[0]);
     for (it->SeekToFirst(); it->Valid(); it->Next()) nn++;
-    it = k2i[TN]->NewIterator(rocksdb::ReadOptions());
+    it = k2i[TN].db->NewIterator(r_opt, k2i[TN].cfs[0]);
     for (it->SeekToFirst(); it->Valid(); it->Next()) tn++;
     cout << "Size K2I: " << nn << " " << tn << endl;
 
     tm = 0;
-    it = i2p->NewIterator(rocksdb::ReadOptions());
+    it = i2p.db->NewIterator(r_opt, i2p.cfs[0]);
     for (it->SeekToFirst(); it->Valid(); it->Next()) tm++;
     cout << "Size I2P: " << tm << endl;
 }

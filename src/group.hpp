@@ -9,6 +9,7 @@
 #include <google/sparse_hash_map>
 #include <rocksdb/db.h>
 
+#include "db.hpp"
 #include "common.hpp"
 #include "stage.hpp"
 
@@ -64,7 +65,7 @@ private:
     void populate(int gid);
     void populate_index(int gid, const std::string& lid,
                         const std::vector<std::string>& kmers, int kind,
-                        kmer_count& keep, kmer_count& drop, rocksdb::DB* db);
+                        kmer_count& keep, kmer_count& drop, rdb_handle &rdb);
 };
 
 void get_positions(const uint64_t bitmap[POS_LEN], std::vector<int> *pos);

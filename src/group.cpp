@@ -6,7 +6,6 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include "db.hpp"
 #include "util.hpp"
 
 using std::cout;
@@ -37,10 +36,10 @@ void group::run()
 
     rocksdb::Status status;
 
-    rocksdb::DB* i2p_tm;
-    rocksdb::DB* seq_tm;
-    open_merge(&i2p_tm, _conf, I2P, TM, true);
-    open_merge(&seq_tm, _conf, SEQ, TM, true);
+    rdb_handle i2p_tm;
+    rdb_handle seq_tm;
+    open_index_full_iter(_conf, I2P, TM, i2p_tm);
+    open_index_full_iter(_conf, SEQ, TM, seq_tm);
 
     int min = _conf.window_min;
     int len = _conf.window_len;
@@ -60,7 +59,7 @@ void group::run()
 
     // 1. Iterate through candidates.
 
-    rocksdb::Iterator* it = i2p_tm->NewIterator(rocksdb::ReadOptions());
+    rocksdb::Iterator* it = i2p_tm.db->NewIterator(rocksdb::ReadOptions());
     for (it->SeekToFirst(); it->Valid(); it->Next()) {
         num_all++;
 
@@ -72,7 +71,7 @@ void group::run()
 
         string read;
         rocksdb::Status status;
-        status = seq_tm->Get(rocksdb::ReadOptions(), sid, &read);
+        status = seq_tm.db->Get(rocksdb::ReadOptions(), sid, &read);
         if (!status.ok())
             continue;
 
@@ -126,8 +125,8 @@ void group::run()
     }
 
     delete it;
-    delete i2p_tm;
-    delete seq_tm;
+    delete i2p_tm.cfs[0], seq_tm.cfs[0];
+    delete i2p_tm.db, seq_tm.db;
 
     end = std::chrono::system_clock::now();
     time = end - start;
@@ -169,12 +168,12 @@ void group::populate(int gid)
     const char comp_code[] = "ab";
     const char kind_code[] = "nt";
 
-    rocksdb::DB* _seq[2];
-    rocksdb::DB* _k2i[2];
-    open_group(&_k2i[NN], _conf, K2I, NN);
-    open_group(&_k2i[TN], _conf, K2I, TN);
-    open_group(&_seq[NN], _conf, SEQ, NN);
-    open_group(&_seq[TN], _conf, SEQ, TN);
+    rdb_handle _seq[2];
+    rdb_handle _k2i[2];
+    open_index_full_read(_conf, K2I, NN, _k2i[NN]);
+    open_index_full_read(_conf, K2I, TN, _k2i[TN]);
+    open_index_full_read(_conf, SEQ, NN, _seq[NN]);
+    open_index_full_read(_conf, SEQ, TN, _seq[TN]);
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
@@ -256,7 +255,7 @@ void group::populate(int gid)
             ofs << "\"reads-" << kind_code[i] << "\":[";
             for (string sid: (*_l2i[gid])[lid][i]) {
                 string read;
-                status = _seq[i]->Get(rocksdb::ReadOptions(), lid, &read);
+                status = _seq[i].db->Get(rocksdb::ReadOptions(), lid, &read);
                 if (!status.ok())
                     continue;
                 if (!first_read)
@@ -285,12 +284,13 @@ void group::populate(int gid)
 
 void group::populate_index(int gid, const string& lid,
                            const std::vector<string>& kmers, int kind,
-                           kmer_count& keep, kmer_count& drop, rocksdb::DB* db)
+                           kmer_count& keep, kmer_count& drop,
+                           rdb_handle &rdb)
 {
     for (string kmer: kmers) {
         string list;
         rocksdb::Status status;
-        status = db->Get(rocksdb::ReadOptions(), kmer, &list);
+        status = rdb.db->Get(rocksdb::ReadOptions(), kmer, &list);
         if (!status.ok()) {
             continue;
         }
