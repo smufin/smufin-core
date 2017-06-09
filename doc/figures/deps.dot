@@ -36,6 +36,7 @@ digraph stage_deps {
         "merge:run_{seq,k2i,i2p}_{nn,tn,tm}"
             [label = "run_{seq,k2i,i2p}_{nn,tn,tm}"];
         "merge:stats" [label = stats];
+        "merge:to_fastq" [label = to_fastq];
     }
 
     subgraph cluster_4 {
@@ -61,8 +62,9 @@ digraph stage_deps {
     "filter:dump" -> "merge:run"
     "filter:dump" -> "merge:run_{seq,k2i,i2p}_{nn,tn,tm}"
 
-    "merge:run" -> "merge:stats"
-    "merge:run" -> "group:run"
+    "merge:run" -> "merge:stats":n
+    "merge:run" -> "merge:to_fastq"
+    "merge:run":se -> "group:run":nw
     "merge:run_{seq,k2i,i2p}_{nn,tn,tm}" -> "group:run"
 
     "group:run" -> "group:stats"

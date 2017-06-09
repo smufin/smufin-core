@@ -104,6 +104,7 @@ list contains all available stages and commands:
    * `run_{seq,k2i,i2p}_{nn,tn,tm}`: read and combine specific filter indexes
      from different partitions into a single RocksDB instance.
    * `stats`: display sizes of the merged filters.
+   * `to_fastq`: convert indexed reads to FASTQ format.
  * `group`: match candidates that belong to the same region.
    * `run`: window-based group leader selection and retrieval of related
      reads.
