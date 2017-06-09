@@ -34,6 +34,9 @@ private:
     void load_seq(rdb_handle &rdb, sm_idx_set set, int pid, int iid);
     void load_k2i(rdb_handle &rdb, sm_idx_set set, int pid, int iid);
     void load_i2p(rdb_handle &rdb, sm_idx_set set, int pid, int iid);
+
+    void to_fastq();
+    void to_fastq_set(sm_idx_set set);
 };
 
 #endif

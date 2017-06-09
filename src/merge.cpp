@@ -9,6 +9,7 @@
 
 #include "index_iterator.hpp"
 #include "registry.hpp"
+#include "util.hpp"
 
 using std::cout;
 using std::endl;
@@ -27,6 +28,7 @@ merge::merge(const sm_config &conf) : stage(conf)
     _executable["run_i2p_tm"] = std::bind(&merge::load, this, I2P, TM);
 
     _executable["stats"] = std::bind(&merge::stats, this);
+    _executable["to_fastq"] = std::bind(&merge::to_fastq, this);
 }
 
 void merge::run()
@@ -211,4 +213,37 @@ void merge::stats()
     it = i2p.db->NewIterator(r_opt, i2p.cfs[0]);
     for (it->SeekToFirst(); it->Valid(); it->Next()) tm++;
     cout << "Size I2P: " << tm << endl;
+}
+
+void merge::to_fastq()
+{
+    std::vector<sm_idx_set> list = { NN, TN };
+    spawn<sm_idx_set>("to_fastq", std::bind(&merge::to_fastq_set, this,
+                      std::placeholders::_1), list);
+}
+
+void merge::to_fastq_set(sm_idx_set set)
+{
+    std::ofstream ofs;
+    std::ostringstream file;
+    file << _conf.output_path << "/reads-" << sm::sets[set] << ".fastq";
+    ofs.open(file.str());
+
+    rdb_handle rdb;
+    open_index_full_iter(_conf, SEQ, set, rdb);
+
+    rocksdb::ReadOptions r_opt;
+    rocksdb::Iterator* it = rdb.db->NewIterator(r_opt, rdb.cfs[0]);
+    for (it->SeekToFirst(); it->Valid(); it->Next()) {
+        string id = it->key().ToString();
+        string seq = it->value().ToString();
+        // Quality is not available at this point, so score set to lowest
+        // quality and should be ignored.
+        string qual = string(seq.length(), '!');
+        ofs << "@" << id << "\n" << seq << "\n+\n" << qual << "\n";
+    }
+
+    delete rdb.cfs[0];
+    delete rdb.db;
+    ofs.close();
 }
