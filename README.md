@@ -21,7 +21,7 @@ support (>= 4.8), and the following libraries:
  - [boost][boost] (>= 1.55): Property trees and string algorithms
  - [ConcurrentQueue][concurrentq] and [ReaderWriterQueue][rwq]: MPMC and SPSC
    queues
- - [libbf][libbf]: Bloom filters
+ - [libbf][libbf] (<= 9d67fe02d0): Bloom filters
  - [RocksDB][rocksdb] (>= 4.9): Key-value store for flash storage
  - [htslib][htslib]: Parse BAM files
 
