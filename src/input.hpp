@@ -1,6 +1,8 @@
 #ifndef __SM_INPUT__H__
 #define __SM_INPUT__H__
 
+#include <functional>
+
 #include <concurrentqueue.h>
 
 #include "common.hpp"
