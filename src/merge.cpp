@@ -226,7 +226,7 @@ void merge::to_fastq_set(sm_idx_set set)
 {
     std::ofstream ofs;
     std::ostringstream file;
-    file << _conf.output_path << "/reads-" << sm::sets[set] << ".fastq";
+    file << _conf.output_path << "/merge-" << sm::sets[set] << ".fastq";
     ofs.open(file.str());
 
     rdb_handle rdb;
