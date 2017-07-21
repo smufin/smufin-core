@@ -107,7 +107,7 @@ void open_index_ro(const sm_config &conf, sm_idx_type type,
 
     s = rocksdb::LoadLatestOptions(path, env, &db_options, &cf_descs);
     if (!s.ok()) {
-        cout << "Failed to latest RocksDB options: " << path << endl;
+        cout << "Failed to load latest RocksDB options: " << path << endl;
         exit(1);
     }
 
