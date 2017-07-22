@@ -255,7 +255,7 @@ void group::populate(int gid)
             ofs << "\"reads-" << kind_code[i] << "\":[";
             for (string sid: (*_l2i[gid])[lid][i]) {
                 string read;
-                status = _seq[i].db->Get(rocksdb::ReadOptions(), lid, &read);
+                status = _seq[i].db->Get(rocksdb::ReadOptions(), sid, &read);
                 if (!status.ok())
                     continue;
                 if (!first_read)
