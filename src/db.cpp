@@ -77,8 +77,8 @@ void open_index(const sm_config &conf, sm_idx_type type,
     std::vector<rocksdb::ColumnFamilyDescriptor> cf_descs;
 
     rocksdb::Env* env = rocksdb::Env::Default();
-    env->SetBackgroundThreads(2, Env::Priority::HIGH);
-    env->SetBackgroundThreads(4, Env::Priority::LOW);
+    env->SetBackgroundThreads(conf.num_threads_high, Env::Priority::HIGH);
+    env->SetBackgroundThreads(conf.num_threads_low, Env::Priority::LOW);
 
     s = rocksdb::LoadOptionsFromFile(conf_file, env, &db_options, &cf_descs);
     if (!s.ok()) {

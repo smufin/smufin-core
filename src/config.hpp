@@ -57,6 +57,10 @@ struct sm_config {
     // groups file.
     int max_group_reads;
 
+    // Number of high and low priority RocksDB threads.
+    int num_threads_high;
+    int num_threads_low;
+
     void load(const std::string &filename);
 };
 
