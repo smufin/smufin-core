@@ -113,6 +113,7 @@ void open_index_ro(const sm_config &conf, sm_idx_type type,
 
     set_options_type(cf_descs[0].options, type);
     db_options.create_if_missing = false;
+    db_options.wal_dir = path;
 
     s = rocksdb::DB::OpenForReadOnly(db_options, path, cf_descs, &rdb.cfs,
                                      &rdb.db);
