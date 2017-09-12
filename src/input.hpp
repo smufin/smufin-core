@@ -40,7 +40,7 @@ class input_queue
 {
 public:
     input_queue(const sm_config &conf) : _conf(conf) {};
-    void init();
+    virtual void init();
     bool try_dequeue(sm_chunk &chunk);
 
     std::atomic<int> len{0};
