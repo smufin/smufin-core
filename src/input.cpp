@@ -56,13 +56,13 @@ void input_queue_bam_chunks::init()
         files.push_back({file, CANCER_READ});
 
     for (auto& file: files) {
-        std::vector<uint64_t> offsets(_conf.num_loaders);
+        std::vector<uint64_t> offsets;
         if (!chunk_bam(file.first, _conf.num_loaders, offsets)) {
             cout << "Failed to chunk BAM file " << file.first << endl;
             exit(1);
         }
 
-        for (int i = 0; i < offsets.size(); i++) {
+        for (int i = 0; i < offsets.size() - 1; i++) {
             sm_chunk chunk;
             chunk.file = file.first;
             chunk.begin = offsets[i];
@@ -89,9 +89,6 @@ bool input_queue_bam_chunks::chunk_bam(const string bam_file,
     const uint64_t chunk_size = bam_file_size / num_chunks;
     const string bai_file = string(bam_file + ".bai");
 
-    for (auto& o: offsets)
-        o = (chunk_size * num_chunks) << 16;
-
     BGZF *fp = bgzf_open(bai_file.c_str(), "r");
     uint8_t magic[4];
     uint32_t n_ref;
@@ -107,6 +104,9 @@ bool input_queue_bam_chunks::chunk_bam(const string bam_file,
 
     if (bgzf_read(fp, &n_ref, 4) != 4)
         return false;
+
+    for (int i = 0; i < num_chunks; i++)
+        offsets.push_back((chunk_size * num_chunks) << 16);
 
     for (int i = 0; i < n_ref; i++) {
         uint32_t n_bin;
