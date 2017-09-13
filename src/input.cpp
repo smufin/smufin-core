@@ -59,7 +59,16 @@ void input_queue_bam_chunks::init()
         std::vector<uint64_t> offsets;
         if (!chunk_bam(file.first, _conf.num_loaders, offsets)) {
             cout << "Failed to chunk BAM file " << file.first << endl;
-            exit(1);
+
+            // Default to addressing the entire BAM file without chunking.
+            sm_chunk chunk;
+            chunk.file = file.first;
+            chunk.begin = -1;
+            chunk.end = -1;
+            chunk.kind = file.second;
+            _queue.enqueue(chunk);
+            len++;
+            continue;
         }
 
         for (int i = 0; i < offsets.size() - 1; i++) {
