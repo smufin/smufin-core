@@ -77,8 +77,10 @@ void input_queue_bam_chunks::init()
             chunk.begin = offsets[i];
             chunk.end = offsets[i + 1];
             chunk.kind = file.second;
-            _queue.enqueue(chunk);
-            len++;
+            if (chunk.begin < chunk.end) {
+                _queue.enqueue(chunk);
+                len++;
+            }
         }
     }
 }
