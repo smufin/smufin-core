@@ -218,10 +218,10 @@ void group::populate(int gid)
         first_group = false;
 
         ofs << "\"" << lid << "\":{";
-        ofs  << "\"lead\":["
-             << "\"" << lid << "\","
-             << "\"" << seq << "\""
-             << "],";
+        ofs << "\"lead\":["
+            << "\"" << lid << "\","
+            << "\"" << seq << "\""
+            << "],";
 
         for (int i = 0; i < 2; i++) {
             ofs << "\"pos-" << comp_code[i] << "\":[";
