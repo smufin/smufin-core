@@ -96,6 +96,9 @@ private:
     void export_csv();
     void export_csv_table(int sid);
 
+    void annotate();
+    void annotate_sub(const char* sub, int pos, int len, std::ofstream &ofs);
+
     void stats();
 };
 

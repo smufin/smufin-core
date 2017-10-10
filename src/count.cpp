@@ -33,6 +33,7 @@ count::count(const sm_config &conf) : stage(conf)
     _executable["restore"] = std::bind(&count::restore, this);
     _executable["stats"] = std::bind(&count::stats, this);
     _executable["export"] = std::bind(&count::export_csv, this);
+    _executable["annotate"] = std::bind(&count::annotate, this);
 }
 
 void count::chain(const stage* prev)
@@ -410,4 +411,76 @@ void count::export_csv_table(int sid)
     }
 
     ofs.close();
+}
+
+void count::annotate()
+{
+    std::ofstream ofs;
+    std::ostringstream file;
+    file << _conf.output_path << "/annotate." << _conf.pid << ".json";
+    ofs.open(file.str());
+
+    sm_chunk chunk;
+    chunk.file = _conf.annotate_input;
+    chunk.begin = -1;
+    chunk.end = -1;
+    chunk.kind = NORMAL_READ; // Kind not relevant in this context.
+
+    input_iterator *it;
+    sm_read read;
+    it = sm::input_iterators.at("fastq")(_conf, chunk);
+
+    bool first = true;
+    ofs << "{";
+    while (it->next(&read)) {
+        if (!first)
+            ofs << ",";
+        first = false;
+        ofs << "\"" << read.id << "\":{";
+        ofs << "\"seq\":\"" << read.seq << "\",";
+        ofs << "\"kmers\":{";
+        for (int i = 0; i < read.num_splits; i++) {
+            int p = read.splits[i][0];
+            int n = read.splits[i][1];
+            annotate_sub(&read.seq[p], p, n, ofs);
+        }
+        ofs << "}}";
+    }
+    ofs << "}";
+}
+
+void count::annotate_sub(const char* sub, int pos, int len, std::ofstream &ofs)
+{
+    if (len < _conf.k)
+        return;
+
+    bool first = true;
+    int stem_len = _conf.k - 2;
+    char stem[stem_len + 1];
+    for (int i = 0; i <= len - _conf.k; i++) {
+        strncpy(stem, &sub[i + 1], stem_len);
+        stem[stem_len] = '\0';
+
+        uint64_t m = 0;
+        memcpy(&m, stem, MAP_LEN);
+        hash_5mer(m);
+
+        if (map_l1[m] != _conf.pid)
+            continue;
+        int sid = map_l2[m];
+        sm_key key = strtob4(stem);
+
+        sm_table::const_iterator it = _tables[sid]->find(key);
+        if (it != _tables[sid]->end()) {
+            uint8_t f = sm::code[sub[i]] - '0';
+            uint8_t l = sm::code[sub[i + _conf.k - 1]] - '0';
+            uint32_t nc = it->second.v[f][l][NORMAL_READ];
+            uint32_t tc = it->second.v[f][l][CANCER_READ];
+
+            if (!first)
+                ofs << ",";
+            first = false;
+            ofs << "\"" << (pos + i) << "\":[" << nc << "," << tc << "]";
+        }
+    }
 }

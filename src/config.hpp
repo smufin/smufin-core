@@ -39,6 +39,8 @@ struct sm_config {
     int export_min;
     int export_max;
 
+    std::string annotate_input;
+
     std::string index_format;
     int num_indexes;
     int max_nc;
