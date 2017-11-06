@@ -19,7 +19,7 @@ input_iterator_fastq::input_iterator_fastq(const sm_config &conf,
 bool input_iterator_fastq::next(sm_read *read)
 {
     while (kseq_read(_seq) >= 0) {
-        if (lq_count(_seq->qual.s, _seq->qual.l) > _seq->qual.l / 10)
+        if (_check && lq_count(_seq->qual.s, _seq->qual.l) > _seq->qual.l / 10)
             continue;
 
         read->id = _seq->name.s;

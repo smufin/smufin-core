@@ -14,6 +14,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include "registry.hpp"
+#include "input_iterator_fastq.hpp"
 #include "util.hpp"
 
 using std::cout;
@@ -426,9 +427,10 @@ void count::annotate()
     chunk.end = -1;
     chunk.kind = NORMAL_READ; // Kind not relevant in this context.
 
-    input_iterator *it;
+    input_iterator_fastq *it;
     sm_read read;
-    it = sm::input_iterators.at("fastq")(_conf, chunk);
+    it = new input_iterator_fastq(_conf, chunk);
+    it->_check = false;
 
     bool first = true;
     ofs << "{";

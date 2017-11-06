@@ -10,6 +10,7 @@ class input_iterator_fastq : public input_iterator
 public:
     input_iterator_fastq(const sm_config &conf, const sm_chunk &chunk);
     bool next(sm_read *read);
+    bool _check = true;
 
 private:
     gzFile _in;
