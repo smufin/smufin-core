@@ -9,7 +9,6 @@
  * see <https://github.com/smufin/smufin-core/blob/master/COPYING>.
  *
  * Jordà Polo <jorda.polo@bsc.es>, 2015-2018
- *
  */
 
 #include "common.hpp"
