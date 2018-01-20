@@ -1,6 +1,18 @@
+/*
+ * Copyright © 2015-2018 Barcelona Supercomputing Center (BSC)
+ *
+ * This file is part of SMUFIN Core. SMUFIN Core is released under the SMUFIN
+ * Public License, and may not be used except in compliance with it. You
+ * should have received a copy of the SMUFIN Public License along with this
+ * file. If not, see <https://github.com/smufin/smufin-core/COPYING>.
+ *
+ * Jordà Polo <jorda.polo@bsc.es>, 2015-2018
+ *
+ */
+
 #include "common.hpp"
 
-// String to integer conversion. Parses a null-terminated string, interpreting
+// S tring to integer conversion. Parses a null-terminated string, interpreting
 // its content as an integral number in base 4.
 uint64_t strtob4(const char *str)
 {
