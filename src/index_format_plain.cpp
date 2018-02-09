@@ -24,7 +24,7 @@ using std::endl;
 using std::string;
 
 void index_format_plain::update(int fid, const sm_read *read, int pos,
-                                 bool rev, char kmer[], sm_idx_set set)
+                                char kmer[], sm_dir dir, sm_idx_set set)
 {
     char buf[512] = {0};
     sprintf(buf, "%s %s", read->id, read->seq);
@@ -35,7 +35,7 @@ void index_format_plain::update(int fid, const sm_read *read, int pos,
         _seq[set].insert(buf);
     }
     if (set == TM) {
-        if (!rev)
+        if (dir == DIR_A)
             _i2p[read->id].a[pos / 64] |= 1UL << (pos % 64);
         else
             _i2p[read->id].b[pos / 64] |= 1UL << (pos % 64);

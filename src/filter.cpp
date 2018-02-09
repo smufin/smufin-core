@@ -127,16 +127,27 @@ void filter::filter_normal(int fid, const sm_read *read, const char *sub,
     if (len < _conf.k)
         return;
 
+    int stem_len = _conf.k - 2;
+    char stem[stem_len + 1];
     char kmer[_conf.k + 1];
     for (int i = 0; i <= len - _conf.k; i++) {
-        strncpy(kmer, &sub[i], _conf.k);
-        kmer[_conf.k] = '\0';
-        filter_all(fid, read, i, false, kmer, NN);
+        strncpy(stem, &sub[i + 1], stem_len);
+        stem[stem_len] = '\0';
+        int order = min_order(stem, stem_len);
+        if (order)
+            revcomp(stem, stem_len);
+
+        sm_table::const_iterator it;
+        if (get_value(stem, &it) != 0)
+            continue;
 
         strncpy(kmer, &sub[i], _conf.k);
         kmer[_conf.k] = '\0';
+        filter_all(fid, read, i, kmer, DIR_A, order, it->second, NN);
+
         revcomp(kmer, _conf.k);
-        filter_all(fid, read, i, true, kmer, NN);
+        order = (order + 1) % 2;
+        filter_all(fid, read, i, kmer, DIR_B, order, it->second, NN);
     }
 }
 
@@ -146,96 +157,104 @@ void filter::filter_cancer(int fid, const sm_read *read, const char *sub,
     if (len < _conf.k)
         return;
 
+    int stem_len = _conf.k - 2;
+    char stem[stem_len + 1];
     char kmer[_conf.k + 1];
     for (int i = 0; i <= len - _conf.k; i++) {
-        strncpy(kmer, &sub[i], _conf.k);
-        kmer[_conf.k] = '\0';
-        filter_branch(fid, read, i, false, kmer, TM);
-        filter_all(fid, read, i, false, kmer, TN);
+        strncpy(stem, &sub[i + 1], stem_len);
+        stem[stem_len] = '\0';
+        int order = min_order(stem, stem_len);
+        if (order)
+            revcomp(stem, stem_len);
+
+        sm_table::const_iterator it;
+        if (get_value(stem, &it) != 0)
+            continue;
 
         strncpy(kmer, &sub[i], _conf.k);
         kmer[_conf.k] = '\0';
+        filter_branch(fid, read, i, kmer, DIR_A, order, it->second, TM);
+        filter_all(fid, read, i, kmer, DIR_A, order, it->second, TN);
+
         revcomp(kmer, _conf.k);
-        filter_branch(fid, read, i, true, kmer, TM);
-        filter_all(fid, read, i, true, kmer, TN);
+        order = (order + 1) % 2;
+        filter_branch(fid, read, i, kmer, DIR_B, order, it->second, TM);
+        filter_all(fid, read, i, kmer, DIR_B, order, it->second, TN);
     }
 }
 
-int filter::get_value(int fid, char kmer[], sm_table::const_iterator *it)
+int filter::get_value(char stem[], sm_table::const_iterator *it)
 {
-    char last = kmer[_conf.k - 1];
-    kmer[_conf.k - 1] = '\0';
-
     uint64_t m = 0;
-    memcpy(&m, &kmer[1], MAP_LEN);
+    memcpy(&m, stem, MAP_LEN);
     hash_5mer(m);
 
     if (map_l1[m] != _conf.pid)
         return -1;
     int sid = map_l2[m];
-    sm_key key = strtob4(&kmer[1]);
+    sm_key key = strtob4(stem);
 
     const sm_table* table = (*_count)[sid];
     *it = table->find(key);
     if (*it == table->end())
         return -1;
-
-    kmer[_conf.k - 1] = last;
     return 0;
 }
 
-void filter::filter_branch(int fid, const sm_read *read, int pos, bool rev,
-                           char kmer[], sm_idx_set set)
+void filter::filter_all(int fid, const sm_read *read, int pos, char kmer[],
+                        sm_dir dir, int order, const sm_value &counts,
+                        sm_idx_set set)
 {
-    sm_table::const_iterator it;
-    if (get_value(fid, kmer, &it) != 0)
-        return;
-    int f = sm::code[kmer[0]] - '0';
-    int l = sm::code[kmer[_conf.k - 1]] - '0';
-    uint32_t nc = it->second.v[f][l][NORMAL_READ];
-    uint32_t tc = it->second.v[f][l][CANCER_READ];
-    uint32_t nsum = 0;
-    uint32_t tsum = 0;
-    for (l = 0; l < 4; l++) {
-        nsum += it->second.v[f][l][NORMAL_READ];
-        tsum += it->second.v[f][l][CANCER_READ];
-    }
-    filter_kmer(fid, read, pos, rev, kmer, nc, tc, nsum, tsum, set);
-}
+    char first = kmer[0];
+    char last = kmer[_conf.k - 1];
 
-void filter::filter_all(int fid, const sm_read *read, int pos, bool rev,
-                        char kmer[], sm_idx_set set)
-{
-    sm_table::const_iterator it;
-    if (get_value(fid, kmer, &it) != 0)
-        return;
     for (int f = 0; f < 4; f++) {
         kmer[0] = sm::alpha[f];
         uint32_t nsum = 0;
         uint32_t tsum = 0;
         for (int l = 0; l < 4; l++) {
-            nsum += it->second.v[f][l][NORMAL_READ];
-            tsum += it->second.v[f][l][CANCER_READ];
+            nsum += counts.v[order][f][l][NORMAL_READ];
+            tsum += counts.v[order][f][l][CANCER_READ];
         }
         for (int l = 0; l < 4; l++) {
             kmer[_conf.k - 1] = sm::alpha[l];
-            uint32_t nc = it->second.v[f][l][NORMAL_READ];
-            uint32_t tc = it->second.v[f][l][CANCER_READ];
-            filter_kmer(fid, read, pos, rev, kmer, nc, tc, nsum, tsum, set);
+            uint32_t nc = counts.v[order][f][l][NORMAL_READ];
+            uint32_t tc = counts.v[order][f][l][CANCER_READ];
+            filter_kmer(fid, read, pos, kmer, dir, nc, tc, nsum, tsum, set);
         }
     }
+
+    kmer[0] = first;
+    kmer[_conf.k - 1] = last;
 }
 
-void filter::filter_kmer(int fid, const sm_read *read, int pos, bool rev,
-                         char kmer[], uint32_t nc, uint32_t tc, uint32_t nsum,
+void filter::filter_branch(int fid, const sm_read *read, int pos, char kmer[],
+                           sm_dir dir, int order, const sm_value &counts,
+                           sm_idx_set set)
+{
+    int f = sm::code[kmer[0]] - '0';
+    int l = sm::code[kmer[_conf.k - 1]] - '0';
+    uint32_t nc = counts.v[order][f][l][NORMAL_READ];
+    uint32_t tc = counts.v[order][f][l][CANCER_READ];
+    uint32_t nsum = 0;
+    uint32_t tsum = 0;
+    for (l = 0; l < 4; l++) {
+        nsum += counts.v[order][f][l][NORMAL_READ];
+        tsum += counts.v[order][f][l][CANCER_READ];
+    }
+    filter_kmer(fid, read, pos, kmer, dir, nc, tc, nsum, tsum, set);
+}
+
+void filter::filter_kmer(int fid, const sm_read *read, int pos, char kmer[],
+                         sm_dir dir, uint32_t nc, uint32_t tc, uint32_t nsum,
                          uint32_t tsum, sm_idx_set set)
 {
     if (tc >= _conf.min_tc && nc <= _conf.max_nc) {
-        if (rev) {
+        if (dir == DIR_B) {
             // Recalculate reverse-complement position since the loops, and
             // thus the passed `pos', follow the forward sequence.
             pos = read->len - _conf.k - pos;
         }
-        _format->update(fid, read, pos, rev, kmer, set);
+        _format->update(fid, read, pos, kmer, dir, set);
     }
 }

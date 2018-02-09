@@ -39,7 +39,7 @@ class index_format_plain : public index_format
 public:
     index_format_plain(const sm_config &conf) : index_format(conf) {};
 
-    void update(int fid, const sm_read *read, int pos, bool rev, char kmer[],
+    void update(int fid, const sm_read *read, int pos, char kmer[], sm_dir dir,
                 sm_idx_set set);
     bool flush();
     void dump();

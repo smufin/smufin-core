@@ -93,6 +93,11 @@ enum sm_idx_set {
     TM, // Tumor Mutated reads.
 };
 
+enum sm_dir {
+    DIR_A,
+    DIR_B
+};
+
 namespace sm {
     // Nucleotide alphabet, sorted and indexed by code.
     const char alpha[] = {'A', 'C', 'G', 'T'};
@@ -145,5 +150,6 @@ void b4tostr(uint64_t code, int len, char *str);
 int lq_count(const char *str, int len);
 void rev(char seq[], int len);
 void revcomp(char seq[], int len);
+int min_order(char seq[], int len);
 
 #endif

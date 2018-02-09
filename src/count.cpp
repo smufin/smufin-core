@@ -165,6 +165,11 @@ inline void count::load_sub(int lid, const char* sub, int len,
         strncpy(stem, &sub[i + 1], stem_len);
         stem[stem_len] = '\0';
 
+        int order = min_order(stem, stem_len);
+        if (order) {
+            revcomp(stem, stem_len);
+        }
+
         uint64_t m = 0;
         memcpy(&m, stem, MAP_LEN);
         hash_5mer(m);
@@ -175,6 +180,7 @@ inline void count::load_sub(int lid, const char* sub, int len,
         sm_key key = strtob4(stem);
 
         sm_value_offset off;
+        off.order = order;
         off.first = sm::code[sub[i]] - '0';
         off.last = sm::code[sub[i + _conf.k - 1]] - '0';
         off.kind = kind;
@@ -252,7 +258,8 @@ inline void count::incr_key(int sid, sm_key key, sm_value_offset off)
     if (_conf.enable_cache) {
         cit = _caches[sid]->find(key);
         if (cit == _caches[sid]->end()) {
-            uint8_t val = (off.first << 6) | (off.last << 4) | (off.kind << 2);
+            uint8_t val = (off.order << 6) | (off.first << 4) |
+                          (off.last << 2) | off.kind;
             _caches[sid]->insert(std::pair<sm_key, uint8_t>(key, val));
             return;
         }
@@ -264,19 +271,20 @@ inline void count::incr_key(int sid, sm_key key, sm_value_offset off)
         if (_conf.enable_cache) {
             uint8_t cache_value = cit->second;
             sm_value_offset coff;
-            coff.first = cache_value >> 6;
-            coff.last = (cache_value >> 4) & 0x03;
-            coff.kind = (sm_read_kind) ((cache_value >> 2) & 0x03);
-            val.v[coff.first][coff.last][coff.kind] = 1;
+            coff.order = cache_value >> 6;
+            coff.first = (cache_value >> 4) & 0x03;
+            coff.last = (cache_value >> 2) & 0x03;
+            coff.kind = (sm_read_kind) (cache_value & 0x03);
+            val.v[coff.order][coff.first][coff.last][coff.kind] = 1;
         }
-        val.v[off.first][off.last][off.kind]++;
+        val.v[off.order][off.first][off.last][off.kind]++;
         _tables[sid]->insert(std::pair<sm_key, sm_value>(key, val));
     } else {
-        uint32_t inc = it->second.v[off.first][off.last][off.kind] + 1;
+        uint32_t inc = it->second.v[off.order][off.first][off.last][off.kind] + 1;
         uint16_t over = inc >> 16;
         uint16_t count = inc & 0x0000FFFF;
         if (over == 0)
-            (*_tables[sid])[key].v[off.first][off.last][off.kind] = count;
+            (*_tables[sid])[key].v[off.order][off.first][off.last][off.kind] = count;
     }
 }
 
@@ -349,24 +357,26 @@ void count::stats()
         uint64_t sum = 0;
         for (sm_table::const_iterator it = _tables[i]->begin();
              it != _tables[i]->end(); ++it) {
-            uint64_t sum_t = 0;
-            uint64_t sum_n = 0;
-            for (int f = 0; f < 4; f++) {
-                for (int l = 0; l < 4; l++) {
-                    uint16_t nc = it->second.v[f][l][NORMAL_READ];
-                    uint16_t tc = it->second.v[f][l][CANCER_READ];
-                    sum_n += nc;
-                    sum_t += tc;
-                    num_kmers += (nc + tc > 0) ? 1 : 0;
+            for (int o = 0; o < 2; o++) {
+                uint64_t sum_t = 0;
+                uint64_t sum_n = 0;
+                for (int f = 0; f < 4; f++) {
+                    for (int l = 0; l < 4; l++) {
+                        uint16_t nc = it->second.v[o][f][l][NORMAL_READ];
+                        uint16_t tc = it->second.v[o][f][l][CANCER_READ];
+                        sum_n += nc;
+                        sum_t += tc;
+                        num_kmers += (nc + tc > 0) ? 1 : 0;
+                    }
                 }
+                if (sum_n > 0)
+                    hist_n[int(log2(sum_n))]++;
+                if (sum_t > 0)
+                    hist_t[int(log2(sum_t))]++;
+                if (sum_n + sum_t == 1)
+                    num_once++;
+                sum += sum_n + sum_t;
             }
-            if (sum_n > 0)
-                hist_n[int(log2(sum_n))]++;
-            if (sum_t > 0)
-                hist_t[int(log2(sum_t))]++;
-            if (sum_n + sum_t == 1)
-                num_once++;
-            sum += sum_n + sum_t;
         }
         cout << "Table " << i << ": " << num_stems << " " << num_once << " "
              << num_kmers << " " << sum << endl;
@@ -407,18 +417,23 @@ void count::export_csv_table(int sid)
 
     char kmer[32 + 1];
     for (const auto& stem: *_tables[sid]) {
-        for (int f = 0; f < 4; f++) {
-            for (int l = 0; l < 4; l++) {
-                uint16_t nc = stem.second.v[f][l][NORMAL_READ];
-                uint16_t tc = stem.second.v[f][l][CANCER_READ];
-                if ((nc > _conf.export_min && nc < _conf.export_max) ||
-                    (tc > _conf.export_min && tc < _conf.export_max)) {
-                    // Rebuild kmer based on coded stem and first/last indexes
-                    kmer[0] = sm::alpha[f];
-                    b4tostr(stem.first, _conf.k - 2, &kmer[1]);
-                    kmer[_conf.k - 1] = sm::alpha[l];
-                    kmer[_conf.k] = '\0';
-                    ofs << kmer << "," << nc << "," << tc << "\n";
+        for (int o = 0; o < 2; o++) {
+            for (int f = 0; f < 4; f++) {
+                for (int l = 0; l < 4; l++) {
+                    uint16_t nc = stem.second.v[o][f][l][NORMAL_READ];
+                    uint16_t tc = stem.second.v[o][f][l][CANCER_READ];
+                    if ((nc > _conf.export_min && nc < _conf.export_max) ||
+                        (tc > _conf.export_min && tc < _conf.export_max)) {
+                        // Rebuild kmer based on coded stem and first/last base
+                        kmer[0] = sm::alpha[f];
+                        b4tostr(stem.first, _conf.k - 2, &kmer[1]);
+                        kmer[_conf.k - 1] = sm::alpha[l];
+                        kmer[_conf.k] = '\0';
+                        if (o) {
+                            revcomp(&kmer[1], _conf.k - 2);
+                        }
+                        ofs << kmer << "," << nc << "," << tc << "\n";
+                    }
                 }
             }
         }
@@ -476,6 +491,11 @@ void count::annotate_sub(const char* sub, int pos, int len, std::ofstream &ofs)
         strncpy(stem, &sub[i + 1], stem_len);
         stem[stem_len] = '\0';
 
+        int order = min_order(stem, stem_len);
+        if (order) {
+            revcomp(stem, stem_len);
+        }
+
         uint64_t m = 0;
         memcpy(&m, stem, MAP_LEN);
         hash_5mer(m);
@@ -489,8 +509,8 @@ void count::annotate_sub(const char* sub, int pos, int len, std::ofstream &ofs)
         if (it != _tables[sid]->end()) {
             uint8_t f = sm::code[sub[i]] - '0';
             uint8_t l = sm::code[sub[i + _conf.k - 1]] - '0';
-            uint32_t nc = it->second.v[f][l][NORMAL_READ];
-            uint32_t tc = it->second.v[f][l][CANCER_READ];
+            uint32_t nc = it->second.v[order][f][l][NORMAL_READ];
+            uint32_t tc = it->second.v[order][f][l][CANCER_READ];
 
             if (!first)
                 ofs << ",";

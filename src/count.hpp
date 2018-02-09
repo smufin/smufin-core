@@ -28,13 +28,14 @@
 #define COUNT_QUEUE_LEN 512
 
 // A value of the hashtable that contains normal and tumoral counters for all
-// inflections of a stem. The multidimensional array `v' is indexed as
-// follows: v[A][B][C], where A and B are the numeric code of the first and
-// last bases (as defined by sm::code), and C is the kind (as defined by
-// sm_read_kind).
-typedef struct sm_value {
-    uint16_t v[4][4][2] = {{{0}}};
-} sm_value;
+// inflections of a stem and its reverse complement. The multidimensional
+// array `v' is indexed as follows: v[A][B][C][D], where:
+//  - A stands for the direction, sorted by the encoded sequence (the stem or
+//    its reverse complement) in increasing order
+//  - B and C are the numeric code of the first and last bases respectively
+//    (as defined by sm::code)
+//  - D is the kind (as defined by sm_read_kind)
+typedef struct sm_value { uint16_t v[2][4][4][2] = {{{{0}}}}; } sm_value;
 
 typedef google::sparse_hash_map<sm_key, sm_value, sm_hasher<sm_key>> sm_table;
 typedef google::sparse_hash_map<sm_key, uint8_t, sm_hasher<sm_key>> sm_cache;
@@ -44,6 +45,7 @@ typedef google::sparse_hash_map<sm_key, uint8_t, sm_hasher<sm_key>> sm_cache;
 // representing the first and last bases of a kmer using the same mapping as
 // sm::code.
 typedef struct {
+    uint8_t order;
     uint8_t first;
     uint8_t last;
     sm_read_kind kind;

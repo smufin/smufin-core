@@ -41,7 +41,7 @@ index_format_rocks::index_format_rocks(const sm_config &conf)
 }
 
 void index_format_rocks::update(int fid, const sm_read *read, int pos,
-                                bool rev, char kmer[], sm_idx_set set)
+                                char kmer[], sm_dir dir, sm_idx_set set)
 {
     string sid = read->id;
     rocksdb::WriteOptions options;
@@ -54,7 +54,7 @@ void index_format_rocks::update(int fid, const sm_read *read, int pos,
         sm_pos_bitmap p;
         string serialized;
 
-        if (!rev)
+        if (dir == DIR_A)
             p.a[pos / 64] |= 1UL << (pos % 64);
         else
             p.b[pos / 64] |= 1UL << (pos % 64);

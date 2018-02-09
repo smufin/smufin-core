@@ -71,3 +71,20 @@ void revcomp(char seq[], int len)
         seq[j] = c;
     }
 }
+
+// Given a sequence, return order relative to its reverse complement:
+//  - 0: sequence is lower or equal than its reverse complement
+//  - 1: sequence is higher than its reverse complement
+int min_order(char seq[], int len)
+{
+    int i, j;
+    for (i = 0, j = len - 1; i <= j; i++, j--) {
+        int a = sm::code[seq[i]] - '0';
+        int b = sm::code[sm::comp[seq[j]]] - '0';
+        if (a < b)
+            return 0;
+        if (a > b)
+            return 1;
+    }
+    return 0;
+}

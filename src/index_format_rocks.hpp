@@ -39,7 +39,7 @@ class index_format_rocks : public index_format
 public:
     index_format_rocks(const sm_config &conf);
 
-    void update(int fid, const sm_read *read, int pos, bool rev, char kmer[],
+    void update(int fid, const sm_read *read, int pos, char kmer[], sm_dir dir,
                 sm_idx_set set);
     bool flush() {};
     void dump();

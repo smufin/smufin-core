@@ -44,14 +44,16 @@ private:
     void filter_normal(int fid, const sm_read *read, const char *sub, int len);
     void filter_cancer(int fid, const sm_read *read, const char *sub, int len);
 
-    int get_value(int fid, char kmer[], sm_table::const_iterator *it);
+    int get_value(char stem[], sm_table::const_iterator *it);
 
-    inline void filter_all(int fid, const sm_read *read, int pos, bool rev,
-                           char kmer[], sm_idx_set set);
-    inline void filter_branch(int fid, const sm_read *read, int pos, bool rev,
-                              char kmer[], sm_idx_set set);
-    inline void filter_kmer(int fid, const sm_read *read, int pos, bool rev,
-                            char kmer[], uint32_t nc, uint32_t tc,
+    inline void filter_all(int fid, const sm_read *read, int pos, char kmer[],
+                           sm_dir dir, int order, const sm_value &counts,
+                           sm_idx_set set);
+    inline void filter_branch(int fid, const sm_read *read, int pos,
+                              char kmer[], sm_dir dir, int order,
+                              const sm_value &counts, sm_idx_set set);
+    inline void filter_kmer(int fid, const sm_read *read, int pos, char kmer[],
+                            sm_dir dir, uint32_t nc, uint32_t tc,
                             uint32_t nsum, uint32_t tsum, sm_idx_set set);
 };
 
