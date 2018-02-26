@@ -16,7 +16,7 @@
 
 #include <string>
 
-#include <bf.h>
+#include <bf/all.hpp>
 #include <concurrentqueue.h>
 #include <readerwriterqueue.h>
 
