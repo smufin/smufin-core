@@ -174,10 +174,6 @@ inline void count::load_sub(int lid, const char* sub, int len,
         int sid = map_l2[m];
         sm_key key = strtob4(stem);
 
-        if (_enable_prune && !(*_prune)[sid]->lookup(key)) {
-            continue;
-        }
-
         sm_value_offset off;
         off.first = sm::code[sub[i]] - '0';
         off.last = sm::code[sub[i + _conf.k - 1]] - '0';
@@ -248,6 +244,10 @@ inline void count::incr_key(int sid, sm_key key, sm_value_offset off)
     //     - Key exists in table: update entry if there's no overflow.
 
     sm_cache::const_iterator cit;
+
+    if (_enable_prune && !(*_prune)[sid]->lookup(key)) {
+        return;
+    }
 
     if (_conf.enable_cache) {
         cit = _caches[sid]->find(key);
