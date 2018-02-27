@@ -218,9 +218,11 @@ void filter::filter_all(int fid, const sm_read *read, int pos, char kmer[],
         }
         for (int l = 0; l < 4; l++) {
             kmer[_conf.k - 1] = sm::alpha[l];
-            uint32_t nc = counts.v[order][f][l][NORMAL_READ];
-            uint32_t tc = counts.v[order][f][l][CANCER_READ];
-            filter_kmer(fid, read, pos, kmer, dir, nc, tc, nsum, tsum, set);
+            uint32_t na = counts.v[order][f][l][NORMAL_READ];
+            uint32_t ta = counts.v[order][f][l][CANCER_READ];
+            uint32_t nb = counts.v[(order + 1) % 2][f][l][NORMAL_READ];
+            uint32_t tb = counts.v[(order + 1) % 2][f][l][CANCER_READ];
+            filter_kmer(fid, read, pos, kmer, dir, na, ta, nb, tb, nsum, tsum, set);
         }
     }
 
@@ -234,22 +236,26 @@ void filter::filter_branch(int fid, const sm_read *read, int pos, char kmer[],
 {
     int f = sm::code[kmer[0]] - '0';
     int l = sm::code[kmer[_conf.k - 1]] - '0';
-    uint32_t nc = counts.v[order][f][l][NORMAL_READ];
-    uint32_t tc = counts.v[order][f][l][CANCER_READ];
+    uint32_t na = counts.v[order][f][l][NORMAL_READ];
+    uint32_t ta = counts.v[order][f][l][CANCER_READ];
+    uint32_t nb = counts.v[(order + 1) % 2][f][l][NORMAL_READ];
+    uint32_t tb = counts.v[(order + 1) % 2][f][l][CANCER_READ];
     uint32_t nsum = 0;
     uint32_t tsum = 0;
     for (l = 0; l < 4; l++) {
         nsum += counts.v[order][f][l][NORMAL_READ];
         tsum += counts.v[order][f][l][CANCER_READ];
     }
-    filter_kmer(fid, read, pos, kmer, dir, nc, tc, nsum, tsum, set);
+    filter_kmer(fid, read, pos, kmer, dir, na, ta, nb, tb, nsum, tsum, set);
 }
 
 void filter::filter_kmer(int fid, const sm_read *read, int pos, char kmer[],
-                         sm_dir dir, uint32_t nc, uint32_t tc, uint32_t nsum,
-                         uint32_t tsum, sm_idx_set set)
+                         sm_dir dir, uint32_t na, uint32_t ta, uint32_t nb,
+                         uint32_t tb, uint32_t nsum, uint32_t tsum,
+                         sm_idx_set set)
 {
-    if (tc >= _conf.min_tc && nc <= _conf.max_nc) {
+    if (ta >= _conf.min_tc_a && na <= _conf.max_nc_a &&
+        tb >= _conf.min_tc_b && nb <= _conf.max_nc_b) {
         if (dir == DIR_B) {
             // Recalculate reverse-complement position since the loops, and
             // thus the passed `pos', follow the forward sequence.

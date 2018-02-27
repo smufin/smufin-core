@@ -56,8 +56,10 @@ struct sm_config {
 
     std::string index_format;
     int num_indexes;
-    int max_nc;
-    int min_tc;
+    int max_nc_a;
+    int min_tc_a;
+    int max_nc_b;
+    int min_tc_b;
     uint64_t leads_size;
 
     // Maximum number of reads per kmer while filtering; kmers with more than

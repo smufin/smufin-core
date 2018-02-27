@@ -65,8 +65,10 @@ void sm_config::load(const string &filename)
 
     index_format = tree.get<string>("filter.index-format", "plain");
     num_indexes = tree.get<int>("filter.num-indexes", 1);
-    max_nc = tree.get<int>("filter.max-normal-count", 1);
-    min_tc = tree.get<int>("filter.min-tumor-count", 4);
+    max_nc_a = tree.get<int>("filter.max-normal-count-a", 1);
+    min_tc_a = tree.get<int>("filter.min-tumor-count-a", 4);
+    max_nc_b = tree.get<int>("filter.max-normal-count-b", 1);
+    min_tc_b = tree.get<int>("filter.min-tumor-count-b", 4);
     max_filter_reads = tree.get<int>("filter.max-reads", 2000);
 
     window_min = tree.get<int>("group.window-min", 7);
