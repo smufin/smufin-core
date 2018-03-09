@@ -23,6 +23,7 @@ public:
     input_iterator(const sm_config &conf, const sm_chunk &chunk)
         : _conf(conf), _chunk(chunk) {};
     virtual bool next(sm_read *read) = 0;
+    bool check = true;
 
     template<typename T>
     static input_iterator* create(const sm_config &conf, const sm_chunk &chunk)

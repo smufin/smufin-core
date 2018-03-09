@@ -25,6 +25,8 @@ input_iterator_bam::input_iterator_bam(const sm_config &conf,
                                        const sm_chunk &chunk)
     : input_iterator(conf, chunk)
 {
+    check = conf.check_quality;
+
     _in = sam_open(chunk.file.c_str(), "r");
     _header = sam_hdr_read(_in);
     _record = bam_init1();
@@ -71,7 +73,7 @@ bool input_iterator_bam::next(sm_read *read)
         else if (_record->core.flag & BAM_FREAD2)
             dir = "/2";
 
-        if (lq_count(_qual, read_len) > read_len / 10)
+        if (check && lq_count(_qual, read_len) > (read_len / 10))
             continue;
 
         sprintf(_id, "%s%s", bam_get_qname(_record), dir.c_str());

@@ -33,6 +33,7 @@ struct sm_config {
     std::string input_tumor;
     std::vector<std::string> list_normal;
     std::vector<std::string> list_tumor;
+    bool check_quality;
 
     std::string output_path;
     std::string data_path;

@@ -47,6 +47,8 @@ void sm_config::load(const string &filename)
     input_format = tree.get<string>("core.input-format", "fastq");
     input_normal = tree.get<string>("core.input-normal", "");
     input_tumor = tree.get<string>("core.input-tumor", "");
+    check_quality = tree.get<bool>("core.check-quality", true);
+
     output_path = tree.get<string>("core.output", "");
     data_path = tree.get<string>("core.data", "data");
 
