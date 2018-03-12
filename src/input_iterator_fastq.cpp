@@ -33,6 +33,8 @@ input_iterator_fastq::input_iterator_fastq(const sm_config &conf,
 bool input_iterator_fastq::next(sm_read *read)
 {
     while (kseq_read(_seq) >= 0) {
+        assert(_seq->seq.l <= MAX_READ_LEN);
+
         if (check && lq_count(_seq->qual.s, _seq->qual.l) > _seq->qual.l / 10)
             continue;
 
@@ -49,17 +51,17 @@ bool input_iterator_fastq::next(sm_read *read)
 
         while ((ps = (char*) memchr(&_seq->seq.s[p], 'N', l - p)) != NULL) {
             n = ps - &_seq->seq.s[p];
-            if (n > 0) {
+            if (n >= _conf.k) {
+                assert(read->num_splits < MAX_SPLITS);
                 read->splits[read->num_splits][0] = p;
                 read->splits[read->num_splits][1] = n;
                 read->num_splits++;
-                p += n;
             }
-            p++;
+            p += n + 1;
         }
 
         n = l - p;
-        if (n > 0) {
+        if (n >= _conf.k) {
             read->splits[read->num_splits][0] = p;
             read->splits[read->num_splits][1] = n;
             read->num_splits++;

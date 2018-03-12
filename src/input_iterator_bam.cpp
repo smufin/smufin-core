@@ -47,6 +47,8 @@ bool input_iterator_bam::next(sm_read *read)
     while((len = sam_read1(_in, _header, _record)) >= 0 &&
           bgzf_tell(_in->fp.bgzf) <= _chunk.end) {
         const int read_len = _record->core.l_qseq;
+        assert(read_len <= MAX_READ_LEN);
+
         const uint8_t *s = bam_get_seq(_record);
         const uint8_t *q = bam_get_qual(_record);
 
@@ -81,8 +83,8 @@ bool input_iterator_bam::next(sm_read *read)
         read->seq = _seq;
         read->qual = _qual;
         read->len = read_len;
-
         read->num_splits = 0;
+
         int p = 0;
         int l = read_len;
         int n = read_len;
@@ -90,17 +92,17 @@ bool input_iterator_bam::next(sm_read *read)
 
         while ((ps = (char*) memchr(&_seq[p], 'N', l - p)) != NULL) {
             n = ps - &_seq[p];
-            if (n > 0) {
+            if (n >= _conf.k) {
+                assert(read->num_splits < MAX_SPLITS);
                 read->splits[read->num_splits][0] = p;
                 read->splits[read->num_splits][1] = n;
                 read->num_splits++;
-                p += n;
             }
-            p++;
+            p += n + 1;
         }
 
         n = l - p;
-        if (n > 0) {
+        if (n >= _conf.k) {
             read->splits[read->num_splits][0] = p;
             read->splits[read->num_splits][1] = n;
             read->num_splits++;
