@@ -494,7 +494,7 @@ void count::annotate()
     input_iterator_fastq *it;
     sm_read read;
     it = new input_iterator_fastq(_conf, chunk);
-    it->_check = false;
+    it->check = false;
 
     bool first = true;
     ofs << "{";
