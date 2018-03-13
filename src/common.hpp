@@ -27,8 +27,8 @@
 #define CEIL(x,y) (((x) + (y) - 1) / (y))
 
 #define BASE_LEN 4
-#define MAP_LEN 5
-#define MAP_FILE_LEN 1024 // (BASE_LEN ^ MAP_LEN)
+#define MAP_LEN 6
+#define MAP_FILE_LEN 4096 // (BASE_LEN ^ MAP_LEN)
 
 #ifndef MAX_READ_LEN
 #define MAX_READ_LEN 100
@@ -39,19 +39,18 @@
 #define MAX_STORERS 128
 #define MAX_LOADERS 128
 
-// Convert a string of 5 chars/bytes of the 4-base ACGT alphabet (40 bits)
-// into a unique unsigned int identifier in the [0-1024) range (10 bits). The
+// Convert a string of 6 chars/bytes of the 4-base ACGT alphabet (48 bits)
+// into a unique unsigned int identifier in the [0-4096) range (12 bits). The
 // idea is to take the 2nd and 3rd least significant bits of each byte as
 // follows:
 //   A -> 65 -> 01000001 -> 00
 //   C -> 67 -> 01000011 -> 01
 //   G -> 71 -> 01000111 -> 11
 //   T -> 84 -> 01010100 -> 10
-#define hash_5mer(h) ({                   \
-        (h) = ((h) & 25870861830) >> 1;     \
-        (h) = ((h) & 0xFFFF) + ((h) >> 14); \
-        (h) = ((h) & 0xFF) + ((h) >> 4);    \
-        (h) = ((h) & 0xFF) + (((h) & 0xFF00) >> 6); })
+#define hash_6mer(h) ({                   \
+    (h) = ((h) & 6622940628486) >> 1;     \
+    (h) = ((h) & 0xFFFFFF) + ((h) >> 22); \
+    (h) = ((h) & 0xF) + (((h) & 0xF00) >> 4) + (((h) & 0xF0000) >> 8); });
 
 typedef uint64_t sm_key;
 
@@ -104,7 +103,7 @@ namespace sm {
 
     // Map ASCII position to internal code. Note that partition maps use a
     // different encoding based on binary representation instead, see
-    // hash_5mer.
+    // hash_6mer.
     //   A -> 0 (pos. 65)
     //   C -> 1 (pos. 67)
     //   G -> 2 (pos. 71)

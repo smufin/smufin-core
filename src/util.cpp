@@ -37,7 +37,7 @@ void spawn(string name, std::function<void(int)> func, int n)
 void init_mapping(const sm_config &conf, int n1, int n2, int l1[], int l2[])
 {
     std::ostringstream map_file;
-    map_file << conf.data_path << "/maps/5-" << n1 << "-" << n2;
+    map_file << conf.data_path << "/maps/6-" << n1 << "-" << n2;
     std::ifstream map_stream(map_file.str());
     if (!map_stream.good()) {
         cout << "Failed to load mapping " << map_file.str() << endl;
@@ -52,7 +52,7 @@ void init_mapping(const sm_config &conf, int n1, int n2, int l1[], int l2[])
         boost::split(columns, line, boost::is_any_of(" "));
         uint64_t m = 0;
         memcpy(&m, columns[0].c_str(), MAP_LEN);
-        hash_5mer(m);
+        hash_6mer(m);
         l1[m] = atoi(columns[1].c_str());
         l2[m] = atoi(columns[2].c_str());
     }
