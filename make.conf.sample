@@ -3,7 +3,7 @@
 
 # Maximum length of reads in the input files. Used to adapt data structures
 # and buffer sizes depending on expected read length.
-MAX_READ_LEN = 100
+MAX_READ_LEN = 120
 
 # Path to headers:
 # - Google sparsehash
