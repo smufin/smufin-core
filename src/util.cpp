@@ -52,7 +52,7 @@ void init_mapping(const sm_config &conf, int n1, int n2, int l1[], int l2[])
         boost::split(columns, line, boost::is_any_of(" "));
         uint64_t m = 0;
         memcpy(&m, columns[0].c_str(), MAP_LEN);
-        hash_6mer(m);
+        map_mer(m);
         l1[m] = atoi(columns[1].c_str());
         l2[m] = atoi(columns[2].c_str());
     }

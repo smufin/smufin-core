@@ -47,7 +47,7 @@
 //   C -> 67 -> 01000011 -> 01
 //   G -> 71 -> 01000111 -> 11
 //   T -> 84 -> 01010100 -> 10
-#define hash_6mer(h) ({                   \
+#define map_mer(h) ({                   \
     (h) = ((h) & 6622940628486) >> 1;     \
     (h) = ((h) & 0xFFFFFF) + ((h) >> 22); \
     (h) = ((h) & 0xF) + (((h) & 0xF00) >> 4) + (((h) & 0xF0000) >> 8); });
@@ -103,7 +103,7 @@ namespace sm {
 
     // Map ASCII position to internal code. Note that partition maps use a
     // different encoding based on binary representation instead, see
-    // hash_6mer.
+    // map_mer.
     //   A -> 0 (pos. 65)
     //   C -> 1 (pos. 67)
     //   G -> 2 (pos. 71)

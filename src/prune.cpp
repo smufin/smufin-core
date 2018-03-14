@@ -137,7 +137,7 @@ inline void prune::load_sub(int lid, const char* sub, int len,
 
         uint64_t m = 0;
         memcpy(&m, stem, MAP_LEN);
-        hash_6mer(m);
+        map_mer(m);
 
         if (map_l1[m] != _conf.pid)
             continue;

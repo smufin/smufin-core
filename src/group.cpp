@@ -108,7 +108,7 @@ void group::run()
         uint64_t m = 0;
         string sub = read.substr(0, MAP_LEN);
         memcpy(&m, sub.c_str(), MAP_LEN);
-        hash_6mer(m);
+        map_mer(m);
         if (_group_map_l1[m] != _conf.pid)
             continue;
         int gid = _group_map_l2[m];
