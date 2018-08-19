@@ -218,10 +218,13 @@ void filter::filter_all(int fid, const sm_read *read, int pos, char kmer[],
         }
         for (int l = 0; l < 4; l++) {
             kmer[_conf.k - 1] = sm::alpha[l];
-            uint32_t na = counts.v[order][f][l][NORMAL_READ];
-            uint32_t ta = counts.v[order][f][l][CANCER_READ];
-            uint32_t nb = counts.v[(order + 1) % 2][f][l][NORMAL_READ];
-            uint32_t tb = counts.v[(order + 1) % 2][f][l][CANCER_READ];
+            int orderb = (order + 1) % 2;
+            int fb = (3 - l);
+            int lb = (3 - f);
+            uint32_t na = counts.v[order ][f ][l ][NORMAL_READ];
+            uint32_t ta = counts.v[order ][f ][l ][CANCER_READ];
+            uint32_t nb = counts.v[orderb][fb][lb][NORMAL_READ];
+            uint32_t tb = counts.v[orderb][fb][lb][CANCER_READ];
             filter_kmer(fid, read, pos, kmer, dir, na, ta, nb, tb, nsum, tsum, set);
         }
     }
@@ -236,16 +239,23 @@ void filter::filter_branch(int fid, const sm_read *read, int pos, char kmer[],
 {
     int f = sm::code[kmer[0]] - '0';
     int l = sm::code[kmer[_conf.k - 1]] - '0';
-    uint32_t na = counts.v[order][f][l][NORMAL_READ];
-    uint32_t ta = counts.v[order][f][l][CANCER_READ];
-    uint32_t nb = counts.v[(order + 1) % 2][f][l][NORMAL_READ];
-    uint32_t tb = counts.v[(order + 1) % 2][f][l][CANCER_READ];
+
+    int orderb = (order + 1) % 2;
+    int fb = (3 - l);
+    int lb = (3 - f);
+
+    uint32_t na = counts.v[order ][f ][l ][NORMAL_READ];
+    uint32_t ta = counts.v[order ][f ][l ][CANCER_READ];
+    uint32_t nb = counts.v[orderb][fb][lb][NORMAL_READ];
+    uint32_t tb = counts.v[orderb][fb][lb][CANCER_READ];
+
     uint32_t nsum = 0;
     uint32_t tsum = 0;
     for (l = 0; l < 4; l++) {
         nsum += counts.v[order][f][l][NORMAL_READ];
         tsum += counts.v[order][f][l][CANCER_READ];
     }
+
     filter_kmer(fid, read, pos, kmer, dir, na, ta, nb, tb, nsum, tsum, set);
 }
 

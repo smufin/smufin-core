@@ -367,21 +367,24 @@ void count::stats()
         for (sm_table::const_iterator it = _tables[i]->begin();
              it != _tables[i]->end(); ++it) {
             uint64_t hits[2] = {0};
-            for (int o = 0; o < 2; o++) {
+            for (int order = 0; order < 2; order++) {
                 uint64_t sum_t = 0;
                 uint64_t sum_n = 0;
                 for (int f = 0; f < 4; f++) {
                     for (int l = 0; l < 4; l++) {
-                        uint16_t na = it->second.v[o][f][l][NORMAL_READ];
-                        uint16_t ta = it->second.v[o][f][l][CANCER_READ];
-                        uint16_t nb = it->second.v[(o+1)%2][f][l][NORMAL_READ];
-                        uint16_t tb = it->second.v[(o+1)%2][f][l][CANCER_READ];
+                        int orderb = (order + 1) % 2;
+                        int fb = (3 - l);
+                        int lb = (3 - f);
+                        uint16_t na = it->second.v[order ][f ][l ][NORMAL_READ];
+                        uint16_t ta = it->second.v[order ][f ][l ][CANCER_READ];
+                        uint16_t nb = it->second.v[orderb][fb][lb][NORMAL_READ];
+                        uint16_t tb = it->second.v[orderb][fb][lb][CANCER_READ];
                         sum_n += na;
                         sum_t += ta;
                         num_kmers += (na + ta > 0) ? 1 : 0;
                         if (ta >= _conf.min_tc_a && na <= _conf.max_nc_a &&
                             tb >= _conf.min_tc_b && nb <= _conf.max_nc_b) {
-                            hits[o]++;
+                            hits[order]++;
                         }
                     }
                 }
