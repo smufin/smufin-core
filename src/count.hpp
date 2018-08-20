@@ -114,6 +114,9 @@ private:
     void annotate();
     void annotate_sub(const char* sub, int pos, int len, std::ofstream &ofs);
 
+    void prefilter();
+    void prefilter_table(int sid);
+
     void stats();
 };
 

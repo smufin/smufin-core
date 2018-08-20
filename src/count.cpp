@@ -48,6 +48,7 @@ count::count(const sm_config &conf) : stage(conf)
     _executable["stats"] = std::bind(&count::stats, this);
     _executable["export"] = std::bind(&count::export_csv, this);
     _executable["annotate"] = std::bind(&count::annotate, this);
+    _executable["prefilter"] = std::bind(&count::prefilter, this);
 }
 
 void count::chain(const stage* prev)
@@ -557,4 +558,41 @@ void count::annotate_sub(const char* sub, int pos, int len, std::ofstream &ofs)
             ofs << "\"" << (pos + i) << "\":[" << nc << "," << tc << "]";
         }
     }
+}
+
+void count::prefilter()
+{
+    spawn("prefilter", std::bind(&count::prefilter_table, this,
+          std::placeholders::_1), _conf.num_storers);
+}
+
+void count::prefilter_table(int sid)
+{
+    cout << "Prefilter table " << sid << endl;
+
+    sm_table* table = new sm_table();
+    for (const auto& stem: *_tables[sid]) {
+        for (int order = 0; order < 2; order++) {
+            for (int f = 0; f < 4; f++) {
+                for (int l = 0; l < 4; l++) {
+                    int orderb = (order + 1) % 2;
+                    int fb = (3 - l);
+                    int lb = (3 - f);
+
+                    uint32_t na = stem.second.v[order ][f ][l ][NORMAL_READ];
+                    uint32_t ta = stem.second.v[order ][f ][l ][CANCER_READ];
+                    uint32_t nb = stem.second.v[orderb][fb][lb][NORMAL_READ];
+                    uint32_t tb = stem.second.v[orderb][fb][lb][CANCER_READ];
+
+                    if (ta >= _conf.min_tc_a && na <= _conf.max_nc_a &&
+                        tb >= _conf.min_tc_b && nb <= _conf.max_nc_b) {
+                        table->insert(stem);
+                    }
+                }
+            }
+        }
+    }
+
+    delete _tables[sid];
+    _tables[sid] = table;
 }

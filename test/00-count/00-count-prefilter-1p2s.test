@@ -1,0 +1,17 @@
+Execute: count/stats
+Table 0: 13 26 3 34 172 18 18 18
+Table 1: 10 20 1 24 97 18 18 18
+Histo N: 2 4 2
+Histo N: 3 8 2
+Histo T: 0 1 4
+Histo T: 1 2 17
+Histo T: 2 4 10
+Histo T: 3 8 15
+Number of roots: 23
+Number of stems: 46
+Number of stems seen once: 4
+Number of kmers: 58
+Sum of counters: 269
+Number of filter hits (roots): 36
+Number of filter hits (stems): 36
+Number of filter hits (kmers): 36
