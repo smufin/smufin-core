@@ -64,8 +64,7 @@ private:
                               const sm_value &counts, sm_idx_set set);
     inline void filter_kmer(int fid, const sm_read *read, int pos, char kmer[],
                             sm_dir dir, uint32_t na, uint32_t ta,
-                            uint32_t nb, uint32_t tb, uint32_t nsum,
-                            uint32_t tsum, sm_idx_set set);
+                            uint32_t nb, uint32_t tb, sm_idx_set set);
 };
 
 

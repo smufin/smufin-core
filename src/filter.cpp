@@ -210,12 +210,6 @@ void filter::filter_all(int fid, const sm_read *read, int pos, char kmer[],
 
     for (int f = 0; f < 4; f++) {
         kmer[0] = sm::alpha[f];
-        uint32_t nsum = 0;
-        uint32_t tsum = 0;
-        for (int l = 0; l < 4; l++) {
-            nsum += counts.v[order][f][l][NORMAL_READ];
-            tsum += counts.v[order][f][l][CANCER_READ];
-        }
         for (int l = 0; l < 4; l++) {
             kmer[_conf.k - 1] = sm::alpha[l];
             int orderb = (order + 1) % 2;
@@ -225,7 +219,7 @@ void filter::filter_all(int fid, const sm_read *read, int pos, char kmer[],
             uint32_t ta = counts.v[order ][f ][l ][CANCER_READ];
             uint32_t nb = counts.v[orderb][fb][lb][NORMAL_READ];
             uint32_t tb = counts.v[orderb][fb][lb][CANCER_READ];
-            filter_kmer(fid, read, pos, kmer, dir, na, ta, nb, tb, nsum, tsum, set);
+            filter_kmer(fid, read, pos, kmer, dir, na, ta, nb, tb, set);
         }
     }
 
@@ -249,20 +243,12 @@ void filter::filter_branch(int fid, const sm_read *read, int pos, char kmer[],
     uint32_t nb = counts.v[orderb][fb][lb][NORMAL_READ];
     uint32_t tb = counts.v[orderb][fb][lb][CANCER_READ];
 
-    uint32_t nsum = 0;
-    uint32_t tsum = 0;
-    for (l = 0; l < 4; l++) {
-        nsum += counts.v[order][f][l][NORMAL_READ];
-        tsum += counts.v[order][f][l][CANCER_READ];
-    }
-
-    filter_kmer(fid, read, pos, kmer, dir, na, ta, nb, tb, nsum, tsum, set);
+    filter_kmer(fid, read, pos, kmer, dir, na, ta, nb, tb, set);
 }
 
 void filter::filter_kmer(int fid, const sm_read *read, int pos, char kmer[],
                          sm_dir dir, uint32_t na, uint32_t ta, uint32_t nb,
-                         uint32_t tb, uint32_t nsum, uint32_t tsum,
-                         sm_idx_set set)
+                         uint32_t tb, sm_idx_set set)
 {
     if (filter::condition(_conf, na, ta, nb, tb)) {
         if (dir == DIR_B) {
