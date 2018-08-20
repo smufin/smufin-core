@@ -27,7 +27,7 @@ DEP = $(SRC:.cpp=.d)
 
 INC = -Isrc -I$(GSH_INC) -I$(MCQ_INC) -I$(RWQ_INC) \
       -I$(BOOST_INC) -I$(BF_INC) -I$(ROCKS_INC) -I$(HTS_INC)
-LIB = -lz -lpthread -lbf -lrocksdb -lhts
+LIB = -lboost_iostreams -lz -lpthread -lbf -lrocksdb -lhts
 
 CFLAGS += -std=c++11 -DMAX_READ_LEN=$(MAX_READ_LEN)
 LFLAGS += -L$(BF_LIB) -L$(ROCKS_LIB) -L$(HTS_LIB)

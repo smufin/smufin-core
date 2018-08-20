@@ -12,12 +12,13 @@
  */
 
 #include "util.hpp"
-
 #include <wordexp.h>
 
 #include <sstream>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
 
 using std::cout;
 using std::endl;
@@ -37,7 +38,8 @@ void spawn(string name, std::function<void(int)> func, int n)
 void init_mapping(const sm_config &conf, int n1, int n2, int l1[], int l2[])
 {
     std::ostringstream map_file;
-    map_file << conf.data_path << "/maps/" << MAP_LEN << "-" << n1 << "-" << n2;
+    map_file << conf.data_path << "/maps/" << MAP_LEN << "-" << n1 << "-" << n2
+             << ".gz";
     std::ifstream map_stream(map_file.str());
     if (!map_stream.good()) {
         cout << "Failed to load mapping " << map_file.str() << endl;
@@ -45,9 +47,12 @@ void init_mapping(const sm_config &conf, int n1, int n2, int l1[], int l2[])
         exit(1);
     }
 
-    // Initialize 5-mer prefix to partition/storer mapping.
+    // Initialize prefix to partition/storer mapping.
     cout << "Load mapping: " << map_file.str() << endl;
-    for (string line; getline(map_stream, line);) {
+    boost::iostreams::filtering_istream in;
+    in.push(boost::iostreams::gzip_decompressor());
+    in.push(map_stream);
+    for (string line; getline(in, line);) {
         std::vector<string> columns;
         boost::split(columns, line, boost::is_any_of(" "));
         uint64_t m = 0;
