@@ -26,6 +26,7 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include "filter.hpp"
 #include "registry.hpp"
 #include "input_iterator_fastq.hpp"
 #include "util.hpp"
@@ -383,8 +384,7 @@ void count::stats()
                         sum_n += na;
                         sum_t += ta;
                         num_kmers += (na + ta > 0) ? 1 : 0;
-                        if (ta >= _conf.min_tc_a && na <= _conf.max_nc_a &&
-                            tb >= _conf.min_tc_b && nb <= _conf.max_nc_b) {
+                        if (filter::condition(_conf, na, ta, nb, tb)) {
                             hits[order]++;
                         }
                     }
@@ -584,8 +584,7 @@ void count::prefilter_table(int sid)
                     uint32_t nb = stem.second.v[orderb][fb][lb][NORMAL_READ];
                     uint32_t tb = stem.second.v[orderb][fb][lb][CANCER_READ];
 
-                    if (ta >= _conf.min_tc_a && na <= _conf.max_nc_a &&
-                        tb >= _conf.min_tc_b && nb <= _conf.max_nc_b) {
+                    if (filter::condition(_conf, na, ta, nb, tb)) {
                         table->insert(stem);
                     }
                 }

@@ -31,6 +31,16 @@ public:
     void dump();
     void stats();
 
+    static inline bool condition(const sm_config &conf, uint32_t na,
+                                 uint32_t ta, uint32_t nb, uint32_t tb)
+    {
+        if (ta >= conf.min_tc_a && na <= conf.max_nc_a &&
+            tb >= conf.min_tc_b && nb <= conf.max_nc_b) {
+            return true;
+        }
+        return false;
+    }
+
 private:
     input_queue* _input_queue;
 
@@ -57,5 +67,6 @@ private:
                             uint32_t nb, uint32_t tb, uint32_t nsum,
                             uint32_t tsum, sm_idx_set set);
 };
+
 
 #endif

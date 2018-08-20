@@ -264,8 +264,7 @@ void filter::filter_kmer(int fid, const sm_read *read, int pos, char kmer[],
                          uint32_t tb, uint32_t nsum, uint32_t tsum,
                          sm_idx_set set)
 {
-    if (ta >= _conf.min_tc_a && na <= _conf.max_nc_a &&
-        tb >= _conf.min_tc_b && nb <= _conf.max_nc_b) {
+    if (filter::condition(_conf, na, ta, nb, tb)) {
         if (dir == DIR_B) {
             // Recalculate reverse-complement position since the loops, and
             // thus the passed `pos', follow the forward sequence.
