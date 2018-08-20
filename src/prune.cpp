@@ -135,6 +135,11 @@ inline void prune::load_sub(int lid, const char* sub, int len,
         strncpy(stem, &sub[i + 1], stem_len);
         stem[stem_len] = '\0';
 
+        int order = min_order(stem, stem_len);
+        if (order) {
+            revcomp(stem, stem_len);
+        }
+
         uint64_t m = 0;
         memcpy(&m, stem, MAP_LEN);
         map_mer(m);
