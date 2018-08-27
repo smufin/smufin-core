@@ -1,15 +1,14 @@
 Execute: count/stats
-Table 0: 7 14 1 18 86 10 10 10
-Histo N: 2 4 2
-Histo T: 0 1 1
-Histo T: 1 2 5
-Histo T: 2 4 3
-Histo T: 3 8 5
-Number of roots: 7
-Number of stems: 14
-Number of stems seen once: 1
-Number of kmers: 18
-Sum of counters: 86
-Number of filter hits (roots): 10
-Number of filter hits (stems): 10
-Number of filter hits (kmers): 10
+Table 0: 12 24 4 28 109 20 20 20
+Histo T: 0 1 4
+Histo T: 1 2 8
+Histo T: 2 4 6
+Histo T: 3 8 6
+Number of roots: 12
+Number of stems: 24
+Number of stems seen once: 4
+Number of kmers: 28
+Sum of counters: 109
+Number of filter hits (roots): 20
+Number of filter hits (stems): 20
+Number of filter hits (kmers): 20
