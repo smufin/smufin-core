@@ -129,27 +129,21 @@ inline void prune::load_sub(int lid, const char* sub, int len,
     if (len < _conf.k)
         return;
 
-    int stem_len = _conf.k - 2;
-    char stem[stem_len + 1];
+    char stem_str[_conf.stem_len + 1];
     for (int i = 0; i <= len - _conf.k; i++) {
-        strncpy(stem, &sub[i + 1], stem_len);
-        stem[stem_len] = '\0';
-
-        int order = min_order(stem, stem_len);
-        if (order) {
-            revcomp(stem, stem_len);
-        }
+        strncpy(stem_str, &sub[i + 1], _conf.stem_len);
+        stem_str[_conf.stem_len] = '\0';
 
         uint64_t m = 0;
-        memcpy(&m, stem, MAP_LEN);
+        memcpy(&m, &stem_str[_conf.map_pos], MAP_LEN);
         map_mer(m);
 
         if (map_l1[m] != _conf.pid)
             continue;
         int sid = map_l2[m];
-        sm_key key = strtob4(stem);
+        sm_key stem_key = strtob4(stem_str);
 
-        bulks[sid].array[bulks[sid].num] = key;
+        bulks[sid].array[bulks[sid].num] = stem_key;
         bulks[sid].num++;
 
         if (bulks[sid].num == BULK_KEY_LEN) {
@@ -195,11 +189,12 @@ void prune::add(int sid)
     delete _all[sid];
 }
 
-void prune::add_key(int sid, sm_key key)
+void prune::add_key(int sid, sm_key stem)
 {
-    if (!_all[sid]->lookup(key)) {
-        _all[sid]->add(key);
-    } else if (!_allowed[sid]->lookup(key)) {
-        _allowed[sid]->add(key);
+    sm_key root = to_root(stem, _conf.stem_len);
+    if (!_all[sid]->lookup(root)) {
+        _all[sid]->add(root);
+    } else if (!_allowed[sid]->lookup(root)) {
+        _allowed[sid]->add(root);
     }
 }

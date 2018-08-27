@@ -65,7 +65,7 @@ private:
                          sm_bulk_key* bulk);
 
     void add(int sid);
-    void add_key(int sid, sm_key key);
+    void add_key(int sid, sm_key stem);
 };
 
 #endif

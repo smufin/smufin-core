@@ -81,6 +81,9 @@ void sm_config::load(const string &filename)
     num_threads_high = tree.get<int>("rocks.num-threads-high", 1);
     num_threads_low = tree.get<int>("rocks.num-threads-low", 1);
 
+    stem_len = k - 2;
+    map_pos = (stem_len - MAP_LEN) / 2;
+
     if (sm::input_queues.find(input_format) == sm::input_queues.end()) {
         cout << "Invalid input format " << input_format << endl;
         exit(1);

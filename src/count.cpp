@@ -79,7 +79,7 @@ void count::run()
     }
 
     float table_mem = estimate_sparse(_conf.num_storers * _table_size,
-                                      sizeof(sm_key), sizeof(sm_value));
+                                      sizeof(sm_key), sizeof(sm_stem));
     float cache_mem = estimate_sparse(_conf.num_storers * _cache_size,
                                       sizeof(sm_key), sizeof(uint8_t));
     cout << "Tables: " << _table_size << " x " << _conf.num_storers
@@ -104,7 +104,7 @@ void count::run()
         storer.join();
 
     for (int i = 0; i < _conf.num_storers; i++)
-        cout << "Table " << i << ": " << _tables[i]->size() << endl;
+        cout << "Table " << i << ": " << _root_tables[i]->size() << endl;
 }
 
 void count::load(int lid)
@@ -161,33 +161,26 @@ inline void count::load_sub(int lid, const char* sub, int len,
     if (len < _conf.k)
         return;
 
-    int stem_len = _conf.k - 2;
-    char stem[stem_len + 1];
+    char stem_str[_conf.stem_len + 1];
     for (int i = 0; i <= len - _conf.k; i++) {
-        strncpy(stem, &sub[i + 1], stem_len);
-        stem[stem_len] = '\0';
-
-        int order = min_order(stem, stem_len);
-        if (order) {
-            revcomp(stem, stem_len);
-        }
+        strncpy(stem_str, &sub[i + 1], _conf.stem_len);
+        stem_str[_conf.stem_len] = '\0';
 
         uint64_t m = 0;
-        memcpy(&m, stem, MAP_LEN);
+        memcpy(&m, &stem_str[_conf.map_pos], MAP_LEN);
         map_mer(m);
 
         if (map_l1[m] != _conf.pid)
             continue;
         int sid = map_l2[m];
-        sm_key key = strtob4(stem);
+        sm_key stem_key = strtob4(stem_str);
 
-        sm_value_offset off;
-        off.order = order;
+        sm_stem_offset off;
         off.first = sm::code[sub[i]] - '0';
         off.last = sm::code[sub[i + _conf.k - 1]] - '0';
         off.kind = kind;
 
-        bulks[sid].array[bulks[sid].num] = sm_msg(key, off);
+        bulks[sid].array[bulks[sid].num] = sm_msg(stem_key, off);
         bulks[sid].num++;
 
         if (bulks[sid].num == BULK_MSG_LEN) {
@@ -201,12 +194,12 @@ inline void count::load_sub(int lid, const char* sub, int len,
 
 void count::incr(int sid)
 {
-    _tables[sid] = new sm_table();
-    _tables[sid]->resize(_table_size);
+    _stem_tables[sid] = new sm_stem_table();
+    _stem_tables[sid]->resize(_table_size);
 
     if (_conf.enable_cache) {
-        _caches[sid] = new sm_cache();
-        _caches[sid]->resize(_cache_size);
+        _root_caches[sid] = new sm_cache();
+        _root_caches[sid]->resize(_cache_size);
     }
 
     sm_bulk_msg *pmsg;
@@ -235,58 +228,80 @@ void count::incr(int sid)
     }
 
     if (_conf.enable_cache) {
-        delete _caches[sid];
+        delete _root_caches[sid];
     }
+
+    convert_table(sid);
 }
 
-inline void count::incr_key(int sid, sm_key key, sm_value_offset off)
+inline void count::incr_key(int sid, sm_key stem, sm_stem_offset off)
 {
     // Use sm_cache to hold keys with a single appearance; as soon as a key in
     // increased more than once, it is placed into sm_table. The steps are as
     // follows:
     //
-    // - Find key in cache.
-    //   - Key doesn't exist in cache: insert in cache.
-    //   - Key exists in cache: find key in table.
-    //     - Key doesn't exist in table: insert key and cache value in table.
-    //     - Key exists in table: update entry if there's no overflow.
+    // - Find the stem's root in cache.
+    //   - Stem's root doesn't exist in cache: insert in cache.
+    //   - Stem's root exists in cache: find stem in table.
+    //     - Stem doesn't exist in table:
+    //       - Insert cache value in table only if the stem in cache matches
+    //         the current stem key.
+    //       - Insert stem in table.
+    //     - Stem exists in table: update entry if there's no overflow.
 
     sm_cache::const_iterator cit;
+    sm_key root = stem;
+    int order = 0;
 
-    if (_enable_prune && !(*_prune)[sid]->lookup(key)) {
+    if (_enable_prune || _conf.enable_cache) {
+        root = to_root(stem, _conf.stem_len);
+        if (root < stem) {
+            order = 1;
+        }
+    }
+
+    if (_enable_prune && !(*_prune)[sid]->lookup(root)) {
         return;
     }
 
     if (_conf.enable_cache) {
-        cit = _caches[sid]->find(key);
-        if (cit == _caches[sid]->end()) {
-            uint8_t val = (off.order << 6) | (off.first << 4) |
-                          (off.last << 2) | off.kind;
-            _caches[sid]->insert(std::pair<sm_key, uint8_t>(key, val));
+        cit = _root_caches[sid]->find(root);
+        if (cit == _root_caches[sid]->end()) {
+            uint8_t val = (order << 6) | (off.first << 4) | (off.last << 2) |
+                          off.kind;
+            _root_caches[sid]->insert(std::pair<sm_key, uint8_t>(root, val));
             return;
         }
     }
 
-    sm_table::const_iterator it = _tables[sid]->find(key);
-    if (it == _tables[sid]->end()) {
-        sm_value val;
+    sm_stem_table::const_iterator it = _stem_tables[sid]->find(stem);
+    if (it == _stem_tables[sid]->end()) {
+        sm_stem val;
+
         if (_conf.enable_cache) {
+            int corder = 0;
             uint8_t cache_value = cit->second;
-            sm_value_offset coff;
-            coff.order = cache_value >> 6;
+            sm_stem_offset coff;
+            corder = (cache_value >> 6) & 0x01;
             coff.first = (cache_value >> 4) & 0x03;
             coff.last = (cache_value >> 2) & 0x03;
             coff.kind = (sm_read_kind) (cache_value & 0x03);
-            val.v[coff.order][coff.first][coff.last][coff.kind] = 1;
+
+            // Insert kmer stored in the cache only the first time we find the
+            // same stem (meaning root in the same direction).
+            if (order == corder) {
+                val.v[coff.first][coff.last][coff.kind] = 1;
+            }
         }
-        val.v[off.order][off.first][off.last][off.kind]++;
-        _tables[sid]->insert(std::pair<sm_key, sm_value>(key, val));
+
+        val.v[off.first][off.last][off.kind]++;
+        _stem_tables[sid]->insert(std::pair<sm_key, sm_stem>(stem, val));
     } else {
-        uint32_t inc = it->second.v[off.order][off.first][off.last][off.kind] + 1;
+        uint32_t inc = it->second.v[off.first][off.last][off.kind] + 1;
         uint16_t over = inc >> 16;
         uint16_t count = inc & 0x0000FFFF;
         if (over == 0)
-            (*_tables[sid])[key].v[off.order][off.first][off.last][off.kind] = count;
+            (*_stem_tables[sid])[stem].v[off.first][off.last][off.kind] = count;
     }
 }
 
@@ -309,7 +324,7 @@ void count::dump_table(int sid)
         exit(1);
     }
 
-    if (!_tables[sid]->serialize(sm_table::NopointerSerializer(), fp)) {
+    if (!_root_tables[sid]->serialize(sm_root_table::NopointerSerializer(), fp)) {
         cout << "Failed to serialize table " << _conf.pid << "-" << sid << endl;
         exit(1);
     }
@@ -325,8 +340,7 @@ void count::restore()
 
 void count::restore_table(int sid)
 {
-    _tables[sid] = new sm_table();
-    _tables[sid]->resize(_table_size);
+    _root_tables[sid] = new sm_root_table();
 
     std::ostringstream fs;
     fs << _conf.output_path << "/table." << _conf.pid << "-" << sid << ".sht";
@@ -339,7 +353,7 @@ void count::restore_table(int sid)
         exit(0);
     }
 
-    _tables[sid]->unserialize(sm_table::NopointerSerializer(), fp);
+    _root_tables[sid]->unserialize(sm_root_table::NopointerSerializer(), fp);
     fclose(fp);
 }
 
@@ -358,7 +372,7 @@ void count::stats()
     uint64_t total_hits_kmers = 0;
 
     for (int i = 0; i < _conf.num_storers; i++) {
-        uint64_t num_roots = _tables[i]->size();
+        uint64_t num_roots = _root_tables[i]->size();
         uint64_t num_stems = 0;
         uint64_t num_once = 0;
         uint64_t num_kmers = 0;
@@ -366,8 +380,8 @@ void count::stats()
         uint64_t num_hits_roots = 0;
         uint64_t num_hits_stems = 0;
         uint64_t num_hits_kmers = 0;
-        for (sm_table::const_iterator it = _tables[i]->begin();
-             it != _tables[i]->end(); ++it) {
+        for (sm_root_table::const_iterator it = _root_tables[i]->begin();
+             it != _root_tables[i]->end(); ++it) {
             uint64_t hits[2] = {0};
             for (int order = 0; order < 2; order++) {
                 uint64_t sum_t = 0;
@@ -375,12 +389,12 @@ void count::stats()
                 for (int f = 0; f < 4; f++) {
                     for (int l = 0; l < 4; l++) {
                         int orderb = (order + 1) % 2;
-                        int fb = (3 - l);
-                        int lb = (3 - f);
-                        uint16_t na = it->second.v[order ][f ][l ][NORMAL_READ];
-                        uint16_t ta = it->second.v[order ][f ][l ][CANCER_READ];
-                        uint16_t nb = it->second.v[orderb][fb][lb][NORMAL_READ];
-                        uint16_t tb = it->second.v[orderb][fb][lb][CANCER_READ];
+                        int fb = sm::comp_code[l];
+                        int lb = sm::comp_code[f];
+                        uint16_t na = it->second.s[order ].v[f ][l ][NORMAL_READ];
+                        uint16_t ta = it->second.s[order ].v[f ][l ][CANCER_READ];
+                        uint16_t nb = it->second.s[orderb].v[fb][lb][NORMAL_READ];
+                        uint16_t tb = it->second.s[orderb].v[fb][lb][CANCER_READ];
                         sum_n += na;
                         sum_t += ta;
                         num_kmers += (na + ta > 0) ? 1 : 0;
@@ -455,22 +469,22 @@ void count::export_csv_table(int sid)
     file << _conf.output_path << "/table." << _conf.pid << "-" << sid << ".csv";
     ofs.open(file.str());
 
-    char kmer[32 + 1];
-    for (const auto& stem: *_tables[sid]) {
+    char kmer[_conf.k + 1];
+    for (const auto& root: *_root_tables[sid]) {
         for (int o = 0; o < 2; o++) {
             for (int f = 0; f < 4; f++) {
                 for (int l = 0; l < 4; l++) {
-                    uint16_t nc = stem.second.v[o][f][l][NORMAL_READ];
-                    uint16_t tc = stem.second.v[o][f][l][CANCER_READ];
+                    uint16_t nc = root.second.s[o].v[f][l][NORMAL_READ];
+                    uint16_t tc = root.second.s[o].v[f][l][CANCER_READ];
                     if ((nc > _conf.export_min && nc < _conf.export_max) ||
                         (tc > _conf.export_min && tc < _conf.export_max)) {
                         // Rebuild kmer based on coded stem and first/last base
                         kmer[0] = sm::alpha[f];
-                        b4tostr(stem.first, _conf.k - 2, &kmer[1]);
+                        b4tostr(root.first, _conf.stem_len, &kmer[1]);
                         kmer[_conf.k - 1] = sm::alpha[l];
                         kmer[_conf.k] = '\0';
                         if (o) {
-                            revcomp(&kmer[1], _conf.k - 2);
+                            revcomp(&kmer[1], _conf.stem_len);
                         }
                         ofs << kmer << "," << nc << "," << tc << "\n";
                     }
@@ -525,32 +539,32 @@ void count::annotate_sub(const char* sub, int pos, int len, std::ofstream &ofs)
         return;
 
     bool first = true;
-    int stem_len = _conf.k - 2;
-    char stem[stem_len + 1];
+    char stem_str[_conf.stem_len + 1];
     for (int i = 0; i <= len - _conf.k; i++) {
-        strncpy(stem, &sub[i + 1], stem_len);
-        stem[stem_len] = '\0';
-
-        int order = min_order(stem, stem_len);
-        if (order) {
-            revcomp(stem, stem_len);
-        }
+        strncpy(stem_str, &sub[i + 1], _conf.stem_len);
+        stem_str[_conf.stem_len] = '\0';
 
         uint64_t m = 0;
-        memcpy(&m, stem, MAP_LEN);
+        memcpy(&m, &stem_str[_conf.map_pos], MAP_LEN);
         map_mer(m);
 
         if (map_l1[m] != _conf.pid)
             continue;
         int sid = map_l2[m];
-        sm_key key = strtob4(stem);
 
-        sm_table::const_iterator it = _tables[sid]->find(key);
-        if (it != _tables[sid]->end()) {
+        int order = 0;
+        sm_key stem = strtob4(stem_str);
+        sm_key root = to_root(stem, _conf.stem_len);
+        if (root < stem) {
+            order = 1;
+        }
+
+        sm_root_table::const_iterator it = _root_tables[sid]->find(root);
+        if (it != _root_tables[sid]->end()) {
             uint8_t f = sm::code[sub[i]] - '0';
             uint8_t l = sm::code[sub[i + _conf.k - 1]] - '0';
-            uint32_t nc = it->second.v[order][f][l][NORMAL_READ];
-            uint32_t tc = it->second.v[order][f][l][CANCER_READ];
+            uint32_t nc = it->second.s[order].v[f][l][NORMAL_READ];
+            uint32_t tc = it->second.s[order].v[f][l][CANCER_READ];
 
             if (!first)
                 ofs << ",";
@@ -558,6 +572,26 @@ void count::annotate_sub(const char* sub, int pos, int len, std::ofstream &ofs)
             ofs << "\"" << (pos + i) << "\":[" << nc << "," << tc << "]";
         }
     }
+}
+
+// Convert a stem-indexed table to a root-indexed one.
+void count::convert_table(int sid)
+{
+    cout << "Convert table " << sid << endl;
+
+    _root_tables[sid] = new sm_root_table();
+
+    char stem_str[_conf.stem_len + 1];
+    for (const auto& stem: *_stem_tables[sid]) {
+        int order = 0;
+        sm_key root = to_root(stem.first, _conf.stem_len);
+        if (root < stem.first) {
+            order = 1;
+        }
+        (*_root_tables[sid])[root].s[order] = stem.second;
+    }
+
+    delete _stem_tables[sid];
 }
 
 void count::prefilter()
@@ -568,30 +602,29 @@ void count::prefilter()
 
 void count::prefilter_table(int sid)
 {
-    cout << "Prefilter table " << sid << endl;
+    sm_root_table* table = new sm_root_table();
 
-    sm_table* table = new sm_table();
-    for (const auto& stem: *_tables[sid]) {
+    for (const auto& root: *_root_tables[sid]) {
         for (int order = 0; order < 2; order++) {
             for (int f = 0; f < 4; f++) {
                 for (int l = 0; l < 4; l++) {
                     int orderb = (order + 1) % 2;
-                    int fb = (3 - l);
-                    int lb = (3 - f);
+                    int fb = sm::comp_code[l];
+                    int lb = sm::comp_code[f];
 
-                    uint32_t na = stem.second.v[order ][f ][l ][NORMAL_READ];
-                    uint32_t ta = stem.second.v[order ][f ][l ][CANCER_READ];
-                    uint32_t nb = stem.second.v[orderb][fb][lb][NORMAL_READ];
-                    uint32_t tb = stem.second.v[orderb][fb][lb][CANCER_READ];
+                    uint32_t na = root.second.s[order ].v[f ][l ][NORMAL_READ];
+                    uint32_t ta = root.second.s[order ].v[f ][l ][CANCER_READ];
+                    uint32_t nb = root.second.s[orderb].v[fb][lb][NORMAL_READ];
+                    uint32_t tb = root.second.s[orderb].v[fb][lb][CANCER_READ];
 
                     if (filter::condition(_conf, na, ta, nb, tb)) {
-                        table->insert(stem);
+                        table->insert(root);
                     }
                 }
             }
         }
     }
 
-    delete _tables[sid];
-    _tables[sid] = table;
+    delete _root_tables[sid];
+    _root_tables[sid] = table;
 }

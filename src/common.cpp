@@ -13,6 +13,19 @@
 
 #include "common.hpp"
 
+// Low-quality phred score counter. Returns number of bases with a quality
+// score below 20.
+int lq_count(const char *str, int len)
+{
+    int lq = 0;
+    for (int i = 0; i < len; i++) {
+        int phred = str[i] - 33;
+        if (phred < 20)
+            lq++;
+    }
+    return lq;
+}
+
 // String to integer conversion. Parses a null-terminated string, interpreting
 // its content as an integral number in base 4.
 uint64_t strtob4(const char *str)
@@ -37,19 +50,6 @@ void b4tostr(uint64_t code, int len, char *str)
     str[len] = '\0';
 }
 
-// Low-quality phred score counter. Returns number of bases with a quality
-// score below 20.
-int lq_count(const char *str, int len)
-{
-    int lq = 0;
-    for (int i = 0; i < len; i++) {
-        int phred = str[i] - 33;
-        if (phred < 20)
-            lq++;
-    }
-    return lq;
-}
-
 // In-place conversion of a sequence to its reverse.
 void rev(char seq[], int len)
 {
@@ -61,7 +61,7 @@ void rev(char seq[], int len)
     }
 }
 
-// In-place conversion of a sequence to its reverse complement.
+// In-place conversion of a sequence to its reverse-complement.
 void revcomp(char seq[], int len)
 {
     int i, j;
@@ -70,6 +70,29 @@ void revcomp(char seq[], int len)
         seq[i] = sm::comp[seq[j]];
         seq[j] = c;
     }
+}
+
+// Conversion of an encoded key to its reverse-complement.
+sm_key revcomp_code(sm_key key, int len)
+{
+    sm_key rc = 0;
+    for (int i = 0; i < len; i++) {
+        rc = (rc << 2) | sm::comp_code[key & 0x03];
+        key >>= 2;
+    }
+    return rc;
+}
+
+// Given an encoded stem, return its root, which is the smallest between the
+// stem and its reverse complement.
+sm_key to_root(sm_key stem, int len)
+{
+    sm_key root = stem;
+    sm_key rc = revcomp_code(stem, len);
+    if (rc < stem) {
+        root = rc;
+    }
+    return root;
 }
 
 // Given a sequence, return order relative to its reverse complement:

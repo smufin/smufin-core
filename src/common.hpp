@@ -120,6 +120,9 @@ namespace sm {
     const char comp[] = "-------------------------------------------"
                         "----------------------T-G---C------N-----A";
 
+    // Encoded complementary mapping.
+    const int comp_code[] = {3, 2, 1, 0};
+
     // Index and set names, sorted as the sm_index and sm_set enums,
     // respectively.
     const std::array<std::string, NUM_TYPES> types = {"seq", "k2i", "i2p"};
@@ -144,11 +147,16 @@ extern int map_l2[MAP_FILE_LEN];
 
 KSEQ_INIT(gzFile, gzread);
 
+int lq_count(const char *str, int len);
+
 uint64_t strtob4(const char *str);
 void b4tostr(uint64_t code, int len, char *str);
-int lq_count(const char *str, int len);
+
 void rev(char seq[], int len);
 void revcomp(char seq[], int len);
+sm_key revcomp_code(sm_key key, int len);
+
+sm_key to_root(sm_key stem, int len);
 int min_order(char seq[], int len);
 
 #endif

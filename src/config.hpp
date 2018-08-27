@@ -80,6 +80,15 @@ struct sm_config {
     int num_threads_low;
 
     void load(const std::string &filename);
+
+    // The following additional configuration variables are easily derived
+    // from other parameters, and not read from the configuration file.
+    // Available here as part of the configuration for convenience.
+
+    int stem_len;
+
+    // Starting position within a stem used for mapping.
+    int map_pos;
 };
 
 #endif

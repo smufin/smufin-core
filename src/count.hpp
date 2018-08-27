@@ -35,23 +35,24 @@
 //  - B and C are the numeric code of the first and last bases respectively
 //    (as defined by sm::code)
 //  - D is the kind (as defined by sm_read_kind)
-typedef struct sm_value { uint16_t v[2][4][4][2] = {{{{0}}}}; } sm_value;
+typedef struct sm_stem { uint16_t v[4][4][2] = {{{0}}}; } sm_stem;
+typedef struct sm_root { sm_stem s[2]; } sm_root;
 
-typedef google::sparse_hash_map<sm_key, sm_value, sm_hasher<sm_key>> sm_table;
 typedef google::sparse_hash_map<sm_key, uint8_t, sm_hasher<sm_key>> sm_cache;
+typedef google::sparse_hash_map<sm_key, sm_stem, sm_hasher<sm_key>> sm_stem_table;
+typedef google::sparse_hash_map<sm_key, sm_root, sm_hasher<sm_key>> sm_root_table;
 
 // Contains data to calculate a position within a sm_value multidimensional
 // array. `first' and `last' are integers in the range 0..3 and contain codes
 // representing the first and last bases of a kmer using the same mapping as
 // sm::code.
 typedef struct {
-    uint8_t order;
     uint8_t first;
     uint8_t last;
     sm_read_kind kind;
-} sm_value_offset;
+} sm_stem_offset;
 
-typedef std::pair<sm_key, sm_value_offset> sm_msg;
+typedef std::pair<sm_key, sm_stem_offset> sm_msg;
 
 typedef struct {
     uint16_t num = 0;
@@ -72,15 +73,18 @@ public:
     void run();
     void chain(const stage* prev);
 
-    inline const sm_table* operator[](int sid) const { return _tables[sid]; };
+    inline const sm_root_table* operator[](int sid) const {
+        return _root_tables[sid];
+    };
 
 private:
     uint64_t _table_size = 0;
     uint64_t _cache_size = 0;
 
     // Hash tables that hold data in memory, one per storer/consumer thread.
-    sm_table* _tables[MAX_STORERS];
-    sm_cache* _caches[MAX_STORERS];
+    sm_cache* _root_caches[MAX_STORERS];
+    sm_stem_table* _stem_tables[MAX_STORERS];
+    sm_root_table* _root_tables[MAX_STORERS];
 
     // Message queues between loader threads and storer threads. One SPSC
     // queue per loader/storer pair.
@@ -100,7 +104,7 @@ private:
                          sm_read_kind kind, sm_bulk_msg* bulks);
 
     void incr(int sid);
-    inline void incr_key(int sid, sm_key key, sm_value_offset off);
+    inline void incr_key(int sid, sm_key stem, sm_stem_offset off);
 
     void dump();
     void dump_table(int sid);
@@ -113,6 +117,8 @@ private:
 
     void annotate();
     void annotate_sub(const char* sub, int pos, int len, std::ofstream &ofs);
+
+    void convert_table(int sid);
 
     void prefilter();
     void prefilter_table(int sid);

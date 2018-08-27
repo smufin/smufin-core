@@ -127,18 +127,17 @@ void filter::filter_normal(int fid, const sm_read *read, const char *sub,
     if (len < _conf.k)
         return;
 
-    int stem_len = _conf.k - 2;
-    char stem[stem_len + 1];
+    char root[_conf.stem_len + 1];
     char kmer[_conf.k + 1];
     for (int i = 0; i <= len - _conf.k; i++) {
-        strncpy(stem, &sub[i + 1], stem_len);
-        stem[stem_len] = '\0';
-        int order = min_order(stem, stem_len);
+        strncpy(root, &sub[i + 1], _conf.stem_len);
+        root[_conf.stem_len] = '\0';
+        int order = min_order(root, _conf.stem_len);
         if (order)
-            revcomp(stem, stem_len);
+            revcomp(root, _conf.stem_len);
 
-        sm_table::const_iterator it;
-        if (get_value(stem, &it) != 0)
+        sm_root_table::const_iterator it;
+        if (get_value(root, &it) != 0)
             continue;
 
         strncpy(kmer, &sub[i], _conf.k);
@@ -157,18 +156,17 @@ void filter::filter_cancer(int fid, const sm_read *read, const char *sub,
     if (len < _conf.k)
         return;
 
-    int stem_len = _conf.k - 2;
-    char stem[stem_len + 1];
+    char root[_conf.stem_len + 1];
     char kmer[_conf.k + 1];
     for (int i = 0; i <= len - _conf.k; i++) {
-        strncpy(stem, &sub[i + 1], stem_len);
-        stem[stem_len] = '\0';
-        int order = min_order(stem, stem_len);
+        strncpy(root, &sub[i + 1], _conf.stem_len);
+        root[_conf.stem_len] = '\0';
+        int order = min_order(root, _conf.stem_len);
         if (order)
-            revcomp(stem, stem_len);
+            revcomp(root, _conf.stem_len);
 
-        sm_table::const_iterator it;
-        if (get_value(stem, &it) != 0)
+        sm_root_table::const_iterator it;
+        if (get_value(root, &it) != 0)
             continue;
 
         strncpy(kmer, &sub[i], _conf.k);
@@ -183,26 +181,26 @@ void filter::filter_cancer(int fid, const sm_read *read, const char *sub,
     }
 }
 
-int filter::get_value(char stem[], sm_table::const_iterator *it)
+int filter::get_value(char root[], sm_root_table::const_iterator *it)
 {
     uint64_t m = 0;
-    memcpy(&m, stem, MAP_LEN);
+    memcpy(&m, &root[_conf.map_pos], MAP_LEN);
     map_mer(m);
 
     if (map_l1[m] != _conf.pid)
         return -1;
     int sid = map_l2[m];
-    sm_key key = strtob4(stem);
+    sm_key root_key = strtob4(root);
 
-    const sm_table* table = (*_count)[sid];
-    *it = table->find(key);
+    const sm_root_table* table = (*_count)[sid];
+    *it = table->find(root_key);
     if (*it == table->end())
         return -1;
     return 0;
 }
 
 void filter::filter_all(int fid, const sm_read *read, int pos, char kmer[],
-                        sm_dir dir, int order, const sm_value &counts,
+                        sm_dir dir, int order, const sm_root &counts,
                         sm_idx_set set)
 {
     char first = kmer[0];
@@ -215,10 +213,10 @@ void filter::filter_all(int fid, const sm_read *read, int pos, char kmer[],
             int orderb = (order + 1) % 2;
             int fb = (3 - l);
             int lb = (3 - f);
-            uint32_t na = counts.v[order ][f ][l ][NORMAL_READ];
-            uint32_t ta = counts.v[order ][f ][l ][CANCER_READ];
-            uint32_t nb = counts.v[orderb][fb][lb][NORMAL_READ];
-            uint32_t tb = counts.v[orderb][fb][lb][CANCER_READ];
+            uint32_t na = counts.s[order ].v[f ][l ][NORMAL_READ];
+            uint32_t ta = counts.s[order ].v[f ][l ][CANCER_READ];
+            uint32_t nb = counts.s[orderb].v[fb][lb][NORMAL_READ];
+            uint32_t tb = counts.s[orderb].v[fb][lb][CANCER_READ];
             filter_kmer(fid, read, pos, kmer, dir, na, ta, nb, tb, set);
         }
     }
@@ -228,20 +226,20 @@ void filter::filter_all(int fid, const sm_read *read, int pos, char kmer[],
 }
 
 void filter::filter_branch(int fid, const sm_read *read, int pos, char kmer[],
-                           sm_dir dir, int order, const sm_value &counts,
+                           sm_dir dir, int order, const sm_root &counts,
                            sm_idx_set set)
 {
     int f = sm::code[kmer[0]] - '0';
     int l = sm::code[kmer[_conf.k - 1]] - '0';
 
     int orderb = (order + 1) % 2;
-    int fb = (3 - l);
-    int lb = (3 - f);
+    int fb = sm::comp_code[l];
+    int lb = sm::comp_code[f];
 
-    uint32_t na = counts.v[order ][f ][l ][NORMAL_READ];
-    uint32_t ta = counts.v[order ][f ][l ][CANCER_READ];
-    uint32_t nb = counts.v[orderb][fb][lb][NORMAL_READ];
-    uint32_t tb = counts.v[orderb][fb][lb][CANCER_READ];
+    uint32_t na = counts.s[order ].v[f ][l ][NORMAL_READ];
+    uint32_t ta = counts.s[order ].v[f ][l ][CANCER_READ];
+    uint32_t nb = counts.s[orderb].v[fb][lb][NORMAL_READ];
+    uint32_t tb = counts.s[orderb].v[fb][lb][CANCER_READ];
 
     filter_kmer(fid, read, pos, kmer, dir, na, ta, nb, tb, set);
 }
