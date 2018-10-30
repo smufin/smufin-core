@@ -250,14 +250,11 @@ inline void count::incr_key(int sid, sm_key stem, sm_stem_offset off)
     //     - Stem exists in table: update entry if there's no overflow.
 
     sm_cache::const_iterator cit;
-    sm_key root = stem;
-    int order = 0;
 
-    if (_enable_prune || _conf.enable_cache) {
-        root = to_root(stem, _conf.stem_len);
-        if (root < stem) {
-            order = 1;
-        }
+    int order = 0;
+    sm_key root = to_root(stem, _conf.stem_len);
+    if (root < stem) {
+        order = 1;
     }
 
     if (_enable_prune && !(*_prune)[sid]->lookup(root)) {
