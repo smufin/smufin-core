@@ -231,7 +231,13 @@ void count::incr(int sid)
         delete _root_caches[sid];
     }
 
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    std::chrono::duration<double> time;
+    start = std::chrono::system_clock::now();
     convert_table(sid);
+    end = std::chrono::system_clock::now();
+    time = end - start;
+    cout << "Time count/convert " << sid << ": " << time.count() << endl;
 }
 
 inline void count::incr_key(int sid, sm_key stem, sm_stem_offset off)
