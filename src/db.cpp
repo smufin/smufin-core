@@ -102,6 +102,13 @@ void open_index(const sm_config &conf, sm_idx_type type,
     set_options_type(cf_descs[0].options, type);
     db_options.error_if_exists = true;
 
+    rocksdb::BlockBasedTableOptions t_options;
+    t_options.block_cache = rocksdb::NewLRUCache(conf.block_cache_size);
+    t_options.block_size = conf.block_size;
+    t_options.pin_l0_filter_and_index_blocks_in_cache = true;
+    auto t_factory = rocksdb::NewBlockBasedTableFactory(t_options);
+    cf_descs[0].options.table_factory.reset(t_factory);
+
     s = rocksdb::DB::Open(db_options, path, cf_descs, &rdb.cfs, &rdb.db);
     if (!s.ok()) {
         cout << "Failed to open RocksDB database: " << path << endl;
@@ -164,7 +171,9 @@ void open_index_full_read(const sm_config &conf, sm_idx_type type,
     cf_descs[0].options.disable_auto_compactions = true;
 
     rocksdb::BlockBasedTableOptions t_options;
-    t_options.block_cache = rocksdb::NewLRUCache(512UL * 1024 * 1024);
+    t_options.block_cache = rocksdb::NewLRUCache(conf.block_cache_size);
+    t_options.block_size = conf.block_size;
+    t_options.pin_l0_filter_and_index_blocks_in_cache = true;
     t_options.filter_policy.reset(rocksdb::NewBloomFilterPolicy(8));
     auto t_factory = rocksdb::NewBlockBasedTableFactory(t_options);
     cf_descs[0].options.table_factory.reset(t_factory);

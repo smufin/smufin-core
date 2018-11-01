@@ -78,6 +78,8 @@ struct sm_config {
     // Number of high and low priority RocksDB threads.
     int num_threads_high;
     int num_threads_low;
+    uint64_t block_cache_size;
+    uint64_t block_size;
 
     void load(const std::string &filename);
 

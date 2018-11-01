@@ -80,6 +80,8 @@ void sm_config::load(const string &filename)
 
     num_threads_high = tree.get<int>("rocks.num-threads-high", 1);
     num_threads_low = tree.get<int>("rocks.num-threads-low", 1);
+    block_cache_size = tree.get<uint64_t>("rocks.block-cache-size", 536870912);
+    block_size = tree.get<uint64_t>("rocks.block-size", 4096);
 
     stem_len = k - 2;
     map_pos = (stem_len - MAP_LEN) / 2;
