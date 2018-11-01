@@ -317,7 +317,8 @@ void count::dump()
 void count::dump_table(int sid)
 {
     std::ostringstream fs;
-    fs << _conf.output_path << "/table." << _conf.pid << "-" << sid << ".sht";
+    fs << _conf.output_path_count << "/table." << _conf.pid << "-" << sid
+       << ".sht";
     string file = fs.str();
     cout << "Serialize " << file << endl;
 
@@ -346,7 +347,8 @@ void count::restore_table(int sid)
     _root_tables[sid] = new sm_root_table();
 
     std::ostringstream fs;
-    fs << _conf.output_path << "/table." << _conf.pid << "-" << sid << ".sht";
+    fs << _conf.output_path_count << "/table." << _conf.pid << "-" << sid
+       << ".sht";
     string file = fs.str();
     cout << "Unserialize " << file << endl;
 
@@ -469,7 +471,8 @@ void count::export_csv_table(int sid)
 {
     std::ofstream ofs;
     std::ostringstream file;
-    file << _conf.output_path << "/table." << _conf.pid << "-" << sid << ".csv";
+    file << _conf.output_path_count << "/table." << _conf.pid << "-" << sid
+         << ".csv";
     ofs.open(file.str());
 
     char kmer[_conf.k + 1];
@@ -503,7 +506,7 @@ void count::annotate()
 {
     std::ofstream ofs;
     std::ostringstream file;
-    file << _conf.output_path << "/annotate." << _conf.pid << ".json";
+    file << _conf.output_path_count << "/annotate." << _conf.pid << ".json";
     ofs.open(file.str());
 
     sm_chunk chunk;

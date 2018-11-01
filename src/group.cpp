@@ -195,8 +195,9 @@ void group::populate(int gid)
     rocksdb::Status status;
 
     std::ofstream ofs;
-    string file = _conf.output_path + "/group." + std::to_string(_conf.pid) +
-                  "-" + std::to_string(gid) + ".json";
+    string file = _conf.output_path_group + "/group." +
+                  std::to_string(_conf.pid) + "-" + std::to_string(gid) +
+                  ".json";
     ofs.open(file);
     ofs << "{";
 

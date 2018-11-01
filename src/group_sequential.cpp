@@ -324,8 +324,9 @@ void group_sequential::populate(int gid)
     start = std::chrono::system_clock::now();
 
     std::ofstream ofs;
-    string file = _conf.output_path + "/group." + std::to_string(_conf.pid) +
-                  "-" + std::to_string(gid) + ".json";
+    string file = _conf.output_path_group + "/group." +
+                  std::to_string(_conf.pid) + "-" + std::to_string(gid) +
+                  ".json";
     ofs.open(file);
     ofs << "{";
 

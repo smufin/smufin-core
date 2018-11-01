@@ -36,6 +36,10 @@ struct sm_config {
     bool check_quality;
 
     std::string output_path;
+    std::string output_path_count;
+    std::string output_path_filter;
+    std::string output_path_merge;
+    std::string output_path_group;
     std::string data_path;
 
     std::string exec;

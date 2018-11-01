@@ -95,7 +95,7 @@ void index_format_plain::write_seq(sm_idx_set set)
 {
     std::ofstream ofs;
     std::ostringstream file;
-    file << _conf.output_path << "/index-seq-" << sm::sets[set] << "."
+    file << _conf.output_path_filter << "/index-seq-" << sm::sets[set] << "."
          << _conf.pid << ".txt";
     ofs.open(file.str(), std::ofstream::app);
     for (auto const &s: _seq[set]) {
@@ -108,7 +108,7 @@ void index_format_plain::write_k2i(sm_idx_set set)
 {
     std::ofstream ofs;
     std::ostringstream file;
-    file << _conf.output_path << "/index-k2i-" << sm::sets[set] << "."
+    file << _conf.output_path_filter << "/index-k2i-" << sm::sets[set] << "."
          << _conf.pid << ".txt";
     ofs.open(file.str());
     for (auto const &kv: _k2i[set]) {
@@ -127,7 +127,7 @@ void index_format_plain::write_i2p(sm_idx_set set)
 {
     std::ofstream ofs;
     std::ostringstream file;
-    file << _conf.output_path << "/index-i2p-" << sm::sets[set] << "."
+    file << _conf.output_path_filter << "/index-i2p-" << sm::sets[set] << "."
          << _conf.pid << ".txt";
     ofs.open(file.str());
     for (auto const &kv: _i2p) {

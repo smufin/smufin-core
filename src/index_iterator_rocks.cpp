@@ -27,9 +27,9 @@ template <typename T>
 bool rocks_iterator<T>::init()
 {
     std::ostringstream path;
-    path << this->_conf.output_path << "/index-" << sm::types[this->_type]
-         << "-" << sm::sets[this->_set] << "." << this->_pid << "-"
-         << this->_iid << ".rdb";
+    path << this->_conf.output_path_filter << "/index-"
+         << sm::types[this->_type] << "-" << sm::sets[this->_set] << "."
+         << this->_pid << "-" << this->_iid << ".rdb";
     cout << "Prepare iterator: " << path.str() << endl;
 
     rdb_handle rdb;

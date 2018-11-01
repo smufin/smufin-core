@@ -45,7 +45,7 @@ void open_index_part_load(const sm_config &conf, sm_idx_type type,
 {
     std::ostringstream conf_file, path;
     conf_file << conf.data_path << "/rocks/filter.conf";
-    path << conf.output_path << "/index-" << sm::types[type] << "-"
+    path << conf.output_path_filter << "/index-" << sm::types[type] << "-"
          << sm::sets[set] << "." << pid << "-" << iid << ".rdb";
     open_index(conf, type, path.str(), conf_file.str(), rdb);
 }
@@ -55,7 +55,7 @@ void open_index_part_iter(const sm_config &conf, sm_idx_type type,
                           rdb_handle &rdb)
 {
     std::ostringstream path;
-    path << conf.output_path << "/index-" << sm::types[type] << "-"
+    path << conf.output_path_filter << "/index-" << sm::types[type] << "-"
          << sm::sets[set] << "." << pid << "-" << iid << ".rdb";
     open_index_ro(conf, type, path.str(), rdb);
 }
@@ -65,7 +65,7 @@ void open_index_full_load(const sm_config &conf, sm_idx_type type,
 {
     std::ostringstream conf_file, path;
     conf_file << conf.data_path << "/rocks/merge.conf";
-    path << conf.output_path << "/index-" << sm::types[type] << "-"
+    path << conf.output_path_merge << "/index-" << sm::types[type] << "-"
          << sm::sets[set] << ".rdb";
     open_index(conf, type, path.str(), conf_file.str(), rdb);
 }
@@ -74,7 +74,7 @@ void open_index_full_iter(const sm_config &conf, sm_idx_type type,
                           sm_idx_set set, rdb_handle &rdb)
 {
     std::ostringstream path;
-    path << conf.output_path << "/index-" << sm::types[type] << "-"
+    path << conf.output_path_merge << "/index-" << sm::types[type] << "-"
          << sm::sets[set] << ".rdb";
     open_index_ro(conf, type, path.str(), rdb);
 }
@@ -151,7 +151,7 @@ void open_index_full_read(const sm_config &conf, sm_idx_type type,
 {
     std::ostringstream conf_file, path;
     conf_file << conf.data_path << "/rocks/group.conf";
-    path << conf.output_path << "/index-" << sm::types[type] << "-"
+    path << conf.output_path_merge << "/index-" << sm::types[type] << "-"
          << sm::sets[set] << ".rdb";
 
     rocksdb::Status s;

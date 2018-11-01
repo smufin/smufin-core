@@ -50,6 +50,11 @@ void sm_config::load(const string &filename)
     check_quality = tree.get<bool>("core.check-quality", true);
 
     output_path = tree.get<string>("core.output", "");
+    output_path_count = tree.get<string>("count.output", output_path);
+    output_path_filter = tree.get<string>("filter.output", output_path);
+    output_path_merge = tree.get<string>("merge.output", output_path);
+    output_path_group = tree.get<string>("group.output", output_path);
+
     data_path = tree.get<string>("core.data", "data");
 
     exec = tree.get<string>("core.exec", "count:run,stats");
