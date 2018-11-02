@@ -7,7 +7,7 @@ CC_0 = @echo "CC $@"; g++
 CC_1 = g++
 CC = $(CC_$(VERBOSE))
 
-MAX_READ_LEN ?= 100
+MAX_READ_LEN ?= 120
 
 GSH_INC   ?= /usr/include/sparsehash
 MCQ_INC   ?= /usr/include/concurrentqueue
