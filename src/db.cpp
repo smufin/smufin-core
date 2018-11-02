@@ -28,10 +28,11 @@ using std::cout;
 using std::endl;
 using std::string;
 
-void set_options_type(rocksdb::ColumnFamilyOptions &options, sm_idx_type type)
+void set_options_type(const sm_config &conf,
+                      rocksdb::ColumnFamilyOptions &options, sm_idx_type type)
 {
     if (type == K2I) {
-        options.merge_operator.reset(new IDListOperator());
+        options.merge_operator.reset(new IDListOperator(conf));
     }
 
     if (type == I2P) {
@@ -99,7 +100,7 @@ void open_index(const sm_config &conf, sm_idx_type type,
         exit(1);
     }
 
-    set_options_type(cf_descs[0].options, type);
+    set_options_type(conf, cf_descs[0].options, type);
     db_options.error_if_exists = true;
 
     rocksdb::BlockBasedTableOptions t_options;
@@ -131,7 +132,7 @@ void open_index_ro(const sm_config &conf, sm_idx_type type,
         exit(1);
     }
 
-    set_options_type(cf_descs[0].options, type);
+    set_options_type(conf, cf_descs[0].options, type);
     db_options.create_if_missing = false;
     db_options.wal_dir = path;
 
@@ -166,7 +167,7 @@ void open_index_full_read(const sm_config &conf, sm_idx_type type,
         exit(1);
     }
 
-    set_options_type(cf_descs[0].options, type);
+    set_options_type(conf, cf_descs[0].options, type);
     db_options.create_if_missing = false;
     cf_descs[0].options.disable_auto_compactions = true;
 

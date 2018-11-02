@@ -14,6 +14,7 @@
 #ifndef __SM_ROCKSDB_H__
 #define __SM_ROCKSDB_H__
 
+#include <algorithm>
 #include <sstream>
 #include <string>
 
@@ -30,7 +31,8 @@ typedef struct rdb_handle {
     std::vector<rocksdb::ColumnFamilyHandle*> cfs;
 } rdb_handle;
 
-void set_options_type(rocksdb::ColumnFamilyOptions &options, sm_idx_type type);
+void set_options_type(const sm_config &conf,
+                      rocksdb::ColumnFamilyOptions &options, sm_idx_type type);
 
 void open_index(const sm_config &conf, sm_idx_type type,
                 const std::string &path, const std::string &conf_file,
@@ -87,6 +89,8 @@ public:
 class IDListOperator : public AssociativeMergeOperator
 {
 public:
+    IDListOperator(const sm_config &conf) : _conf(conf) {};
+
     virtual bool Merge(const Slice& key, const Slice* existing_value,
                        const Slice& value, std::string* new_value,
                        Logger* logger) const override
@@ -97,7 +101,24 @@ public:
         if (existing_value) {
             existing = std::string(existing_value->ToString().c_str());
         }
+
         std::stringstream s;
+
+        // Check if this merge operation exceeds the maximum number of reads
+        // per kmer. In order to avoid counting the reads for every single
+        // operation, the length of the value string is measured first as a
+        // fast heuristic. The exact number is only counted when the length of
+        // the value is 10 times bigger than the maximum number of reads
+        // (assuming read IDs are usually at least 10 characters long).
+        if (existing.size() > _conf.max_filter_reads * 10) {
+            int count = std::count(existing.begin(), existing.end(), ' ');
+            if (count > _conf.max_filter_reads) {
+                s << existing;
+                *new_value = s.str();
+                return true;
+            }
+        }
+
         s << existing << oper;
         *new_value = s.str();
         return true;
@@ -107,6 +128,9 @@ public:
     {
         return "IDListOperator";
     }
+
+private:
+    const sm_config &_conf;
 };
 
 #endif
