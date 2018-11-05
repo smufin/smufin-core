@@ -71,7 +71,14 @@ int main(int argc, char *argv[])
             case 'g': conf.num_groupers = atoi(optarg); break;
             case 'N': conf.input_normal = string(optarg); break;
             case 'T': conf.input_tumor= string(optarg); break;
-            case 'o': conf.output_path = string(optarg); break;
+            case 'o':
+                // Override all output paths in the configuration.
+                conf.output_path = string(optarg);
+                conf.output_path_count = string(optarg);
+                conf.output_path_filter = string(optarg);
+                conf.output_path_merge = string(optarg);
+                conf.output_path_group = string(optarg);
+                break;
             case 'x': conf.exec = string(optarg); break;
             case '?': display_usage(); return 1;
             case ':': display_usage(); return 1;
