@@ -89,7 +89,6 @@ void filter::load_chunk(int fid, const sm_chunk &chunk)
     input_iterator *it;
     uint64_t num_reads = 0;
     sm_read read;
-    sm_bulk_msg bulks[MAX_STORERS];
 
     it = sm::input_iterators.at(_conf.input_format)(_conf, chunk);
     while (it->next(&read)) {
