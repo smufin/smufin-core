@@ -29,7 +29,7 @@ using std::cout;
 using std::endl;
 using std::string;
 
-void input_queue::init()
+void input_queue::init(int num_threads)
 {
     // Interleave normal and tumoral files.
     std::vector<std::pair<string, sm_read_kind>> files;
@@ -53,6 +53,9 @@ void input_queue::init()
         _queue.enqueue(chunk);
         len++;
     }
+
+    cout << "Initialize: input queue with " << _queue.size_approx()
+         << " chunks" << endl;
 }
 
 bool input_queue::try_dequeue(sm_chunk &chunk)
@@ -60,7 +63,7 @@ bool input_queue::try_dequeue(sm_chunk &chunk)
     return _queue.try_dequeue(chunk);
 }
 
-void input_queue_bam_chunks::init()
+void input_queue_bam_chunks::init(int num_threads)
 {
     std::vector<std::pair<string, sm_read_kind>> files;
     for (auto& file: _conf.list_normal)
@@ -68,9 +71,11 @@ void input_queue_bam_chunks::init()
     for (auto& file: _conf.list_tumor)
         files.push_back({file, CANCER_READ});
 
+    int chunks_per_file = std::max(1, int(num_threads / files.size()));
+
     for (auto& file: files) {
         std::vector<uint64_t> offsets;
-        if (!chunk_bam(file.first, _conf.num_loaders, offsets)) {
+        if (!chunk_bam(file.first, chunks_per_file, offsets)) {
             cout << "Failed to chunk BAM file " << file.first << endl;
 
             // Default to addressing the entire BAM file without chunking.
@@ -96,6 +101,9 @@ void input_queue_bam_chunks::init()
             }
         }
     }
+
+    cout << "Initialize: input queue with " << _queue.size_approx()
+         << " chunks (BAM)" << endl;
 }
 
 // Manually reads the BAI index of «bam_file», jumping to its linear index and

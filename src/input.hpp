@@ -53,7 +53,7 @@ class input_queue
 {
 public:
     input_queue(const sm_config &conf) : _conf(conf) {};
-    virtual void init();
+    virtual void init(int num_threads);
     bool try_dequeue(sm_chunk &chunk);
 
     std::atomic<int> len{0};
@@ -79,7 +79,7 @@ class input_queue_bam_chunks : public input_queue
 {
 public:
     input_queue_bam_chunks(const sm_config &conf) : input_queue(conf) {};
-    void init();
+    void init(int num_threads);
 
 private:
     bool chunk_bam(const std::string bam_file, const int num_chunks,

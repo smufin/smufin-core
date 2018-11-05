@@ -29,7 +29,7 @@ using std::string;
 filter::filter(const sm_config &conf) : stage(conf)
 {
     _input_queue = sm::input_queues.at(_conf.input_format)(conf);
-    _input_queue->init();
+    _input_queue->init(_conf.num_filters);
 
     string name = _conf.index_format;
     if (sm::index_formats.find(name) != sm::index_formats.end()) {

@@ -30,7 +30,7 @@ using std::string;
 prune::prune(const sm_config &conf) : stage(conf)
 {
     _input_queue = sm::input_queues.at(_conf.input_format)(conf);
-    _input_queue->init();
+    _input_queue->init(_conf.num_loaders);
 
     _all_size = _conf.all_size / _conf.num_partitions / _conf.num_storers;
     _allowed_size = _conf.allowed_size / _conf.num_partitions /

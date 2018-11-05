@@ -38,7 +38,7 @@ using std::string;
 count::count(const sm_config &conf) : stage(conf)
 {
     _input_queue = sm::input_queues.at(_conf.input_format)(conf);
-    _input_queue->init();
+    _input_queue->init(_conf.num_loaders);
 
     _table_size = _conf.table_size / _conf.num_partitions / _conf.num_storers;
     _cache_size = _conf.cache_size / _conf.num_partitions / _conf.num_storers;
