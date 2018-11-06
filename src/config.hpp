@@ -59,6 +59,8 @@ struct sm_config {
 
     std::string annotate_input;
 
+    int max_conversions;
+
     std::string index_format;
     int num_indexes;
     int max_nc_a;

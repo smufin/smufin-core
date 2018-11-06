@@ -98,6 +98,9 @@ private:
     // Signal end of loader threads.
     std::atomic<bool> _done{false};
 
+    // Track table conversion IDs.
+    std::atomic<int> _convert{0};
+
     void load(int lid);
     void load_chunk(int lid, const sm_chunk &chunk);
     inline void load_sub(int lid, const char* sub, int len,
@@ -118,6 +121,7 @@ private:
     void annotate();
     void annotate_sub(const char* sub, int pos, int len, std::ofstream &ofs);
 
+    void convert();
     void convert_table(int sid);
 
     void prefilter();

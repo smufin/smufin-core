@@ -103,6 +103,21 @@ void count::run()
     for (auto& storer: storers)
         storer.join();
 
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    std::chrono::duration<double> time;
+    start = std::chrono::system_clock::now();
+
+    std::vector<std::thread> converters;
+    for (int i = 0; i < _conf.max_conversions; i++)
+        converters.push_back(std::thread(&count::convert, this));
+    cout << "Spawned " << converters.size() << " convert threads" << endl;
+    for (auto& converter: converters)
+        converter.join();
+
+    end = std::chrono::system_clock::now();
+    time = end - start;
+    cout << "Time count/run/convert: " << time.count() << endl;
+
     for (int i = 0; i < _conf.num_storers; i++)
         cout << "Table " << i << ": " << _root_tables[i]->size() << endl;
 }
@@ -230,14 +245,6 @@ void count::incr(int sid)
     if (_conf.enable_cache) {
         delete _root_caches[sid];
     }
-
-    std::chrono::time_point<std::chrono::system_clock> start, end;
-    std::chrono::duration<double> time;
-    start = std::chrono::system_clock::now();
-    convert_table(sid);
-    end = std::chrono::system_clock::now();
-    time = end - start;
-    cout << "Time count/convert " << sid << ": " << time.count() << endl;
 }
 
 inline void count::incr_key(int sid, sm_key stem, sm_stem_offset off)
@@ -580,11 +587,20 @@ void count::annotate_sub(const char* sub, int pos, int len, std::ofstream &ofs)
     }
 }
 
+void count::convert()
+{
+    while (_convert < _conf.num_storers) {
+        int sid = _convert;
+        bool inc = _convert.compare_exchange_weak(sid, sid + 1);
+        if (sid < _conf.num_storers && inc) {
+            convert_table(sid);
+        }
+    }
+}
+
 // Convert a stem-indexed table to a root-indexed one.
 void count::convert_table(int sid)
 {
-    cout << "Convert table " << sid << endl;
-
     _root_tables[sid] = new sm_root_table();
 
     char stem_str[_conf.stem_len + 1];

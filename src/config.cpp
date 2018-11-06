@@ -69,6 +69,7 @@ void sm_config::load(const string &filename)
     export_min = tree.get<int>("count.export-min", 29);
     export_max = tree.get<int>("count.export-max", 31);
     annotate_input = tree.get<string>("count.annotate-input", "");
+    max_conversions = tree.get<int>("count.max-conversions", num_storers);
 
     index_format = tree.get<string>("filter.index-format", "plain");
     num_indexes = tree.get<int>("filter.num-indexes", 1);
