@@ -2,3 +2,4 @@ sm
 src/*.o
 src/*.d
 make.conf
+*.swp
