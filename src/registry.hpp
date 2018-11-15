@@ -23,6 +23,7 @@
 #include "merge.hpp"
 #include "group.hpp"
 #include "group_sequential.hpp"
+#include "group_rocks.hpp"
 
 #include "input.hpp"
 #include "input_iterator.hpp"
@@ -44,7 +45,8 @@ namespace sm
         {"filter", &stage::create<filter>},
         {"merge", &stage::create<merge>},
         {"group", &stage::create<group>},
-        {"group_sequential", &stage::create<group_sequential>}
+        {"group_sequential", &stage::create<group_sequential>},
+        {"group_rocks", &stage::create<group_rocks>}
     };
 
     const std::map<std::string, input_queue_s> input_queues = {

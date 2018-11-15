@@ -55,6 +55,10 @@ void open_index_full_iter(const sm_config &conf, sm_idx_type type,
 void open_index_full_read(const sm_config &conf, sm_idx_type type,
                           sm_idx_set set, rdb_handle &rdb);
 
+void open_groups_part(const sm_config &conf, int gid, rdb_handle &rdb);
+void open_groups(const sm_config &conf, const std::string &path,
+                 const std::string &conf_file, rdb_handle &rdb);
+
 void encode_pos(const sm_pos_bitmap &p, std::string &s);
 sm_pos_bitmap decode_pos(const std::string &s);
 

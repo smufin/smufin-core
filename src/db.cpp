@@ -187,6 +187,48 @@ void open_index_full_read(const sm_config &conf, sm_idx_type type,
     }
 }
 
+void open_groups_part(const sm_config &conf, int gid, rdb_handle &rdb)
+{
+    std::ostringstream conf_file, path;
+    conf_file << conf.data_path << "/rocks/group.conf";
+    path << conf.output_path_group << "/group." << conf.pid << "-" << gid
+         << ".rdb";
+    open_groups(conf, path.str(), conf_file.str(), rdb);
+}
+
+void open_groups(const sm_config &conf, const std::string &path,
+                 const std::string &conf_file, rdb_handle &rdb)
+{
+    rocksdb::Status s;
+    rocksdb::DBOptions db_options;
+    std::vector<rocksdb::ColumnFamilyDescriptor> cf_descs;
+
+    rocksdb::Env* env = rocksdb::Env::Default();
+    env->SetBackgroundThreads(conf.num_threads_high, Env::Priority::HIGH);
+    env->SetBackgroundThreads(conf.num_threads_low, Env::Priority::LOW);
+
+    s = rocksdb::LoadOptionsFromFile(conf_file, env, &db_options, &cf_descs);
+    if (!s.ok()) {
+        cout << "Failed to load RocksDB options: " << conf_file << endl;
+        exit(1);
+    }
+
+    db_options.error_if_exists = true;
+
+    rocksdb::BlockBasedTableOptions t_options;
+    t_options.block_cache = rocksdb::NewLRUCache(conf.block_cache_size);
+    t_options.block_size = conf.block_size;
+    t_options.pin_l0_filter_and_index_blocks_in_cache = true;
+    auto t_factory = rocksdb::NewBlockBasedTableFactory(t_options);
+    cf_descs[0].options.table_factory.reset(t_factory);
+
+    s = rocksdb::DB::Open(db_options, path, cf_descs, &rdb.cfs, &rdb.db);
+    if (!s.ok()) {
+        cout << "Failed to open RocksDB database: " << path << endl;
+        exit(1);
+    }
+}
+
 void encode_pos(const sm_pos_bitmap &p, std::string &s)
 {
     std::stringstream e;
