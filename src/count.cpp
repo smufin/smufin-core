@@ -603,7 +603,6 @@ void count::convert_table(int sid)
 {
     _root_tables[sid] = new sm_root_table();
 
-    char stem_str[_conf.stem_len + 1];
     for (const auto& stem: *_stem_tables[sid]) {
         int order = 0;
         sm_key root = to_root(stem.first, _conf.stem_len);
