@@ -19,6 +19,7 @@ ROCKS_INC ?= /usr/include/rocksdb
 ROCKS_LIB ?= /usr/lib
 HTS_INC   ?= /usr/include/htslib
 HTS_LIB   ?= /usr/lib
+MSGP_INC  ?= /usr/include
 
 BIN = sm
 SRC = $(wildcard src/*.cpp)
@@ -26,7 +27,8 @@ OBJ = $(SRC:.cpp=.o)
 DEP = $(SRC:.cpp=.d)
 
 INC = -Isrc -I$(GSH_INC) -I$(MCQ_INC) -I$(RWQ_INC) \
-      -I$(BOOST_INC) -I$(BF_INC) -I$(ROCKS_INC) -I$(HTS_INC)
+      -I$(BOOST_INC) -I$(BF_INC) -I$(ROCKS_INC) -I$(HTS_INC) \
+      -I$(MSGP_INC)
 LIB = -lboost_iostreams -lz -lpthread -lbf -lrocksdb -lhts
 
 CFLAGS += -std=c++11 -DMAX_READ_LEN=$(MAX_READ_LEN)

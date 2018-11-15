@@ -24,11 +24,12 @@ support (>= 4.8), and the following libraries:
  - [libbf][libbf]: Bloom filters
  - [RocksDB][rocksdb] (>= 4.9): Key-value store for flash storage
  - [htslib][htslib]: Parse BAM files
+ - [msgpack][msgpack]: Serialization
 
 The paths for each library can be configured using a custom `make.conf` file,
 see `make.conf.sample` for an example. On Debian-based systems, packages for
-the first two and last two libraries are available as: `libsparsehash-dev
-libboost1.55-dev librocksdb-dev libhts-dev`.
+the first two and last three libraries are available as: `libsparsehash-dev
+libboost1.55-dev librocksdb-dev libhts-dev libmsgpack-dev`.
 
 *smufin*'s makefile defaults to a minimal output. For a more verbose output,
 use the following:
@@ -133,3 +134,4 @@ Jordà Polo `<jorda.polo@bsc.es>`, 2015-2018.
 [rwq]: https://github.com/cameron314/readerwriterqueue "ReaderWriterQueue"
 [libbf]: https://github.com/mavam/libbf "libbf"
 [htslib]: https://github.com/samtools/htslib "htslib"
+[msgpack]: https://github.com/msgpack/msgpack-c "msgpack"

@@ -13,6 +13,7 @@ GSH_INC   = /usr/include
 MCQ_INC   = /usr/include/concurrentqueue
 RWQ_INC   = /usr/include/readerwriterqueue
 BOOST_INC = /usr/include/boost
+MSGP_INC  = /usr/include
 
 # libbf: paths to headers/libraries.
 BF_INC = /usr/include/libbf
