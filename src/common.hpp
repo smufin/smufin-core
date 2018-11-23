@@ -18,11 +18,11 @@
 #include <string>
 #include <set>
 
+#include <htslib/kseq.h>
 #include <zlib.h>
 
 #include "config.hpp"
 #include "hash.hpp"
-#include "kseq.h"
 
 #define CEIL(x,y) (((x) + (y) - 1) / (y))
 
