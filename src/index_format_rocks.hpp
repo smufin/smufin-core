@@ -41,7 +41,7 @@ public:
 
     void update(int fid, const sm_read *read, int pos, char kmer[], sm_dir dir,
                 sm_idx_set set);
-    bool flush() {};
+    bool flush() { return false; };
     void dump();
     void stats();
 
