@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 {
     sm_config conf = sm_config();
 
-    static const char *opts = "c:p:l:s:f:m:g:o:x:h";
+    static const char *opts = "c:p:l:s:f:m:g:o:x:vh";
     static const struct option opts_long[] = {
         { "config", required_argument, NULL, 'c' },
         { "pid", required_argument, NULL, 'P' },
@@ -52,6 +52,7 @@ int main(int argc, char *argv[])
         { "input-tumor", required_argument, NULL, 'T' },
         { "output", required_argument, NULL, 'o' },
         { "exec", required_argument, NULL, 'x' },
+        { "version", no_argument, NULL, 'v' },
         { "help", no_argument, NULL, 'h' },
         { NULL, no_argument, NULL, 0 },
     };
@@ -80,6 +81,7 @@ int main(int argc, char *argv[])
                 conf.output_path_group = string(optarg);
                 break;
             case 'x': conf.exec = string(optarg); break;
+            case 'v': cout << VERSION << endl; return 0;
             case '?': display_usage(); return 1;
             case ':': display_usage(); return 1;
             case 'h': display_usage(); return 0;

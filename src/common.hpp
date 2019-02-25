@@ -24,6 +24,8 @@
 #include "config.hpp"
 #include "hash.hpp"
 
+#define VERSION "2.0.0-b2_UNRELEASED"
+
 #define CEIL(x,y) (((x) + (y) - 1) / (y))
 
 #define BASE_LEN 4
