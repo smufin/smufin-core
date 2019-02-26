@@ -294,8 +294,10 @@ void group_rocks::populate_reads(sm_group& group, sm_idx_set set,
                                  rdb_handle &rdb)
 {
     rocksdb::Status status;
+    std::set<sm_group_read> sids(group.reads[set].begin(),
+                                 group.reads[set].end());
     std::vector<sm_group_read> reads;
-    for (auto& k: group.reads[set]) {
+    for (auto& k: sids) {
         string sid = k.first;
         string seq;
         status = rdb.db->Get(rocksdb::ReadOptions(), sid, &seq);
