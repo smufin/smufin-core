@@ -32,6 +32,7 @@ group_rocks::group_rocks(const sm_config &conf) : stage(conf)
                  _group_map_l1, _group_map_l2);
     _leads_size = _conf.leads_size / _conf.num_partitions / _conf.num_groupers;
     _executable["run"] = std::bind(&group_rocks::run, this);
+    _executable["dump"] = std::bind(&group_rocks::dump, this);
     _executable["stats"] = std::bind(&group_rocks::stats, this);
 }
 
@@ -182,11 +183,6 @@ void group_rocks::run()
 
     delete _k2i[NN].cfs[0], _k2i[TN].cfs[0], _seq[NN].cfs[0], _seq[TN].cfs[0];
     delete _k2i[NN].db, _k2i[TN].db, _seq[NN].db, _seq[TN].db;
-
-    // 3. Write results.
-
-    spawn("dump", std::bind(&group_rocks::dump, this, std::placeholders::_1),
-          _conf.num_groupers);
 }
 
 void group_rocks::select_candidate(int gid, string& sid, string& seq,
@@ -310,7 +306,13 @@ void group_rocks::populate_reads(sm_group& group, sm_idx_set set,
     group.reads[set] = reads;
 }
 
-void group_rocks::dump(int gid)
+void group_rocks::dump()
+{
+    spawn("dump", std::bind(&group_rocks::dump_groups, this,
+          std::placeholders::_1), _conf.num_groupers);
+}
+
+void group_rocks::dump_groups(int gid)
 {
     std::ofstream ofs;
     string file = _conf.output_path_group + "/group." +

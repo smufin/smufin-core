@@ -42,6 +42,7 @@ class group_rocks : public stage
 public:
     group_rocks(const sm_config &conf);
     void run();
+    void dump();
     void stats();
 
 private:
@@ -66,7 +67,7 @@ private:
     void populate_kmers(sm_group& group, sm_idx_set set, rdb_handle &rdb);
     void populate_reads(sm_group& group, sm_idx_set set, rdb_handle &rdb);
 
-    void dump(int gid);
+    void dump_groups(int gid);
 };
 
 #endif
