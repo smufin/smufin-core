@@ -157,4 +157,37 @@ Where upper-case words stand for:
 ]
 ```
 
+*Stage*: `group_rocks`
+*Filename*: `group.<PID>-<GID>.msgpack`
+
+A MSGPACK file containing a list of groups. The schema of each MSGPACK group
+is as follows:
+
+```
+"lead" : READ,
+"pos" : [ POS-A, POS-B ],
+"kmers" : [ KMERS-A, KMERS-B ],
+"reads" : [ READS-N, READS-T ]
+```
+
+Where upper-case words stand for:
+
+ - READ: Tuple of two strings representing a read ID and its sequence,
+ - POS-[A|B]: Lists of integers corresponding to candidate positions in a
+   sequence, in direction A and B,
+ - KMERS-[A|B]: Lists of KMER in direction A and B,
+ - READS-[N|T]: Lists of READ, normal and tumoral.
+
+*Stage*: `group_rocks`
+*Filename*: `sets.<PID>-<GID>.txt`
+
+A sets file is a text file containing a summary of the information available
+in group files, and its meant to ease discarding groups that aren't relevant,
+e.g. groups whose reads are all contained in another group. Each line of the
+file represents a group, and it has the following format:
+
+```
+<lead ID> <number of items> <space-separated list read IDs>
+```
+
 [sparsehash]: https://github.com/sparsehash/sparsehash "Sparse Hash"
