@@ -8,7 +8,7 @@
  * received a copy of the SMUFIN Public License along with this file. If not,
  * see <https://github.com/smufin/smufin-core/blob/master/COPYING>.
  *
- * Jordà Polo <jorda.polo@bsc.es>, 2018
+ * Jordà Polo <jorda.polo@bsc.es>, 2018-2019
  */
 
 #include "group_rocks.hpp"
@@ -255,7 +255,7 @@ void group_rocks::populate_kmers(sm_group& group, sm_idx_set set,
                                  rdb_handle &rdb)
 {
     rocksdb::Status status;
-    std::vector<sm_dir> dirs= {DIR_A, DIR_B};
+    std::vector<sm_dir> dirs = {DIR_A, DIR_B};
     for (auto& dir: dirs) {
         for (auto& k: group.kmers[dir]) {
             string kmer = k.first;
@@ -314,22 +314,49 @@ void group_rocks::dump()
 
 void group_rocks::dump_groups(int gid)
 {
-    std::ofstream ofs;
-    string file = _conf.output_path_group + "/group." +
+    std::ofstream ofs_groups;
+    string groups = _conf.output_path_group + "/group." +
+                    std::to_string(_conf.pid) + "-" + std::to_string(gid) +
+                    ".msgpack";
+    ofs_groups.open(groups);
+
+    std::ofstream ofs_sets;
+    string sets = _conf.output_path_group + "/sets." +
                   std::to_string(_conf.pid) + "-" + std::to_string(gid) +
-                  ".msgpack";
-    ofs.open(file);
+                  ".txt";
+    ofs_sets.open(sets);
 
     rocksdb::ReadOptions r_options;
     rocksdb::Iterator* it;
     it = _groups[gid].db->NewIterator(r_options, _groups[gid].cfs[0]);
     for (it->SeekToFirst(); it->Valid(); it->Next()) {
+        string key = it->key().ToString();
         string val = it->value().ToString();
-        ofs << val;
+        ofs_groups << val;
+
+        msgpack::object_handle oh = msgpack::unpack(val.c_str(), val.size());
+        msgpack::object obj = oh.get();
+        sm_group group;
+        obj.convert(group);
+
+        ofs_sets << key << " ";
+        std::vector<sm_idx_set> indexes = {NN, TN};
+        std::set<string> sids;
+        for (auto& i: indexes) {
+            for (auto& k: group.reads[i]) {
+                sids.insert(k.first);
+            }
+        }
+        ofs_sets << sids.size() << " ";
+        for (auto& sid: sids) {
+            ofs_sets << sid << " ";
+        }
+        ofs_sets << "\n";
     }
     delete it;
 
-    ofs.close();
+    ofs_groups.close();
+    ofs_sets.close();
 }
 
 void group_rocks::stats()
