@@ -8,6 +8,7 @@
    * [I2P Index](#i2p-index)
  * [Output](#output)
    * [Groups](#groups)
+   * [Groups RocksDB](#groups-rocksdb)
 
 
 ## Intermediate
@@ -156,6 +157,11 @@ Where upper-case words stand for:
    "TCTCTTCTGTGCCCTGAATTCTCTCTCTCTCCCTCTCACACACACACACACACACACACACGCACG",
 ]
 ```
+
+### Groups RocksDB
+
+After the execution of `group_rocks`, two different kinds of files are
+generated: group files and sets files.
 
 *Stage*: `group_rocks`
 *Filename*: `group.<PID>-<GID>.msgpack`
