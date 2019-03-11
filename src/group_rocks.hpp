@@ -8,7 +8,7 @@
  * received a copy of the SMUFIN Public License along with this file. If not,
  * see <https://github.com/smufin/smufin-core/blob/master/COPYING>.
  *
- * Jordà Polo <jorda.polo@bsc.es>, 2018
+ * Jordà Polo <jorda.polo@bsc.es>, 2018-2019
  */
 
 #ifndef __SM_GROUP_ROCKS_H__

@@ -125,7 +125,7 @@ dependencies between *smufin* commands:
 
 ## Maintainers
 
-Jordà Polo `<jorda.polo@bsc.es>`, 2015-2018.
+Jordà Polo `<jorda.polo@bsc.es>`, 2015-2019.
 
 [smufin]: http://cg.bsc.es/smufin/ "SMUFIN"
 [boost]: http://www.boost.org/ "Boost"
