@@ -43,6 +43,7 @@ digraph stage_deps {
         label = "group"
         color = black;
         "group:run" [label = run];
+        "group:dump" [label = dump];
         "group:stats" [label = stats];
     }
 
@@ -67,5 +68,6 @@ digraph stage_deps {
     "merge:run":se -> "group:run":nw
     "merge:run_{seq,k2i,i2p}_{nn,tn,tm}" -> "group:run"
 
+    "group:run" -> "group:dump"
     "group:run" -> "group:stats"
 }
