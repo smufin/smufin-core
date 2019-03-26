@@ -1,6 +1,11 @@
 # Changelog
 
 ## 2.0.0-b2 -- UNRELEASED
+- `count`: Cached kmers are now inserted to the table as soon as the
+  same root is seen again; until now, cached kmers were only inserted
+  after finding the same stem, which potentially lead to missing certain
+  kmers and forced stronger requirements on directional filter
+  parameters.
 - `group_rocks`:
   - Sort reads in groups, avoiding duplicates.
   - Make `dump` a explicit command instead of automatically running it.
