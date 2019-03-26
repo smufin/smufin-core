@@ -1,19 +1,19 @@
 Execute: count/stats
-Table 0: 227 329 81 422 2972 20 20 20
-Histo N: 0 1 53
+Table 0: 227 402 154 495 3045 20 20 20
+Histo N: 0 1 78
 Histo N: 1 2 20
 Histo N: 2 4 69
 Histo N: 3 8 73
-Histo T: 0 1 107
+Histo T: 0 1 155
 Histo T: 1 2 48
 Histo T: 2 4 53
 Histo T: 3 8 107
 Histo T: 4 16 3
 Number of roots: 227
-Number of stems: 329
-Number of stems seen once: 81
-Number of kmers: 422
-Sum of counters: 2972
+Number of stems: 402
+Number of stems seen once: 154
+Number of kmers: 495
+Sum of counters: 3045
 Number of filter hits (roots): 20
 Number of filter hits (stems): 20
 Number of filter hits (kmers): 20
