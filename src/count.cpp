@@ -61,6 +61,9 @@ void count::chain(const stage* prev)
 
 void count::run()
 {
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    std::chrono::duration<double> time;
+
     if (_conf.num_loaders > MAX_LOADERS) {
         cout << "Number of loaders is larger than MAX_LOADERS" << endl;
         exit(1);
@@ -103,8 +106,14 @@ void count::run()
     for (auto& storer: storers)
         storer.join();
 
-    std::chrono::time_point<std::chrono::system_clock> start, end;
-    std::chrono::duration<double> time;
+    end = std::chrono::system_clock::now();
+    time = end - start;
+    cout << "Time count/run/load: " << time.count() << endl;
+
+    if (_enable_prune) {
+        delete _prune;
+    }
+
     start = std::chrono::system_clock::now();
 
     std::vector<std::thread> converters;
