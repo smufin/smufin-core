@@ -8,7 +8,7 @@
  * received a copy of the SMUFIN Public License along with this file. If not,
  * see <https://github.com/smufin/smufin-core/blob/master/COPYING>.
  *
- * Jordà Polo <jorda.polo@bsc.es>, 2015-2018
+ * Jordà Polo <jorda.polo@bsc.es>, 2015-2019
  */
 
 #ifndef __SM_CONFIG_H__
@@ -54,12 +54,15 @@ struct sm_config {
     uint64_t table_size;
     uint64_t cache_size;
 
+    std::string conversion_mode;
+    int max_conversions;
+
+    bool prefilter;
+
     int export_min;
     int export_max;
 
     std::string annotate_input;
-
-    int max_conversions;
 
     std::string index_format;
     int num_indexes;

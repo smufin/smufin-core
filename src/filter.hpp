@@ -8,7 +8,7 @@
  * received a copy of the SMUFIN Public License along with this file. If not,
  * see <https://github.com/smufin/smufin-core/blob/master/COPYING>.
  *
- * Jordà Polo <jorda.polo@bsc.es>, 2015-2018
+ * Jordà Polo <jorda.polo@bsc.es>, 2015-2019
  */
 
 #ifndef __SM_FILTER_H__
@@ -31,11 +31,25 @@ public:
     void dump();
     void stats();
 
+    // Filter condition to evaluate a kmer (A) and it reverse-complement (B).
     static inline bool condition(const sm_config &conf, uint32_t na,
                                  uint32_t ta, uint32_t nb, uint32_t tb)
     {
         if (ta >= conf.min_tc_a && na <= conf.max_nc_a &&
             tb >= conf.min_tc_b && nb <= conf.max_nc_b) {
+            return true;
+        }
+        return false;
+    }
+
+    // Filter condition to pre-evaluate a kmer. This condition can be used
+    // when prefiltering individual stems without roots: if a kmer doesn't
+    // meet the condition in at least one direction, it can be guaranteed that
+    // its reverse-complement won't meet the full condition either.
+    static inline bool condition(const sm_config &conf, uint32_t n, uint32_t t)
+    {
+        if ((t >= conf.min_tc_a && n <= conf.max_nc_a) ||
+            (t >= conf.min_tc_b && n <= conf.max_nc_b)) {
             return true;
         }
         return false;

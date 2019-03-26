@@ -8,7 +8,7 @@
  * received a copy of the SMUFIN Public License along with this file. If not,
  * see <https://github.com/smufin/smufin-core/blob/master/COPYING>.
  *
- * Jordà Polo <jorda.polo@bsc.es>, 2015-2018
+ * Jordà Polo <jorda.polo@bsc.es>, 2015-2019
  */
 
 #ifndef __SM_COUNT_H__
@@ -109,6 +109,13 @@ private:
     void incr(int sid);
     inline void incr_key(int sid, sm_key stem, sm_stem_offset off);
 
+    void convert();
+    void convert_table_mem(int sid);
+
+    void prefilter_table(int sid);
+    inline bool prefilter_stem(const sm_config &conf, const sm_stem &stem);
+    inline bool prefilter_root(const sm_config &conf, const sm_root &root);
+
     void dump();
     void dump_table(int sid);
 
@@ -120,12 +127,6 @@ private:
 
     void annotate();
     void annotate_sub(const char* sub, int pos, int len, std::ofstream &ofs);
-
-    void convert();
-    void convert_table(int sid);
-
-    void prefilter();
-    void prefilter_table(int sid);
 
     void stats();
 };

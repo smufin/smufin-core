@@ -8,7 +8,7 @@
  * received a copy of the SMUFIN Public License along with this file. If not,
  * see <https://github.com/smufin/smufin-core/blob/master/COPYING>.
  *
- * Jordà Polo <jorda.polo@bsc.es>, 2015-2018
+ * Jordà Polo <jorda.polo@bsc.es>, 2015-2019
  */
 
 #include "count.hpp"
@@ -49,7 +49,6 @@ count::count(const sm_config &conf) : stage(conf)
     _executable["stats"] = std::bind(&count::stats, this);
     _executable["export"] = std::bind(&count::export_csv, this);
     _executable["annotate"] = std::bind(&count::annotate, this);
-    _executable["prefilter"] = std::bind(&count::prefilter, this);
 }
 
 void count::chain(const stage* prev)
@@ -126,9 +125,6 @@ void count::run()
     end = std::chrono::system_clock::now();
     time = end - start;
     cout << "Time count/run/convert: " << time.count() << endl;
-
-    for (int i = 0; i < _conf.num_storers; i++)
-        cout << "Table " << i << ": " << _root_tables[i]->size() << endl;
 }
 
 void count::load(int lid)
@@ -334,6 +330,94 @@ inline void count::incr_key(int sid, sm_key stem, sm_stem_offset off)
         if (over == 0)
             (*_stem_tables[sid])[stem].v[off.first][off.last][off.kind] = count;
     }
+}
+
+void count::convert()
+{
+    while (_convert < _conf.num_storers) {
+        int sid = _convert;
+        bool inc = _convert.compare_exchange_weak(sid, sid + 1);
+        if (sid < _conf.num_storers && inc) {
+            if (_conf.conversion_mode == "mem") {
+                convert_table_mem(sid);
+            }
+        }
+    }
+}
+
+// Convert a stem-indexed table to a root-indexed one.
+void count::convert_table_mem(int sid)
+{
+    _root_tables[sid] = new sm_root_table();
+
+    for (const auto& stem: *_stem_tables[sid]) {
+        int order = 0;
+        sm_key root = to_root(stem.first, _conf.stem_len);
+        if (root < stem.first) {
+            order = 1;
+        }
+
+        if (!_conf.prefilter || prefilter_stem(_conf, stem.second)) {
+            (*_root_tables[sid])[root].s[order] = stem.second;
+        }
+    }
+
+    delete _stem_tables[sid];
+
+    if (_conf.prefilter) {
+        prefilter_table(sid);
+    }
+}
+
+void count::prefilter_table(int sid)
+{
+    sm_root_table* table = new sm_root_table();
+
+    for (const auto& root: *_root_tables[sid]) {
+        if (prefilter_root(_conf, root.second)) {
+            table->insert(root);
+        }
+    }
+
+    delete _root_tables[sid];
+    _root_tables[sid] = table;
+}
+
+inline bool count::prefilter_stem(const sm_config &conf, const sm_stem &stem)
+{
+    for (int f = 0; f < 4; f++) {
+        for (int l = 0; l < 4; l++) {
+            uint32_t n = stem.v[f][l][NORMAL_READ];
+            uint32_t t = stem.v[f][l][CANCER_READ];
+            if (filter::condition(conf, n, t)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+inline bool count::prefilter_root(const sm_config &conf, const sm_root &root)
+{
+    for (int order = 0; order < 2; order++) {
+        for (int f = 0; f < 4; f++) {
+            for (int l = 0; l < 4; l++) {
+                int orderb = (order + 1) % 2;
+                int fb = sm::comp_code[l];
+                int lb = sm::comp_code[f];
+
+                uint32_t na = root.s[order ].v[f ][l ][NORMAL_READ];
+                uint32_t ta = root.s[order ].v[f ][l ][CANCER_READ];
+                uint32_t nb = root.s[orderb].v[fb][lb][NORMAL_READ];
+                uint32_t tb = root.s[orderb].v[fb][lb][CANCER_READ];
+
+                if (filter::condition(conf, na, ta, nb, tb)) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 }
 
 void count::dump()
@@ -606,67 +690,4 @@ void count::annotate_sub(const char* sub, int pos, int len, std::ofstream &ofs)
             ofs << "\"" << (pos + i) << "\":[" << nc << "," << tc << "]";
         }
     }
-}
-
-void count::convert()
-{
-    while (_convert < _conf.num_storers) {
-        int sid = _convert;
-        bool inc = _convert.compare_exchange_weak(sid, sid + 1);
-        if (sid < _conf.num_storers && inc) {
-            convert_table(sid);
-        }
-    }
-}
-
-// Convert a stem-indexed table to a root-indexed one.
-void count::convert_table(int sid)
-{
-    _root_tables[sid] = new sm_root_table();
-
-    for (const auto& stem: *_stem_tables[sid]) {
-        int order = 0;
-        sm_key root = to_root(stem.first, _conf.stem_len);
-        if (root < stem.first) {
-            order = 1;
-        }
-        (*_root_tables[sid])[root].s[order] = stem.second;
-    }
-
-    delete _stem_tables[sid];
-}
-
-void count::prefilter()
-{
-    spawn("prefilter", std::bind(&count::prefilter_table, this,
-          std::placeholders::_1), _conf.num_storers);
-}
-
-void count::prefilter_table(int sid)
-{
-    sm_root_table* table = new sm_root_table();
-
-    for (const auto& root: *_root_tables[sid]) {
-        for (int order = 0; order < 2; order++) {
-            for (int f = 0; f < 4; f++) {
-                for (int l = 0; l < 4; l++) {
-                    int orderb = (order + 1) % 2;
-                    int fb = sm::comp_code[l];
-                    int lb = sm::comp_code[f];
-
-                    uint32_t na = root.second.s[order ].v[f ][l ][NORMAL_READ];
-                    uint32_t ta = root.second.s[order ].v[f ][l ][CANCER_READ];
-                    uint32_t nb = root.second.s[orderb].v[fb][lb][NORMAL_READ];
-                    uint32_t tb = root.second.s[orderb].v[fb][lb][CANCER_READ];
-
-                    if (filter::condition(_conf, na, ta, nb, tb)) {
-                        table->insert(root);
-                    }
-                }
-            }
-        }
-    }
-
-    delete _root_tables[sid];
-    _root_tables[sid] = table;
 }

@@ -8,7 +8,7 @@
  * received a copy of the SMUFIN Public License along with this file. If not,
  * see <https://github.com/smufin/smufin-core/blob/master/COPYING>.
  *
- * Jordà Polo <jorda.polo@bsc.es>, 2015-2018
+ * Jordà Polo <jorda.polo@bsc.es>, 2015-2019
  */
 
 #ifndef __SM_REGISTRY_H__
@@ -58,6 +58,8 @@ namespace sm
         {"fastq", &input_iterator::create<input_iterator_fastq>},
         {"bam", &input_iterator::create<input_iterator_bam>}
     };
+
+    const std::set<std::string> conversion_modes = {"mem"};
 
     const std::map<std::string, index_format_s> index_formats = {
         {"plain", &index_format::create<index_format_plain>},

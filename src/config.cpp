@@ -8,7 +8,7 @@
  * received a copy of the SMUFIN Public License along with this file. If not,
  * see <https://github.com/smufin/smufin-core/blob/master/COPYING>.
  *
- * Jordà Polo <jorda.polo@bsc.es>, 2015-2018
+ * Jordà Polo <jorda.polo@bsc.es>, 2015-2019
  */
 
 #include "config.hpp"
@@ -66,10 +66,12 @@ void sm_config::load(const string &filename)
     enable_cache = tree.get<bool>("count.enable-cache", true);
     table_size = tree.get<uint64_t>("count.table-size", 12800000000);
     cache_size = tree.get<uint64_t>("count.cache-size", 106240000000);
+    conversion_mode = tree.get<string>("count.conversion-mode", "mem");
+    max_conversions = tree.get<int>("count.max-conversions", num_storers);
+    prefilter = tree.get<bool>("count.prefilter", true);
     export_min = tree.get<int>("count.export-min", 29);
     export_max = tree.get<int>("count.export-max", 31);
     annotate_input = tree.get<string>("count.annotate-input", "");
-    max_conversions = tree.get<int>("count.max-conversions", num_storers);
 
     index_format = tree.get<string>("filter.index-format", "plain");
     num_indexes = tree.get<int>("filter.num-indexes", 1);
@@ -94,6 +96,11 @@ void sm_config::load(const string &filename)
 
     if (sm::input_queues.find(input_format) == sm::input_queues.end()) {
         cout << "Invalid input format " << input_format << endl;
+        exit(1);
+    }
+
+    if (sm::conversion_modes.find(conversion_mode) == sm::conversion_modes.end()) {
+        cout << "Invalid conversion mode " << conversion_mode << endl;
         exit(1);
     }
 
