@@ -266,8 +266,7 @@ inline void count::incr_key(int sid, sm_key stem, sm_stem_offset off)
     //   - Stem's root doesn't exist in cache: insert in cache.
     //   - Stem's root exists in cache: find stem in table.
     //     - Stem doesn't exist in table:
-    //       - Insert cache value in table only if the stem in cache matches
-    //         the current stem key.
+    //       - Insert cache value in table.
     //       - Insert stem in table.
     //     - Stem exists in table: update entry if there's no overflow.
 
@@ -301,15 +300,28 @@ inline void count::incr_key(int sid, sm_key stem, sm_stem_offset off)
             int corder = 0;
             uint8_t cache_value = cit->second;
             sm_stem_offset coff;
+            uint8_t saved = (cache_value >> 7) & 0x01;
             corder = (cache_value >> 6) & 0x01;
             coff.first = (cache_value >> 4) & 0x03;
             coff.last = (cache_value >> 2) & 0x03;
             coff.kind = (sm_read_kind) (cache_value & 0x03);
 
-            // Insert kmer stored in the cache only the first time we find the
-            // same stem (meaning root in the same direction).
-            if (order == corder) {
-                val.v[coff.first][coff.last][coff.kind] = 1;
+            // Insert in table the kmer stored in the cache. When the stem in
+            // cache is different than that of the current stem, an additional
+            // insertion is needed; otherwise just insert along with current
+            // stem.
+            if (saved == 0) {
+                if (order != corder) {
+                    sm_key cstem = revcomp_code(stem, _conf.stem_len);
+                    sm_stem cval;
+                    cval.v[coff.first][coff.last][coff.kind] = 1;
+                    _stem_tables[sid]->insert(std::pair<sm_key, sm_stem>(cstem, cval));
+                } else {
+                    val.v[coff.first][coff.last][coff.kind] = 1;
+                }
+
+                cache_value |= (1 << 7);
+                (*_root_caches[sid])[root] = cache_value;
             }
         }
 
