@@ -39,6 +39,16 @@ prune::prune(const sm_config &conf) : stage(conf)
     _executable["run"] = std::bind(&prune::run, this);
 }
 
+prune::~prune()
+{
+    for (int i = 0; i < _conf.num_loaders; i++) {
+        delete _allowed[i];
+        for (int j = 0; j < _conf.num_loaders; j++) {
+            delete _queues[i][j];
+        }
+    }
+}
+
 void prune::run()
 {
     if (_conf.num_loaders > MAX_LOADERS) {

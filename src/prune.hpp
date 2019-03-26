@@ -38,6 +38,7 @@ class prune : public stage
 {
 public:
     prune(const sm_config &conf);
+    ~prune();
     void run();
     void stats();
 
