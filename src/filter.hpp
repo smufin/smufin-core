@@ -55,6 +55,43 @@ public:
         return false;
     }
 
+    static inline bool filter_stem(const sm_config &conf, const sm_stem &stem)
+    {
+        for (int f = 0; f < 4; f++) {
+            for (int l = 0; l < 4; l++) {
+                uint32_t n = stem.v[f][l][NORMAL_READ];
+                uint32_t t = stem.v[f][l][CANCER_READ];
+                if (condition(conf, n, t)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    static inline bool filter_root(const sm_config &conf, const sm_root &root)
+    {
+        for (int order = 0; order < 2; order++) {
+            for (int f = 0; f < 4; f++) {
+                for (int l = 0; l < 4; l++) {
+                    int orderb = (order + 1) % 2;
+                    int fb = sm::comp_code[l];
+                    int lb = sm::comp_code[f];
+
+                    uint32_t na = root.s[order ].v[f ][l ][NORMAL_READ];
+                    uint32_t ta = root.s[order ].v[f ][l ][CANCER_READ];
+                    uint32_t nb = root.s[orderb].v[fb][lb][NORMAL_READ];
+                    uint32_t tb = root.s[orderb].v[fb][lb][CANCER_READ];
+
+                    if (condition(conf, na, ta, nb, tb)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
 private:
     input_queue* _input_queue;
 
@@ -80,6 +117,5 @@ private:
                             sm_dir dir, uint32_t na, uint32_t ta,
                             uint32_t nb, uint32_t tb, sm_idx_set set);
 };
-
 
 #endif

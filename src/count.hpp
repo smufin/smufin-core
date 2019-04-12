@@ -111,13 +111,13 @@ private:
 
     void convert();
     void convert_table_mem(int sid);
+    void convert_table_stream(int sid);
 
     void prefilter_table(int sid);
-    inline bool prefilter_stem(const sm_config &conf, const sm_stem &stem);
-    inline bool prefilter_root(const sm_config &conf, const sm_root &root);
 
     void dump();
     void dump_table(int sid);
+    void dump_table_stem(int sid);
 
     void restore();
     void restore_table(int sid);

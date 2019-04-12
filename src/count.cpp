@@ -342,12 +342,14 @@ void count::convert()
         if (sid < _conf.num_storers && inc) {
             if (_conf.conversion_mode == "mem") {
                 convert_table_mem(sid);
+            } else if (_conf.conversion_mode == "stream") {
+                convert_table_stream(sid);
             }
         }
     }
 }
 
-// Convert a stem-indexed table to a root-indexed one.
+// In-memory conversion of a stem-indexed table to a root-indexed one.
 void count::convert_table_mem(int sid)
 {
     _root_tables[sid] = new sm_root_table();
@@ -359,7 +361,7 @@ void count::convert_table_mem(int sid)
             order = 1;
         }
 
-        if (!_conf.prefilter || prefilter_stem(_conf, stem.second)) {
+        if (!_conf.prefilter || filter::filter_stem(_conf, stem.second)) {
             (*_root_tables[sid])[root].s[order] = stem.second;
         }
     }
@@ -371,55 +373,90 @@ void count::convert_table_mem(int sid)
     }
 }
 
+// Convert stem table serializing it to disk and then reading sequentially
+// without loading the whole stem table to memory.
+void count::convert_table_stream(int sid)
+{
+    dump_table_stem(sid);
+    delete _stem_tables[sid];
+
+    std::ostringstream fs;
+    fs << _conf.output_path_count << "/table." << _conf.pid << "-" << sid
+       << ".stem.sht";
+    string file = fs.str();
+    cout << "Reading " << file << endl;
+
+    FILE* fp = fopen(file.c_str(), "r");
+    if (fp == NULL) {
+        cout << "Failed to open " << file << " (" << errno << ")" << endl;
+        exit(0);
+    }
+
+    _root_tables[sid] = new sm_root_table();
+
+    uint64_t magic_num = 0;
+    uint64_t table_size = 0;
+    uint64_t num_buckets = 0;
+
+    read_be(fp, &magic_num);
+    read_be(fp, &table_size);
+    read_be(fp, &num_buckets);
+
+    if (magic_num != 0x24687531) {
+        cout << "Failed to read " << file << " (version mismatch)" << endl;
+        exit(0);
+    }
+
+    uint64_t num_groups = (table_size == 0) ? 0 : ((table_size - 1) / 48) + 1;
+
+    // Read metadata: each group contains the number of non-empty buckets
+    // (first 16 bits), and a bitmap (remaining 48 bits). This information is
+    // ignored for now since we are mainly interested in the content of the
+    // table.
+    uint64_t tmp = 0;
+    for (int i = 0; i < num_groups; i++) {
+        read_be(fp, &tmp);
+        read_be(fp, &tmp);
+    }
+
+    // Read data: each stem key-value pair is loaded into the root table.
+    std::pair<sm_key, sm_stem> stem;
+    for (uint64_t i = 0; i < table_size; i++) {
+        if (!fread(&stem, sizeof(stem), 1, fp)) {
+            cout << "Convert " << sid << ": read " << i << " stems" << endl;
+            break;
+        }
+
+        int order = 0;
+        sm_key root = to_root(stem.first, _conf.stem_len);
+        if (root < stem.first) {
+            order = 1;
+        }
+
+        if (!_conf.prefilter || filter::filter_stem(_conf, stem.second)) {
+            (*_root_tables[sid])[root].s[order] = stem.second;
+        }
+    }
+
+    fclose(fp);
+
+    if (_conf.prefilter) {
+        prefilter_table(sid);
+    }
+}
+
 void count::prefilter_table(int sid)
 {
     sm_root_table* table = new sm_root_table();
 
     for (const auto& root: *_root_tables[sid]) {
-        if (prefilter_root(_conf, root.second)) {
+        if (filter::filter_root(_conf, root.second)) {
             table->insert(root);
         }
     }
 
     delete _root_tables[sid];
     _root_tables[sid] = table;
-}
-
-inline bool count::prefilter_stem(const sm_config &conf, const sm_stem &stem)
-{
-    for (int f = 0; f < 4; f++) {
-        for (int l = 0; l < 4; l++) {
-            uint32_t n = stem.v[f][l][NORMAL_READ];
-            uint32_t t = stem.v[f][l][CANCER_READ];
-            if (filter::condition(conf, n, t)) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-inline bool count::prefilter_root(const sm_config &conf, const sm_root &root)
-{
-    for (int order = 0; order < 2; order++) {
-        for (int f = 0; f < 4; f++) {
-            for (int l = 0; l < 4; l++) {
-                int orderb = (order + 1) % 2;
-                int fb = sm::comp_code[l];
-                int lb = sm::comp_code[f];
-
-                uint32_t na = root.s[order ].v[f ][l ][NORMAL_READ];
-                uint32_t ta = root.s[order ].v[f ][l ][CANCER_READ];
-                uint32_t nb = root.s[orderb].v[fb][lb][NORMAL_READ];
-                uint32_t tb = root.s[orderb].v[fb][lb][CANCER_READ];
-
-                if (filter::condition(conf, na, ta, nb, tb)) {
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
 }
 
 void count::dump()
@@ -432,7 +469,7 @@ void count::dump_table(int sid)
 {
     std::ostringstream fs;
     fs << _conf.output_path_count << "/table." << _conf.pid << "-" << sid
-       << ".sht";
+       << ".root.sht";
     string file = fs.str();
     cout << "Serialize " << file << endl;
 
@@ -450,10 +487,32 @@ void count::dump_table(int sid)
     fclose(fp);
 }
 
+void count::dump_table_stem(int sid)
+{
+    std::ostringstream fs;
+    fs << _conf.output_path_count << "/table." << _conf.pid << "-" << sid
+       << ".stem.sht";
+    string file = fs.str();
+    cout << "Serialize " << file << endl;
+
+    FILE* fp = fopen(file.c_str(), "w");
+    if (fp == NULL) {
+        cout << "Failed to open " << file << " (" << errno << ")" << endl;
+        exit(1);
+    }
+
+    if (!_stem_tables[sid]->serialize(sm_stem_table::NopointerSerializer(), fp)) {
+        cout << "Failed to serialize table " << _conf.pid << "-" << sid << endl;
+        exit(1);
+    }
+
+    fclose(fp);
+}
+
 void count::restore()
 {
-    spawn("restore", std::bind(&count::restore_table, this, std::placeholders::_1),
-          _conf.num_storers);
+    spawn("restore", std::bind(&count::restore_table, this,
+          std::placeholders::_1), _conf.num_storers);
 }
 
 void count::restore_table(int sid)
@@ -462,7 +521,7 @@ void count::restore_table(int sid)
 
     std::ostringstream fs;
     fs << _conf.output_path_count << "/table." << _conf.pid << "-" << sid
-       << ".sht";
+       << ".root.sht";
     string file = fs.str();
     cout << "Unserialize " << file << endl;
 

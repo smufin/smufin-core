@@ -59,7 +59,7 @@ namespace sm
         {"bam", &input_iterator::create<input_iterator_bam>}
     };
 
-    const std::set<std::string> conversion_modes = {"mem"};
+    const std::set<std::string> conversion_modes = {"mem", "stream"};
 
     const std::map<std::string, index_format_s> index_formats = {
         {"plain", &index_format::create<index_format_plain>},
