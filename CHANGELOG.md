@@ -8,6 +8,8 @@
     stronger requirements on directional filter parameters.
   - Turn `prefilter` into a configuration option instead of a command; it can
     now be optimized and performed during table conversion.
+  - Support different methods to convert tables indexed by stem to tables
+    indexed by root.
 - `group_rocks`:
   - Sort reads in groups, avoiding duplicates.
   - Make `dump` a explicit command instead of automatically running it.
