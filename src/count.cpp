@@ -63,6 +63,8 @@ void count::run()
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> time;
 
+    start = std::chrono::system_clock::now();
+
     if (_conf.num_loaders > MAX_LOADERS) {
         cout << "Number of loaders is larger than MAX_LOADERS" << endl;
         exit(1);
