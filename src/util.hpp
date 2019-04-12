@@ -8,7 +8,7 @@
  * received a copy of the SMUFIN Public License along with this file. If not,
  * see <https://github.com/smufin/smufin-core/blob/master/COPYING>.
  *
- * Jordà Polo <jorda.polo@bsc.es>, 2015-2018
+ * Jordà Polo <jorda.polo@bsc.es>, 2015-2019
  */
 
 #ifndef __SM_UTIL_H__
@@ -50,5 +50,10 @@ void init_mapping(const sm_config &conf, int n1, int n2, int l1[], int l2[]);
 float estimate_sparse(uint64_t n, size_t k, size_t v);
 
 std::vector<std::string> expand_path(std::string path);
+
+// Functions to read data from serialized sparsehash tables.
+bool read_be32(FILE* fp, uint32_t* value);
+bool read_be64(FILE* fp, uint64_t* value);
+bool read_be(FILE* fp, uint64_t* value);
 
 #endif

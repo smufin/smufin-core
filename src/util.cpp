@@ -8,10 +8,12 @@
  * received a copy of the SMUFIN Public License along with this file. If not,
  * see <https://github.com/smufin/smufin-core/blob/master/COPYING>.
  *
- * Jordà Polo <jorda.polo@bsc.es>, 2015-2018
+ * Jordà Polo <jorda.polo@bsc.es>, 2015-2019
  */
 
 #include "util.hpp"
+
+#include <endian.h>
 #include <wordexp.h>
 
 #include <sstream>
@@ -80,4 +82,38 @@ std::vector<string> expand_path(string path)
         expanded.push_back(string(we.we_wordv[i]));
     wordfree(&we);
     return expanded;
+}
+
+bool read_be32(FILE* fp, uint32_t* value)
+{
+    uint32_t n = 0;
+    if (!fread(&n, sizeof(n), 1, fp))
+        return false;
+    *value = be32toh(n);
+    return true;
+}
+
+bool read_be64(FILE* fp, uint64_t* value)
+{
+    uint64_t n = 0;
+    if (!fread(&n, sizeof(n), 1, fp))
+        return false;
+    *value = be64toh(n);
+    return true;
+}
+
+// Read big-endian number, and convert it to host byte order. Defaults
+// to reading 32 bit values; 64 bit values are prepended by 0xFFFFFFFF.
+bool read_be(FILE* fp, uint64_t* value)
+{
+    uint32_t first32 = 0;
+    if (!read_be32(fp, &first32))
+        return false;
+    if (first32 < 0xFFFFFFFFULL) {
+        *value = first32;
+    } else {
+        if (!read_be64(fp, value))
+            return false;
+    }
+    return true;
 }
