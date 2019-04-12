@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Barcelona Supercomputing Center (BSC)
+ * Copyright © 2015-2019 Barcelona Supercomputing Center (BSC)
  *
  * This file is part of SMUFIN Core. SMUFIN Core is released under the SMUFIN
  * Public License, and may not be used except in compliance with it. This file
