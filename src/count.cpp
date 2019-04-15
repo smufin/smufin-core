@@ -407,17 +407,12 @@ void count::convert_table_stream(int sid)
         exit(0);
     }
 
-    uint64_t num_groups = (table_size == 0) ? 0 : ((table_size - 1) / 48) + 1;
-
-    // Read metadata: each group contains the number of non-empty buckets
+    // Skip metadata: each group contains the number of non-empty buckets
     // (first 16 bits), and a bitmap (remaining 48 bits). This information is
     // ignored for now since we are mainly interested in the content of the
     // table.
-    uint64_t tmp = 0;
-    for (int i = 0; i < num_groups; i++) {
-        read_be(fp, &tmp);
-        read_be(fp, &tmp);
-    }
+    uint64_t num_groups = (table_size == 0) ? 0 : ((table_size - 1) / 48) + 1;
+    fseek(fp, num_groups * 8, SEEK_CUR);
 
     // Read data: each stem key-value pair is loaded into the root table.
     std::pair<sm_key, sm_stem> stem;
