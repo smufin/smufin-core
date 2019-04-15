@@ -120,7 +120,8 @@ void count::run()
     std::vector<std::thread> converters;
     for (int i = 0; i < _conf.max_conversions; i++)
         converters.push_back(std::thread(&count::convert, this));
-    cout << "Spawned " << converters.size() << " convert threads" << endl;
+    cout << "Spawned " << converters.size() << " convert threads ("
+         << _conf.conversion_mode << ")" << endl;
     for (auto& converter: converters)
         converter.join();
 
@@ -354,6 +355,8 @@ void count::convert_table_mem(int sid)
 {
     _root_tables[sid] = new sm_root_table();
 
+    uint64_t num_stems_pass = 0;
+
     for (const auto& stem: *_stem_tables[sid]) {
         int order = 0;
         sm_key root = to_root(stem.first, _conf.stem_len);
@@ -363,14 +366,21 @@ void count::convert_table_mem(int sid)
 
         if (!_conf.prefilter || filter::filter_stem(_conf, stem.second)) {
             (*_root_tables[sid])[root].s[order] = stem.second;
+            num_stems_pass++;
         }
     }
+
+    uint64_t num_stems = _stem_tables[sid]->size();
+    uint64_t num_roots = _root_tables[sid]->size();
 
     delete _stem_tables[sid];
 
     if (_conf.prefilter) {
         prefilter_table(sid);
     }
+
+    cout << "Convert " << sid << ": " << num_stems << " " << num_stems_pass
+         << " " << num_roots << " " << _root_tables[sid]->size() << endl;
 }
 
 // Convert stem table serializing it to disk and then reading sequentially
@@ -414,13 +424,17 @@ void count::convert_table_stream(int sid)
     uint64_t num_groups = (table_size == 0) ? 0 : ((table_size - 1) / 48) + 1;
     fseek(fp, num_groups * 8, SEEK_CUR);
 
+    uint64_t num_stems = 0;
+    uint64_t num_stems_pass = 0;
+
     // Read data: each stem key-value pair is loaded into the root table.
     std::pair<sm_key, sm_stem> stem;
     for (uint64_t i = 0; i < table_size; i++) {
         if (!fread(&stem, sizeof(stem), 1, fp)) {
-            cout << "Convert " << sid << ": read " << i << " stems" << endl;
             break;
         }
+
+        num_stems++;
 
         int order = 0;
         sm_key root = to_root(stem.first, _conf.stem_len);
@@ -430,14 +444,20 @@ void count::convert_table_stream(int sid)
 
         if (!_conf.prefilter || filter::filter_stem(_conf, stem.second)) {
             (*_root_tables[sid])[root].s[order] = stem.second;
+            num_stems_pass++;
         }
     }
 
     fclose(fp);
 
+    uint64_t num_roots = _root_tables[sid]->size();
+
     if (_conf.prefilter) {
         prefilter_table(sid);
     }
+
+    cout << "Convert " << sid << ": " << num_stems << " " << num_stems_pass
+         << " " << num_roots << " " << _root_tables[sid]->size() << endl;
 }
 
 void count::prefilter_table(int sid)
