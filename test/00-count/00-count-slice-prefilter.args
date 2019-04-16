@@ -1,0 +1,4 @@
+00-count-slice-prefilter-1p1s.test -- -p 1 -s 1
+00-count-slice-prefilter-1p2s.test -- -p 1 -s 2
+00-count-slice-prefilter-2p1s.test -- -p 2 -s 1
+00-count-slice-prefilter-2p2s.test -- -p 2 -s 2
