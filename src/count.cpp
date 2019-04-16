@@ -220,6 +220,10 @@ void count::incr(int sid)
     _stem_tables[sid] = new sm_stem_table();
     _stem_tables[sid]->resize(_table_size);
 
+    if (_conf.slice) {
+        _stem_tables[sid]->set_resizing_parameters(0.01, 0.99);
+    }
+
     _slices[sid] = new std::vector<int>();
 
     if (_conf.enable_cache) {
@@ -240,11 +244,12 @@ void count::incr(int sid)
             }
         }
 
-        if (_conf.slice && _stem_tables[sid]->size() > _table_size) {
+        if (_conf.slice && _stem_tables[sid]->size() > _table_size * 0.8) {
             dump_slice(sid);
             delete _stem_tables[sid];
             _stem_tables[sid] = new sm_stem_table();
             _stem_tables[sid]->resize(_table_size);
+            _stem_tables[sid]->set_resizing_parameters(0.01, 0.99);
         }
     }
 
