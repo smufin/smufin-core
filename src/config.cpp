@@ -104,6 +104,8 @@ void sm_config::load(const string &filename)
         exit(1);
     }
 
+    slice = (conversion_mode == "slice") ? true : false;
+
     if (sm::formats.find(index_format) == sm::formats.end()) {
         cout << "Invalid filter format " << index_format << endl;
         exit(1);

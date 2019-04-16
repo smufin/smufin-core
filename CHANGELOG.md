@@ -9,8 +9,9 @@
   - Turn `prefilter` into a configuration option instead of a command; it can
     now be optimized and performed during table conversion.
   - Support different methods to convert tables indexed by stem to tables
-    indexed by root, including: `mem`, the default in-memory conversion; and
-    `stream`, a new method that dumps to and reads from disk.
+    indexed by root, including: `mem`, the default in-memory conversion, as
+    well as `stream` and `slice`, two new methods that dump to and read from
+    disk.
 - `group_rocks`:
   - Sort reads in groups, avoiding duplicates.
   - Make `dump` a explicit command instead of automatically running it.

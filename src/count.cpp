@@ -220,6 +220,8 @@ void count::incr(int sid)
     _stem_tables[sid] = new sm_stem_table();
     _stem_tables[sid]->resize(_table_size);
 
+    _slices[sid] = new std::vector<int>();
+
     if (_conf.enable_cache) {
         _root_caches[sid] = new sm_cache();
         _root_caches[sid]->resize(_cache_size);
@@ -236,6 +238,13 @@ void count::incr(int sid)
                 _queues[sid][lid]->pop();
                 pmsg = _queues[sid][lid]->peek();
             }
+        }
+
+        if (_conf.slice && _stem_tables[sid]->size() > _table_size) {
+            dump_slice(sid);
+            delete _stem_tables[sid];
+            _stem_tables[sid] = new sm_stem_table();
+            _stem_tables[sid]->resize(_table_size);
         }
     }
 
@@ -343,8 +352,8 @@ void count::convert()
         if (sid < _conf.num_storers && inc) {
             if (_conf.conversion_mode == "mem") {
                 convert_table_mem(sid);
-            } else if (_conf.conversion_mode == "stream") {
-                convert_table_stream(sid);
+            } else {
+                convert_table_slice(sid);
             }
         }
     }
@@ -385,70 +394,83 @@ void count::convert_table_mem(int sid)
 
 // Convert stem table serializing it to disk and then reading sequentially
 // without loading the whole stem table to memory.
-void count::convert_table_stream(int sid)
+void count::convert_table_slice(int sid)
 {
-    dump_table_stem(sid);
+    dump_slice(sid);
     delete _stem_tables[sid];
-
-    std::ostringstream fs;
-    fs << _conf.output_path_count << "/table." << _conf.pid << "-" << sid
-       << ".stem.sht";
-    string file = fs.str();
-    cout << "Reading " << file << endl;
-
-    FILE* fp = fopen(file.c_str(), "r");
-    if (fp == NULL) {
-        cout << "Failed to open " << file << " (" << errno << ")" << endl;
-        exit(0);
-    }
 
     _root_tables[sid] = new sm_root_table();
 
-    uint64_t magic_num = 0;
-    uint64_t table_size = 0;
-    uint64_t num_buckets = 0;
-
-    read_be(fp, &magic_num);
-    read_be(fp, &table_size);
-    read_be(fp, &num_buckets);
-
-    if (magic_num != 0x24687531) {
-        cout << "Failed to read " << file << " (version mismatch)" << endl;
-        exit(0);
-    }
-
-    // Skip metadata: each group contains the number of non-empty buckets
-    // (first 16 bits), and a bitmap (remaining 48 bits). This information is
-    // ignored for now since we are mainly interested in the content of the
-    // table.
-    uint64_t num_groups = (table_size == 0) ? 0 : ((table_size - 1) / 48) + 1;
-    fseek(fp, num_groups * 8, SEEK_CUR);
-
     uint64_t num_stems = 0;
     uint64_t num_stems_pass = 0;
+    const bool prefilter_stem = _conf.prefilter && !_conf.slice;
 
-    // Read data: each stem key-value pair is loaded into the root table.
-    std::pair<sm_key, sm_stem> stem;
-    for (uint64_t i = 0; i < table_size; i++) {
-        if (!fread(&stem, sizeof(stem), 1, fp)) {
-            break;
+    for (int i = 0; i < _slices[sid]->size(); i++) {
+        std::ostringstream fs;
+        fs << _conf.output_path_count << "/slice." << _conf.pid << "-" << sid
+           << "." << i << ".sht";
+        string file = fs.str();
+        cout << "Reading " << file << " (" << (*_slices[sid])[i] << " stems)"
+             << endl;
+
+        FILE* fp = fopen(file.c_str(), "r");
+        if (fp == NULL) {
+            cout << "Failed to open " << file << " (" << errno << ")" << endl;
+            exit(0);
         }
 
-        num_stems++;
+        uint64_t magic_num = 0;
+        uint64_t table_size = 0;
+        uint64_t num_buckets = 0;
 
-        int order = 0;
-        sm_key root = to_root(stem.first, _conf.stem_len);
-        if (root < stem.first) {
-            order = 1;
+        read_be(fp, &magic_num);
+        read_be(fp, &table_size);
+        read_be(fp, &num_buckets);
+
+        if (magic_num != 0x24687531) {
+            cout << "Failed to read " << file << " (version mismatch)" << endl;
+            exit(0);
         }
 
-        if (!_conf.prefilter || filter::filter_stem(_conf, stem.second)) {
-            (*_root_tables[sid])[root].s[order] = stem.second;
-            num_stems_pass++;
+        // Skip metadata: each group contains the number of non-empty buckets
+        // (first 16 bits), and a bitmap (remaining 48 bits). This information is
+        // ignored for now since we are mainly interested in the content of the
+        // table.
+        uint64_t num_groups = (table_size == 0) ? 0 : ((table_size - 1) / 48) + 1;
+        fseek(fp, num_groups * 8, SEEK_CUR);
+
+        // Read data: each stem key-value pair is loaded into the root table.
+        std::pair<sm_key, sm_stem> stem;
+        for (uint64_t i = 0; i < table_size; i++) {
+            if (!fread(&stem, sizeof(stem), 1, fp)) {
+                break;
+            }
+
+            num_stems++;
+
+            int order = 0;
+            sm_key root = to_root(stem.first, _conf.stem_len);
+            if (root < stem.first) {
+                order = 1;
+            }
+
+            sm_root sum;
+            sm_root_table::const_iterator it = _root_tables[sid]->find(root);
+            if (it != _root_tables[sid]->end()) {
+                sum = it->second;
+                sum.s[order] = sum.s[order] + stem.second;
+            } else {
+                sum.s[order] = stem.second;
+            }
+
+            if (!prefilter_stem || filter::filter_stem(_conf, stem.second)) {
+                (*_root_tables[sid])[root] = sum;
+                num_stems_pass++;
+            }
         }
+
+        fclose(fp);
     }
-
-    fclose(fp);
 
     uint64_t num_roots = _root_tables[sid]->size();
 
@@ -484,7 +506,7 @@ void count::dump_table(int sid)
 {
     std::ostringstream fs;
     fs << _conf.output_path_count << "/table." << _conf.pid << "-" << sid
-       << ".root.sht";
+       << ".sht";
     string file = fs.str();
     cout << "Serialize " << file << endl;
 
@@ -502,11 +524,15 @@ void count::dump_table(int sid)
     fclose(fp);
 }
 
-void count::dump_table_stem(int sid)
+void count::dump_slice(int sid)
 {
+    if (_stem_tables[sid]->size() == 0) {
+        return;
+    }
+
     std::ostringstream fs;
-    fs << _conf.output_path_count << "/table." << _conf.pid << "-" << sid
-       << ".stem.sht";
+    fs << _conf.output_path_count << "/slice." << _conf.pid << "-" << sid
+       << "." << _slices[sid]->size() << ".sht";
     string file = fs.str();
     cout << "Serialize " << file << endl;
 
@@ -517,11 +543,13 @@ void count::dump_table_stem(int sid)
     }
 
     if (!_stem_tables[sid]->serialize(sm_stem_table::NopointerSerializer(), fp)) {
-        cout << "Failed to serialize table " << _conf.pid << "-" << sid << endl;
+        cout << "Failed to serialize slice " << _conf.pid << "-" << sid << endl;
         exit(1);
     }
 
     fclose(fp);
+
+    _slices[sid]->push_back(_stem_tables[sid]->size());
 }
 
 void count::restore()
@@ -536,7 +564,7 @@ void count::restore_table(int sid)
 
     std::ostringstream fs;
     fs << _conf.output_path_count << "/table." << _conf.pid << "-" << sid
-       << ".root.sht";
+       << ".sht";
     string file = fs.str();
     cout << "Unserialize " << file << endl;
 

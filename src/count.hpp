@@ -35,8 +35,26 @@
 //  - B and C are the numeric code of the first and last bases respectively
 //    (as defined by sm::code)
 //  - D is the kind (as defined by sm_read_kind)
-typedef struct sm_stem { uint16_t v[4][4][2] = {{{0}}}; } sm_stem;
-typedef struct sm_root { sm_stem s[2]; } sm_root;
+struct sm_stem {
+    uint16_t v[4][4][2] = {{{0}}};
+    sm_stem operator+(const sm_stem& a) const
+    {
+        sm_stem stem;
+        for (int f = 0; f < 4; f++) {
+            for (int l = 0; l < 4; l++) {
+                for (int k = 0; k < 2; k++) {
+                    uint32_t inc = v[f][l][k] + a.v[f][l][k];
+                    uint16_t over = inc >> 16;
+                    uint16_t count = inc & 0x0000FFFF;
+                    if (over == 0)
+                        stem.v[f][l][k] = count;
+                }
+            }
+        }
+        return stem;
+    }
+};
+struct sm_root { sm_stem s[2]; };
 
 typedef google::sparse_hash_map<sm_key, uint8_t, sm_hasher<sm_key>> sm_cache;
 typedef google::sparse_hash_map<sm_key, sm_stem, sm_hasher<sm_key>> sm_stem_table;
@@ -86,6 +104,8 @@ private:
     sm_stem_table* _stem_tables[MAX_STORERS];
     sm_root_table* _root_tables[MAX_STORERS];
 
+    std::vector<int>* _slices[MAX_STORERS];
+
     // Message queues between loader threads and storer threads. One SPSC
     // queue per loader/storer pair.
     sm_queue* _queues[MAX_STORERS][MAX_LOADERS];
@@ -111,13 +131,13 @@ private:
 
     void convert();
     void convert_table_mem(int sid);
-    void convert_table_stream(int sid);
+    void convert_table_slice(int sid);
 
     void prefilter_table(int sid);
 
     void dump();
     void dump_table(int sid);
-    void dump_table_stem(int sid);
+    void dump_slice(int sid);
 
     void restore();
     void restore_table(int sid);

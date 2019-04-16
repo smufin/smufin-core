@@ -97,9 +97,8 @@ struct sm_config {
     // Available here as part of the configuration for convenience.
 
     int stem_len;
-
-    // Starting position within a stem used for mapping.
-    int map_pos;
+    int map_pos; // Starting position within a stem, used for mapping.
+    bool slice;
 };
 
 #endif
