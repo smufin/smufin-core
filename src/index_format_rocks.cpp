@@ -16,7 +16,6 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
-#include <sstream>
 
 #include "db.hpp"
 #include "util.hpp"
@@ -62,9 +61,7 @@ void index_format_rocks::update(int fid, const sm_read *read, int pos,
         encode_pos(p, serialized);
         _i2p[iid].db->Merge(options, _i2p[iid].cfs[0], sid, serialized);
     } else {
-        std::stringstream ss;
-        ss << sid << " ";
-        _k2i[set][iid].db->Merge(options, _k2i[set][iid].cfs[0], kmer, ss.str());
+        _k2i[set][iid].db->Merge(options, _k2i[set][iid].cfs[0], kmer, sid);
     }
 }
 

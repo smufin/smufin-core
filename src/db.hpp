@@ -123,7 +123,7 @@ public:
             }
         }
 
-        s << existing << oper;
+        s << existing << " " << oper;
         *new_value = s.str();
         return true;
     }
